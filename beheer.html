@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NNFC – Beheer & Baanindeling (Waterwerkcommissaris)</title>
+  <title>NNFC – Beheer & Baanindeling v2.0</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 50px; }
     
     header { background: #0f172a; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
     .container { max-width: 1250px; margin: 20px auto; padding: 0 20px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1.35fr; gap: 20px; }
     @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
 
     .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px; }
@@ -43,7 +43,7 @@
 <header>
   <div>
     <strong style="font-size:1.25rem;">NNFC Watertrials – Beheer & Baanindeling</strong>
-    <div style="font-size:0.85rem; color:#94a3b8;">Voorbereiding Waterwerkcommissaris (Reglement 2026)</div>
+    <div style="font-size:0.85rem; color:#94a3b8;">Voorbereiding Waterwerkcommissaris (Reglement 2026 + Referentie 2026)</div>
   </div>
   <div>
     <button class="btn btn-success" onclick="slaAllesOpInFirebase()">Publiceer indeling naar Firebase</button>
@@ -52,17 +52,17 @@
 
 <div class="container">
   <div class="grid-2">
-    <!-- LINKERKOLOM: INSCHRIJVING PLAKKEN OF HANDMATIG INVOEREN -->
+    <!-- LINKERKOLOM -->
     <div>
       <div class="card">
         <h3>1. Snel importeren (Plak tekst uit inschrijfformulier)</h3>
-        <p style="font-size:0.85rem; color:#475569;">Kopieer de tekst van het inschrijfformulier (zoals de e-mail van Zeumeren) en plak deze hieronder. Eén eigenaar met meerdere honden wordt automatisch herkend.</p>
-        <textarea id="pasteBox" rows="6" placeholder="Plak hier de tekst vanaf 'Lidnr: ...' tot en met alle honden..."></textarea>
+        <p style="font-size:0.85rem; color:#475569;">Plak de tekst van het inschrijfformulier. Eén eigenaar met meerdere honden wordt automatisch herkend.</p>
+        <textarea id="pasteBox" rows="5" placeholder="Plak hier de tekst vanaf 'Lidnr: ...' tot en met alle honden..."></textarea>
         <button class="btn btn-primary" onclick="parseFormulierTekst()">Tekst uitlezen en toevoegen</button>
       </div>
 
       <div class="card">
-        <h3>2. Handmatig Eigenaar & Hond toevoegen</h3>
+        <h3>2. Eigenaar & Hond toevoegen (met 2026 spellinghulp)</h3>
         <div class="row-2">
           <div>
             <label>Lidnummer (Eigenaar ID)</label>
@@ -75,7 +75,7 @@
         </div>
         <div class="row-2">
           <div>
-            <label>E-mail (alleen beheer/Firebase)</label>
+            <label>E-mail (alleen Firebase beheer)</label>
             <input type="email" id="inEmail" placeholder="naam@voorbeeld.nl">
           </div>
           <div>
@@ -86,6 +86,10 @@
 
         <hr style="border:none; border-top:1px solid #e2e8f0; margin:12px 0;">
 
+        <label>Volledige stamboomnaam (typ voor 2026 suggesties)</label>
+        <input type="text" id="inStamboom" list="stamboomSuggesties" oninput="checkReferentieMatch()" placeholder="Begin te typen, bijv. Zepp of Tenderness...">
+        <datalist id="stamboomSuggesties"></datalist>
+
         <div class="row-2">
           <div>
             <label>Startnummer (uniek)</label>
@@ -93,11 +97,9 @@
           </div>
           <div>
             <label>Roepnaam hond</label>
-            <input type="text" id="inRoepnaam" placeholder="bijv. Rozi">
+            <input type="text" id="inRoepnaam" placeholder="bijv. Sepp">
           </div>
         </div>
-        <label>Volledige stamboomnaam</label>
-        <input type="text" id="inStamboom" placeholder="bijv. Coco Chanel vom Kaninchenberg">
 
         <div class="row-3">
           <div>
@@ -112,7 +114,7 @@
             <select id="inKlasse">
               <option value="Jeugd">Jeugd (8-20 mnd)</option>
               <option value="Open">Open (20 mnd - 8 jr)</option>
-              <option value="Veteranen">Veteranen (8+ jr)</option>
+              <option value="Veteranen">Veteranen / Senioren (8+ jr)</option>
               <option value="Stamboomloos">Stamboomloos</option>
               <option value="Specials">Specials (30m)</option>
             </select>
@@ -154,14 +156,14 @@
 
         <label style="display:flex; align-items:center; gap:8px; margin-bottom:14px; cursor:pointer;">
           <input type="checkbox" id="inDrijfvest" style="width:auto; margin:0;">
-          <span>Zwemt met drijfvest (Art. 2.14: uitgesloten van eindklassering in Jeugd/Open, wel brevet)</span>
+          <span>Buiten mededinging (*) / Met drijfvest in Jeugd of Open (wel brevet, onderaan stand)</span>
         </label>
 
         <button class="btn btn-primary" style="width:100%;" onclick="voegHandmatigToe()">Hond toevoegen aan lijst</button>
       </div>
     </div>
 
-    <!-- RECHTERKOLOM: BAANINDELING & STARTVOLGORDE -->
+    <!-- RECHTERKOLOM -->
     <div>
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -204,6 +206,7 @@
 <script src="https://gstatic.com"></script>
 <script src="https://gstatic.com"></script>
 <script src="config.js"></script>
+<script src="referentie2026.js"></script>
 
 <script>
   let db = null;
@@ -212,17 +215,17 @@
     db = firebase.database();
   }
 
-  // Lijst van inschrijvingen (lokaal bewaard tijdens voorbereiding)
-  let inschrijvingen = JSON.parse(localStorage.getItem('nnfc_voorbereiding_2026')) || [];
-
-  function saveLocal() {
-    localStorage.setItem('nnfc_voorbereiding_2026', JSON.stringify(inschrijvingen));
-    renderOverzicht();
+  // Vul datalist met historische 2026 kennelnamen (uitsluitend voor spelling)
+  if (typeof REFERENTIE_HONDEN_2026 !== 'undefined') {
+    const dl = document.getElementById('stamboomSuggesties');
+    REFERENTIE_HONDEN_2026.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h.stamboom;
+      if (h.roepnaam) opt.label = `Roepnaam: ${h.roepnaam}`;
+      dl.appendChild(opt);
+    });
   }
 
-  // Reglement Art. 2.3 & 2.9: Bepaal eerstvolgend brevet
-  function bepaalOpvolgendBrevet(klasse, huidig) {
-    if (klasse === 'Jeugd') return 'Jeugdbrevet';
-    const volgorde = ['Geen', 'Brevet A', 'Brevet B', 'Brevet C', 'Brevet D', 'Brevet E', 'Seaman Brevet'];
-    const cleanHuidig = (!huidig || huidig === 'Jeugdbrevet') ? 'Geen' : huidig;
-    const idx = volgorde.indexOf(cleanHuidig);
+  // Vul alleen roepnaam & geslacht aan als gebruiker een bekende 2026 stamboomnaam kiest
+  // Klasse en brevet worden NOOIT automatisch overgenomen!
+  function checkReferentieMatch() {
