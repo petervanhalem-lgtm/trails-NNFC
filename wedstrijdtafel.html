@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NNFC – Wedstrijdtafel v5.1</title>
+  <title>NNFC – Wedstrijdtafel</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 50px; }
     
     header { background: #0f172a; color: white; padding: 14px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .btn-back { background: #334155; color: white; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
+    .btn-back:hover { background: #475569; }
+
     .nav-btns { display: flex; flex-wrap: wrap; gap: 6px; }
     .nav-btns button { background: #1e293b; color: #cbd5e1; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
     .nav-btns button.active { background: #3b82f6; color: white; }
@@ -50,9 +54,10 @@
 <body>
 
 <header>
-  <div>
+  <div class="header-left">
+    <a href="index.html" class="btn-back">← Menu</a>
     <strong style="font-size:1.25rem;">NNFC Wedstrijdtafel</strong>
-    <span id="klokTijd" style="margin-left:14px; color:#94a3b8; font-weight:bold;"></span>
+    <span id="klokTijd" style="color:#94a3b8; font-weight:bold;"></span>
   </div>
   <div class="nav-btns">
     <button id="btnNavOverzicht" class="active" onclick="showSection('overzicht')">Overzicht</button>
@@ -200,9 +205,3 @@
         </div>
       </div>
 
-      <button class="btn btn-acc" style="width:100%; padding:14px; font-size:1rem; margin-top:10px;" onclick="voegExtraDeelnemerToe()">Opslaan en direct naar klokker sturen</button>
-    </div>
-  </div>
-
-  <!-- SECTIE 4: HANDMATIGE NOOD-INVOER AAN DE TAFEL -->
-  <div id="secNoodinvoer" style="display:none;">
