@@ -3,15 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NNFC – Beheer & Baanindeling v2.0</title>
+  <title>NNFC – Beheer, Excel-import & Baanindeling (v3.0)</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 50px; }
     
-    header { background: #0f172a; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-    .container { max-width: 1250px; margin: 20px auto; padding: 0 20px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1.35fr; gap: 20px; }
-    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+    header { background: #0f172a; color: white; padding: 16px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+    .year-box { display: flex; align-items: center; gap: 10px; background: #1e293b; padding: 8px 14px; border-radius: 8px; }
+    .year-box select { margin: 0; font-weight: bold; font-size: 1rem; background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 6px; }
+
+    .container { max-width: 1300px; margin: 20px auto; padding: 0 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
+    @media (max-width: 950px) { .grid-2 { grid-template-columns: 1fr; } }
 
     .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px; }
     h2, h3 { margin-top: 0; }
@@ -36,33 +39,43 @@
     .conflict-banner { background: #fef2f2; border: 1px solid #dc2626; color: #991b1b; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-weight: bold; font-size: 0.9rem; }
     .badge { padding: 2px 7px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; background: #e0f2fe; color: #0369a1; }
     .badge-vest { background: #fef3c7; color: #b45309; }
+    .pay-check { width: 20px; height: 20px; cursor: pointer; accent-color: #16a34a; }
   </style>
 </head>
 <body>
 
 <header>
   <div>
-    <strong style="font-size:1.25rem;">NNFC Watertrials – Beheer & Baanindeling</strong>
-    <div style="font-size:0.85rem; color:#94a3b8;">Voorbereiding Waterwerkcommissaris (Reglement 2026 + Referentie 2026)</div>
+    <strong style="font-size:1.25rem;">NNFC Watertrials – Voorbereiding & Baanindeling</strong>
+    <div style="font-size:0.85rem; color:#94a3b8;">Waterwerkcoördinator & Secretariaat (Reglement 2026)</div>
   </div>
-  <div>
-    <button class="btn btn-success" onclick="slaAllesOpInFirebase()">Publiceer indeling naar Firebase</button>
+  <div class="year-box">
+    <span>Wedstrijdjaar:</span>
+    <select id="selectJaar" onchange="wisselJaar()">
+      <option value="2026">2026</option>
+      <option value="2027" selected>2027</option>
+      <option value="2028">2028</option>
+      <option value="2029">2029</option>
+    </select>
+    <button class="btn btn-success" onclick="stuurNaarWedstrijdtafel()">Stuur indeling naar Wedstrijdtafel</button>
   </div>
 </header>
 
 <div class="container">
   <div class="grid-2">
-    <!-- LINKERKOLOM -->
+    <!-- LINKERKOLOM: EXCEL IMPORT & HANDMATIG TOEVOEGEN -->
     <div>
-      <div class="card">
-        <h3>1. Snel importeren (Plak tekst uit inschrijfformulier)</h3>
-        <p style="font-size:0.85rem; color:#475569;">Plak de tekst van het inschrijfformulier. Eén eigenaar met meerdere honden wordt automatisch herkend.</p>
-        <textarea id="pasteBox" rows="5" placeholder="Plak hier de tekst vanaf 'Lidnr: ...' tot en met alle honden..."></textarea>
-        <button class="btn btn-primary" onclick="parseFormulierTekst()">Tekst uitlezen en toevoegen</button>
+      <div class="card" style="border-left: 4px solid #2563eb;">
+        <h3>1. Importeer deelnemers uit Excel (CSV)</h3>
+        <p style="font-size:0.85rem; color:#475569;">
+          Sla het Excel-bestand van de websitebeheerder op als <strong>CSV (gescheiden door puntkomma of komma)</strong>, kies hierboven het juiste jaar en klik op de knop.
+        </p>
+        <input type="file" id="csvBestand" accept=".csv,.txt" style="padding:6px; background:#f8fafc;">
+        <button class="btn btn-primary" style="width:100%;" onclick="importeerExcelCsv()">Importeer deelnemers</button>
       </div>
 
       <div class="card">
-        <h3>2. Eigenaar & Hond toevoegen (met 2026 spellinghulp)</h3>
+        <h3>2. Handmatig toevoegen (Laatkomers / Formulierhulp)</h3>
         <div class="row-2">
           <div>
             <label>Lidnummer (Eigenaar ID)</label>
@@ -75,7 +88,7 @@
         </div>
         <div class="row-2">
           <div>
-            <label>E-mail (alleen Firebase beheer)</label>
+            <label>E-mail</label>
             <input type="email" id="inEmail" placeholder="naam@voorbeeld.nl">
           </div>
           <div>
@@ -86,18 +99,18 @@
 
         <hr style="border:none; border-top:1px solid #e2e8f0; margin:12px 0;">
 
-        <label>Volledige stamboomnaam (typ voor 2026 suggesties)</label>
-        <input type="text" id="inStamboom" list="stamboomSuggesties" oninput="checkReferentieMatch()" placeholder="Begin te typen, bijv. Zepp of Tenderness...">
+        <label>Volledige stamboomnaam (typ voor 2026 spellinghulp)</label>
+        <input type="text" id="inStamboom" list="stamboomSuggesties" oninput="checkReferentieMatch()" placeholder="Begin te typen...">
         <datalist id="stamboomSuggesties"></datalist>
 
         <div class="row-2">
           <div>
-            <label>Startnummer (uniek)</label>
+            <label>Startnummer</label>
             <input type="number" id="inStartnr" placeholder="bijv. 101">
           </div>
           <div>
             <label>Roepnaam hond</label>
-            <input type="text" id="inRoepnaam" placeholder="bijv. Sepp">
+            <input type="text" id="inRoepnaam" placeholder="bijv. Rozi">
           </div>
         </div>
 
@@ -110,7 +123,7 @@
             </select>
           </div>
           <div>
-            <label>Klasse (Reglement 2026)</label>
+            <label>Klasse</label>
             <select id="inKlasse">
               <option value="Jeugd">Jeugd (8-20 mnd)</option>
               <option value="Open">Open (20 mnd - 8 jr)</option>
@@ -133,15 +146,7 @@
           </div>
         </div>
 
-        <div class="row-3">
-          <div>
-            <label>Stamboeknr</label>
-            <input type="text" id="inStamboek" placeholder="NHSB / VDH / Geen">
-          </div>
-          <div>
-            <label>Regio / District</label>
-            <input type="text" id="inRegio" placeholder="bijv. Limburg">
-          </div>
+        <div class="row-2">
           <div>
             <label>Toewijzen aan Baan</label>
             <select id="inBaan">
@@ -152,25 +157,31 @@
               <option value="5">Baan 5</option>
             </select>
           </div>
+          <div style="display:flex; flex-direction:column; justify-content:center; padding-top:14px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" id="inBetaald" style="width:auto; margin:0;">
+              <span>Inschrijfgeld betaald</span>
+            </label>
+          </div>
         </div>
 
         <label style="display:flex; align-items:center; gap:8px; margin-bottom:14px; cursor:pointer;">
           <input type="checkbox" id="inDrijfvest" style="width:auto; margin:0;">
-          <span>Buiten mededinging (*) / Met drijfvest in Jeugd of Open (wel brevet, onderaan stand)</span>
+          <span>Buiten mededinging (*) / Met drijfvest in Jeugd of Open</span>
         </label>
 
-        <button class="btn btn-primary" style="width:100%;" onclick="voegHandmatigToe()">Hond toevoegen aan lijst</button>
+        <button class="btn btn-primary" style="width:100%;" onclick="voegHandmatigToe()">Handmatig toevoegen aan lijst</button>
       </div>
     </div>
 
-    <!-- RECHTERKOLOM -->
+    <!-- RECHTERKOLOM: DEELNEMERS, BETAALSTATUS & BAANINDELING -->
     <div>
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0;">3. Baanindeling & Startvolgorde</h3>
-          <div>
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+          <h3 style="margin:0;">3. Deelnemers & Baanindeling (<span id="titelJaar">2027</span>)</h3>
+          <div style="display:flex; gap:8px;">
             <select id="filterBaan" onchange="renderOverzicht()" style="width:auto; margin:0; font-weight:bold;">
-              <option value="ALLE">Alle banen tonen</option>
+              <option value="ALLE">Alle banen</option>
               <option value="1">Baan 1</option>
               <option value="2">Baan 2</option>
               <option value="3">Baan 3</option>
@@ -181,6 +192,7 @@
           </div>
         </div>
 
+        <div id="samenvattingBalk" style="background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:12px; font-size:0.9rem; display:flex; justify-content:space-between;"></div>
         <div id="eigenaarConflictMelding" class="conflict-banner" style="display:none;"></div>
 
         <div style="overflow-x:auto;">
@@ -192,40 +204,10 @@
                 <th>Hond (Roepnaam / Stamboom)</th>
                 <th>Eigenaar (Lidnr)</th>
                 <th>Klasse & Brevet</th>
-                <th>Volgorde / Actie</th>
+                <th style="text-align:center;">Betaald</th>
+                <th>Volgorde</th>
               </tr>
             </thead>
             <tbody id="deelnemersBody"></tbody>
           </table>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://gstatic.com"></script>
-<script src="https://gstatic.com"></script>
-<script src="config.js"></script>
-<script src="referentie2026.js"></script>
-
-<script>
-  let db = null;
-  if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey !== "JOUW_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-  }
-
-  // Vul datalist met historische 2026 kennelnamen (uitsluitend voor spelling)
-  if (typeof REFERENTIE_HONDEN_2026 !== 'undefined') {
-    const dl = document.getElementById('stamboomSuggesties');
-    REFERENTIE_HONDEN_2026.forEach(h => {
-      const opt = document.createElement('option');
-      opt.value = h.stamboom;
-      if (h.roepnaam) opt.label = `Roepnaam: ${h.roepnaam}`;
-      dl.appendChild(opt);
-    });
-  }
-
-  // Vul alleen roepnaam & geslacht aan als gebruiker een bekende 2026 stamboomnaam kiest
-  // Klasse en brevet worden NOOIT automatisch overgenomen!
-  function checkReferentieMatch() {
