@@ -1,0 +1,76 @@
+// Historische namenreferentie Watertrials 2026 (uitsluitend voor spellingcontrole/auto-complete)
+// Let op: klasse, eigenaar en brevet worden NOOIT automatisch overgenomen uit 2026.
+const REFERENTIE_HONDEN_2026 = [
+  // Bekende roepnamen & bekerwinnaars 2026
+  { stamboom: "Zepp van het Wijkse Bos", roepnaam: "Sepp", geslacht: "Reu" },
+  { stamboom: "Forrest Hearts Of Kings And Queens", roepnaam: "Heimdall", geslacht: "" },
+  { stamboom: "Livaine of the Tenderness Feeling", roepnaam: "Jacy", geslacht: "Teef" },
+  { stamboom: "Mablaika's River Blue Mountain", roepnaam: "River", geslacht: "" },
+  { stamboom: "Ti Amo Puro Sogno Popping", roepnaam: "Magnum", geslacht: "" },
+  { stamboom: "Aron Floyd v.h. Wijkse Bos", roepnaam: "Floyd", geslacht: "" },
+
+  // Jeugdklasse 2026
+  { stamboom: "Freedom Hearts of Kings and Queens", roepnaam: "", geslacht: "" },
+  { stamboom: "Coco Chanel vom Kaninchenberg", roepnaam: "Rozi", geslacht: "Teef" },
+  { stamboom: "La vie est Belle van de Dorpseberen", roepnaam: "", geslacht: "" },
+  { stamboom: "Acapella v.d. Turfhoeve", roepnaam: "", geslacht: "" },
+  { stamboom: "Jameson Uut Buurvrouwshuus", roepnaam: "", geslacht: "" },
+  { stamboom: "Dylan v.d. Turfhoeve", roepnaam: "", geslacht: "" },
+  { stamboom: "Ti Amo Puro Sogno Mr Perfect", roepnaam: "", geslacht: "" },
+
+  // Reuen Open klasse 2026
+  { stamboom: "Heer Caruso Jebbe uit de Polderklei", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Wizard of Travellers Joy", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Keltic Kobus Guus van de Waterschans", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Idefix - Igor - vom Menhardsweiler Tal", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "M II 3 Mops von Widdersdorf", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Ody v. Asbjørn", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Titan of the Tenderness Feeling", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Ayhan of the Tenderness Feeling", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Fernando vom Burgseeli", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Kai of the Tenderness Feeling", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Blue Lake of the Tenderness Feeling", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Mablaika's Shocking Blue", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Vélès the world of night", roepnaam: "", geslacht: "Reu" },
+  { stamboom: "Tiamo Elmo De Zandvijver", roepnaam: "", geslacht: "Reu" },
+
+  // Teven Open klasse 2026
+  { stamboom: "Oleta Adams van de Dorpse Beren", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Estefani Hearts of Kings and Queens", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Espe Hearts of Kings and Queens", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Tinkerbell of Travellers's Joy", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Mayla", roepnaam: "Mayla", geslacht: "Teef" },
+  { stamboom: "Linge", roepnaam: "Linge", geslacht: "Teef" },
+  { stamboom: "Cappuccino of Traveller's Joy", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Mablaika's VOF de Kunst", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Naoufal of the Tenderness Feeling", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Mystery Song v.d. Turfhoeve", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Ti Amo Puro Sogno Twist", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Moree of the Tenderness Feeling", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Lunah of the Tenderness Feeling", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Ocean of the Tenderness Feeling", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Mablaika's Volumia", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Mablaika's Viva La Vida", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Huggle Double Bears Hello Sunshine", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Cartoucha - Magic Nefshi-House", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Aslan Cato uut Buurvrouwshuus", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Conchita-Magic Nefshi-House", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Newfys Of The Sea Autumn Rose", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Keyah of the Tenderness Feeling", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Shilla Framboise de la Terre des Ours", roepnaam: "", geslacht: "Teef" },
+  { stamboom: "Lynne of the Tenderness Feeling", roepnaam: "", geslacht: "Teef" },
+
+  // Stamboomloze klasse 2026
+  { stamboom: "Boris", roepnaam: "Boris", geslacht: "" },
+  { stamboom: "Balou (1)", roepnaam: "Balou", geslacht: "" },
+  { stamboom: "Cher", roepnaam: "Cher", geslacht: "" },
+  { stamboom: "Ted", roepnaam: "Ted", geslacht: "" },
+  { stamboom: "Koda", roepnaam: "Koda", geslacht: "" },
+  { stamboom: "Balou (2)", roepnaam: "Balou", geslacht: "" },
+  { stamboom: "Bailey", roepnaam: "Bailey", geslacht: "" },
+  { stamboom: "Senna van der Wal", roepnaam: "Senna", geslacht: "" },
+  { stamboom: "Akira", roepnaam: "Akira", geslacht: "" },
+  { stamboom: "Sia", roepnaam: "Sia", geslacht: "" },
+  { stamboom: "Bob Jobels", roepnaam: "Bob Jobels", geslacht: "" },
+  { stamboom: "Sir Winston", roepnaam: "Sir Winston", geslacht: "" }
+];
