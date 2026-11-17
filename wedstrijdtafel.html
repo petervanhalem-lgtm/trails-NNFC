@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NNFC – Wedstrijdtafel v4.0</title>
+  <title>NNFC – Wedstrijdtafel v5.0</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 50px; }
@@ -12,6 +12,7 @@
     .nav-btns { display: flex; flex-wrap: wrap; gap: 6px; }
     .nav-btns button { background: #1e293b; color: #cbd5e1; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
     .nav-btns button.active { background: #3b82f6; color: white; }
+    .nav-btns button.btn-extra { background: #16a34a; color: white; }
     .badge-alert { background: #dc2626; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.8rem; margin-left: 4px; }
 
     .alert-banner { background: #fef2f2; border-bottom: 2px solid #dc2626; color: #991b1b; padding: 12px 24px; font-weight: bold; display: none; justify-content: space-between; align-items: center; }
@@ -28,14 +29,16 @@
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
     th { background: #f8fafc; }
-    select, input { padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.9rem; }
+    select, input { padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.9rem; width: 100%; margin-bottom: 10px; }
+    label { display: block; font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; color: #334155; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     .btn { padding: 8px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
     .btn-acc { background: #16a34a; color: white; }
     .btn-rej { background: #dc2626; color: white; }
     .btn-read { background: #3b82f6; color: white; }
 
-    .check-aanw { width: 22px; height: 22px; cursor: pointer; accent-color: #16a34a; }
+    .check-aanw { width: 22px; height: 22px; cursor: pointer; accent-color: #16a34a; margin: 0; }
     .badge-ok { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
     .badge-no { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
 
@@ -54,6 +57,7 @@
   <div class="nav-btns">
     <button id="btnNavOverzicht" class="active" onclick="showSection('overzicht')">Overzicht</button>
     <button id="btnNavAanmelding" onclick="showSection('aanmelding')">Aanmelding (Dag zelf)</button>
+    <button id="btnNavExtra" class="btn-extra" onclick="showSection('extra')">+ Extra Deelnemer</button>
     <button id="btnNavNoodinvoer" onclick="showSection('noodinvoer')">Handmatige Tijd</button>
     <button id="btnNavMeldingen" onclick="showSection('meldingen')">Meldingen <span id="meldingCount" class="badge-alert" style="display:none;">0</span></button>
     <button id="btnNavBekers" onclick="showSection('bekers')">Bekers & KCM</button>
@@ -79,12 +83,15 @@
   <!-- SECTIE 2: AANMELDING & AANWEZIGHEID OP DE DAG ZELF -->
   <div id="secAanmelding" style="display:none;">
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
         <div>
           <h2 style="margin:0;">Aanmelding Secretariaat (Art. 2.5)</h2>
           <p style="margin:4px 0 0 0; color:#475569; font-size:0.9rem;">Vink aan wie aanwezig is. De hond wordt direct naar de klokker van die baan gestuurd (ook bij laatkomers).</p>
         </div>
-        <button class="btn btn-acc" onclick="stuurAanwezigenNaarKlokkers()">Synchroniseer alle banen met klokkers</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-read" onclick="showSection('extra')">+ Extra deelnemer invoeren</button>
+          <button class="btn btn-acc" onclick="stuurAanwezigenNaarKlokkers()">Synchroniseer alle banen</button>
+        </div>
       </div>
       <table>
         <thead>
@@ -103,101 +110,99 @@
     </div>
   </div>
 
-  <!-- SECTIE 3: HANDMATIGE NOOD-INVOER AAN DE TAFEL -->
+  <!-- SECTIE 3: EXTRA DEELNEMER OP DE DAG ZELF TOEVOEGEN -->
+  <div id="secExtra" style="display:none;">
+    <div class="card" style="max-width:650px;">
+      <h2>+ Extra Deelnemer toevoegen op de wedstrijddag</h2>
+      <p style="color:#475569; font-size:0.9rem;">Voor deelnemers die op de dag zelf nog extra worden ingeschreven. Wordt direct aan de gekozen baan en klokker toegevoegd.</p>
+
+      <div class="row-2">
+        <div>
+          <label>Startnummer (uniek)</label>
+          <input type="number" id="exStartnr" placeholder="bijv. 199">
+        </div>
+        <div>
+          <label>Toewijzen aan Baan</label>
+          <select id="exBaan">
+            <option value="1">Baan 1</option>
+            <option value="2">Baan 2</option>
+            <option value="3">Baan 3</option>
+            <option value="4">Baan 4</option>
+            <option value="5">Baan 5</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div>
+          <label>Roepnaam hond</label>
+          <input type="text" id="exRoepnaam" placeholder="bijv. Max">
+        </div>
+        <div>
+          <label>Volledige stamboomnaam</label>
+          <input type="text" id="exStamboom" placeholder="bijv. Max van de Waterkant">
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div>
+          <label>Naam eigenaar</label>
+          <input type="text" id="exEigenaar" placeholder="bijv. J. de Vries">
+        </div>
+        <div>
+          <label>Lidnummer (optioneel)</label>
+          <input type="text" id="exLidnr" placeholder="bijv. 10001234">
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div>
+          <label>Geslacht</label>
+          <select id="exGeslacht">
+            <option value="Reu">Reu</option>
+            <option value="Teef">Teef</option>
+          </select>
+        </div>
+        <div>
+          <label>Klasse</label>
+          <select id="exKlasse">
+            <option value="Open">Open (50m)</option>
+            <option value="Jeugd">Jeugd (30m)</option>
+            <option value="Veteranen">Veteranen / Senioren (30m)</option>
+            <option value="Stamboomloos">Stamboomloos (30m)</option>
+            <option value="Specials">Specials (30m)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div>
+          <label>Opvolgend Brevet</label>
+          <select id="exBrevet">
+            <option value="Brevet A">Brevet A</option>
+            <option value="Jeugdbrevet">Jeugdbrevet</option>
+            <option value="Brevet B">Brevet B</option>
+            <option value="Brevet C">Brevet C</option>
+            <option value="Brevet D">Brevet D</option>
+            <option value="Brevet E">Brevet E</option>
+            <option value="Seaman Brevet">Seaman Brevet</option>
+          </select>
+        </div>
+        <div style="padding-top:18px;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="exBetaald" checked style="width:auto; margin:0;">
+            <span>Betaald aan tafel (+ €2,50)</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:6px;">
+            <input type="checkbox" id="exBuitenMed" style="width:auto; margin:0;">
+            <span>Buiten mededinging (*)</span>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-acc" style="width:100%; padding:14px; font-size:1rem; margin-top:10px;" onclick="voegExtraDeelnemerToe()">Opslaan en direct naar klokker sturen</button>
+    </div>
+  </div>
+
+  <!-- SECTIE 4: HANDMATIGE NOOD-INVOER AAN DE TAFEL -->
   <div id="secNoodinvoer" style="display:none;">
-    <div class="card" style="max-width:600px;">
-      <h2>Handmatige Tijd / Weigering invoeren</h2>
-      <p style="color:#475569; font-size:0.9rem;">Gebruik dit scherm als een telefoon of mobiele verbinding op een baan hapert en een tijd handmatig aan de uitslag moet worden toegevoegd.</p>
-      
-      <label style="display:block; font-weight:bold; margin-top:10px;">Kies Deelnemer:</label>
-      <select id="noodHondSelect" style="width:100%; margin:6px 0 12px 0;"></select>
-
-      <label style="display:block; font-weight:bold;">Kies Oefening:</label>
-      <select id="noodOefSelect" style="width:100%; margin:6px 0 12px 0;">
-        <option value="A">Oefening A (Object ophalen)</option>
-        <option value="B">Oefening B (Pop ophalen)</option>
-        <option value="C">Oefening C (Springen uit boot)</option>
-        <option value="BREVET">Brevetoefening E t/m J (Zonder tijd)</option>
-      </select>
-
-      <label style="display:block; font-weight:bold;">Resultaat:</label>
-      <select id="noodTypeSelect" onchange="toggleNoodTijdVak()" style="width:100%; margin:6px 0 12px 0;">
-        <option value="TIJD">Geklokte tijd invoeren</option>
-        <option value="WEIGERING">Weigering (600,00 sec)</option>
-        <option value="BREVET_OK">Brevetoefening Uitgevoerd</option>
-      </select>
-
-      <div id="noodTijdVak">
-        <label style="display:block; font-weight:bold;">Tijd in cijfers (bijv. 945 = 9,45 sec | 12345 = 1:23,45):</label>
-        <input type="tel" id="noodCijfers" placeholder="bijv. 1425" style="width:100%; margin:6px 0 12px 0; font-size:1.2rem;">
-      </div>
-
-      <button class="btn btn-acc" style="width:100%; padding:14px; font-size:1rem;" onclick="slaNoodTijdOp()">Resultaat direct toevoegen aan uitslag</button>
-    </div>
-  </div>
-
-  <!-- SECTIE 4: MELDINGEN & CONFLICTEN -->
-  <div id="secMeldingen" style="display:none;">
-    <h2>Openstaande Correcties, Conflicten & Berichten</h2>
-    <div id="meldingenLijst"></div>
-  </div>
-
-  <!-- SECTIE 5: BEKERS & KCM -->
-  <div id="secBekers" style="display:none;">
-    <h2>Bekeroverzicht & KCM-puntentabel (Art. 2.16 & 2.17)</h2>
-    <div class="grid-standen">
-      <div class="card">
-        <h3>Spettertrofee (Open Klasse: Trials + KCM)</h3>
-        <table>
-          <thead><tr><th>Hond</th><th>Trials pnt</th><th>KCM resultaat</th><th>Totaal</th></tr></thead>
-          <tbody id="spetterOpenBody"></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <h3>Junior Spettertrofee (Jeugdklasse: Trials + KCM)</h3>
-        <table>
-          <thead><tr><th>Hond</th><th>Trials pnt</th><th>KCM resultaat</th><th>Totaal</th></tr></thead>
-          <tbody id="spetterJeugdBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECTIE 6: WIJZIGINGEN LOGBOEK -->
-  <div id="secWijzigingen" style="display:none;">
-    <h2>Logboek van de dag (Volgorde, Aanmeldingen & Beslissingen)</h2>
-    <div class="card">
-      <table>
-        <thead><tr><th>Tijdstip</th><th>Baan</th><th>Gebeurtenis</th></tr></thead>
-        <tbody id="logTabelBody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DETAILS -->
-<div class="modal-overlay" id="detailModal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h2 id="modalTitel" style="margin:0;">Details</h2>
-      <button class="btn" onclick="document.getElementById('detailModal').classList.remove('open')">Sluiten</button>
-    </div>
-    <table>
-      <thead id="modalHead"></thead>
-      <tbody id="modalBody"></tbody>
-    </table>
-    <p style="font-size:0.8rem; color:#64748b; margin-top:10px;">* Deze honden hebben buiten mededinging meegedaan.</p>
-  </div>
-</div>
-
-<script src="https://gstatic.com"></script>
-<script src="https://gstatic.com"></script>
-<script src="config.js"></script>
-
-<script>
-  let db = null;
-  try {
-    if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey !== "JOUW_API_KEY") {
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-    }
