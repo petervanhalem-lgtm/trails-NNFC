@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NNFC – Beheer & Baanindeling (Waterwerkcommissaris)</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 50px; }
+    
+    header { background: #0f172a; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 1250px; margin: 20px auto; padding: 0 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px; }
+    h2, h3 { margin-top: 0; }
+    
+    label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; color: #334155; }
+    input, select, textarea { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 10px; font-size: 0.95rem; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+    .btn { padding: 10px 16px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-success { background: #16a34a; color: white; }
+    .btn-warning { background: #f59e0b; color: white; }
+    .btn-danger { background: #dc2626; color: white; padding: 5px 10px; font-size: 0.8rem; }
+    .btn-small { padding: 5px 9px; font-size: 0.8rem; background: #e2e8f0; color: #0f172a; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 0.88rem; }
+    th { background: #f8fafc; }
+
+    .conflict-row { background: #fef2f2 !important; color: #991b1b; }
+    .conflict-banner { background: #fef2f2; border: 1px solid #dc2626; color: #991b1b; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-weight: bold; font-size: 0.9rem; }
+    .badge { padding: 2px 7px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; background: #e0f2fe; color: #0369a1; }
+    .badge-vest { background: #fef3c7; color: #b45309; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <strong style="font-size:1.25rem;">NNFC Watertrials – Beheer & Baanindeling</strong>
+    <div style="font-size:0.85rem; color:#94a3b8;">Voorbereiding Waterwerkcommissaris (Reglement 2026)</div>
+  </div>
+  <div>
+    <button class="btn btn-success" onclick="slaAllesOpInFirebase()">Publiceer indeling naar Firebase</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="grid-2">
+    <!-- LINKERKOLOM: INSCHRIJVING PLAKKEN OF HANDMATIG INVOEREN -->
+    <div>
+      <div class="card">
+        <h3>1. Snel importeren (Plak tekst uit inschrijfformulier)</h3>
+        <p style="font-size:0.85rem; color:#475569;">Kopieer de tekst van het inschrijfformulier (zoals de e-mail van Zeumeren) en plak deze hieronder. Eén eigenaar met meerdere honden wordt automatisch herkend.</p>
+        <textarea id="pasteBox" rows="6" placeholder="Plak hier de tekst vanaf 'Lidnr: ...' tot en met alle honden..."></textarea>
+        <button class="btn btn-primary" onclick="parseFormulierTekst()">Tekst uitlezen en toevoegen</button>
+      </div>
+
+      <div class="card">
+        <h3>2. Handmatig Eigenaar & Hond toevoegen</h3>
+        <div class="row-2">
+          <div>
+            <label>Lidnummer (Eigenaar ID)</label>
+            <input type="text" id="inLidnr" placeholder="bijv. 10002381">
+          </div>
+          <div>
+            <label>Naam eigenaar</label>
+            <input type="text" id="inEigenaar" placeholder="bijv. M. Mosch">
+          </div>
+        </div>
+        <div class="row-2">
+          <div>
+            <label>E-mail (alleen beheer/Firebase)</label>
+            <input type="email" id="inEmail" placeholder="naam@voorbeeld.nl">
+          </div>
+          <div>
+            <label>Telefoon / Mobiel</label>
+            <input type="text" id="inTel" placeholder="06-12345678">
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #e2e8f0; margin:12px 0;">
+
+        <div class="row-2">
+          <div>
+            <label>Startnummer (uniek)</label>
+            <input type="number" id="inStartnr" placeholder="bijv. 101">
+          </div>
+          <div>
+            <label>Roepnaam hond</label>
+            <input type="text" id="inRoepnaam" placeholder="bijv. Rozi">
+          </div>
+        </div>
+        <label>Volledige stamboomnaam</label>
+        <input type="text" id="inStamboom" placeholder="bijv. Coco Chanel vom Kaninchenberg">
+
+        <div class="row-3">
+          <div>
+            <label>Geslacht</label>
+            <select id="inGeslacht">
+              <option value="Teef">Teef</option>
+              <option value="Reu">Reu</option>
+            </select>
+          </div>
+          <div>
+            <label>Klasse (Reglement 2026)</label>
+            <select id="inKlasse">
+              <option value="Jeugd">Jeugd (8-20 mnd)</option>
+              <option value="Open">Open (20 mnd - 8 jr)</option>
+              <option value="Veteranen">Veteranen (8+ jr)</option>
+              <option value="Stamboomloos">Stamboomloos</option>
+              <option value="Specials">Specials (30m)</option>
+            </select>
+          </div>
+          <div>
+            <label>Huidig Brevet</label>
+            <select id="inHuidigBrevet">
+              <option value="Geen">Geen</option>
+              <option value="Jeugdbrevet">Jeugdbrevet</option>
+              <option value="Brevet A">Brevet A</option>
+              <option value="Brevet B">Brevet B</option>
+              <option value="Brevet C">Brevet C</option>
+              <option value="Brevet D">Brevet D</option>
+              <option value="Brevet E">Brevet E</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row-3">
+          <div>
+            <label>Stamboeknr</label>
+            <input type="text" id="inStamboek" placeholder="NHSB / VDH / Geen">
+          </div>
+          <div>
+            <label>Regio / District</label>
+            <input type="text" id="inRegio" placeholder="bijv. Limburg">
+          </div>
+          <div>
+            <label>Toewijzen aan Baan</label>
+            <select id="inBaan">
+              <option value="1">Baan 1</option>
+              <option value="2">Baan 2</option>
+              <option value="3">Baan 3</option>
+              <option value="4">Baan 4</option>
+              <option value="5">Baan 5</option>
+            </select>
+          </div>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:14px; cursor:pointer;">
+          <input type="checkbox" id="inDrijfvest" style="width:auto; margin:0;">
+          <span>Zwemt met drijfvest (Art. 2.14: uitgesloten van eindklassering in Jeugd/Open, wel brevet)</span>
+        </label>
+
+        <button class="btn btn-primary" style="width:100%;" onclick="voegHandmatigToe()">Hond toevoegen aan lijst</button>
+      </div>
+    </div>
+
+    <!-- RECHTERKOLOM: BAANINDELING & STARTVOLGORDE -->
+    <div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0;">3. Baanindeling & Startvolgorde</h3>
+          <div>
+            <select id="filterBaan" onchange="renderOverzicht()" style="width:auto; margin:0; font-weight:bold;">
+              <option value="ALLE">Alle banen tonen</option>
+              <option value="1">Baan 1</option>
+              <option value="2">Baan 2</option>
+              <option value="3">Baan 3</option>
+              <option value="4">Baan 4</option>
+              <option value="5">Baan 5</option>
+            </select>
+            <button class="btn btn-warning" onclick="autoStartnummers()">Genereer startnummers</button>
+          </div>
+        </div>
+
+        <div id="eigenaarConflictMelding" class="conflict-banner" style="display:none;"></div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Baan</th>
+                <th>Startnr</th>
+                <th>Hond (Roepnaam / Stamboom)</th>
+                <th>Eigenaar (Lidnr)</th>
+                <th>Klasse & Brevet</th>
+                <th>Volgorde / Actie</th>
+              </tr>
+            </thead>
+            <tbody id="deelnemersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://gstatic.com"></script>
+<script src="https://gstatic.com"></script>
+<script src="config.js"></script>
+
+<script>
+  let db = null;
+  if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  }
+
+  // Lijst van inschrijvingen (lokaal bewaard tijdens voorbereiding)
+  let inschrijvingen = JSON.parse(localStorage.getItem('nnfc_voorbereiding_2026')) || [];
+
+  function saveLocal() {
+    localStorage.setItem('nnfc_voorbereiding_2026', JSON.stringify(inschrijvingen));
+    renderOverzicht();
+  }
+
+  // Reglement Art. 2.3 & 2.9: Bepaal eerstvolgend brevet
+  function bepaalOpvolgendBrevet(klasse, huidig) {
+    if (klasse === 'Jeugd') return 'Jeugdbrevet';
+    const volgorde = ['Geen', 'Brevet A', 'Brevet B', 'Brevet C', 'Brevet D', 'Brevet E', 'Seaman Brevet'];
+    const cleanHuidig = (!huidig || huidig === 'Jeugdbrevet') ? 'Geen' : huidig;
+    const idx = volgorde.indexOf(cleanHuidig);
