@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NNFC Watertrials – Startmenu</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .card { background: #1e293b; border-radius: 16px; padding: 28px; max-width: 480px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+    h1 { margin: 0 0 6px 0; font-size: 1.5rem; text-align: center; }
+    p { margin: 0 0 24px 0; color: #94a3b8; text-align: center; font-size: 0.95rem; }
+    .section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 18px 0 8px 0; font-weight: bold; }
+    a.btn { display: block; text-decoration: none; text-align: center; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 1.05rem; margin-bottom: 10px; transition: opacity 0.15s; }
+    a.btn:hover { opacity: 0.9; }
+    .btn-tafel { background: #2563eb; color: white; }
+    .btn-beheer { background: #0d9488; color: white; }
+    .grid-banen { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .btn-baan { background: #334155; color: #f8fafc; margin-bottom: 0; }
+    .btn-baan-5 { grid-column: span 2; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>NNFC Watertrials</h1>
+    <p>Digitaal Waarnemingssysteem (Reglement 2026)</p>
+
+    <div class="section-title">Organisatie & Secretariaat</div>
+    <a href="wedstrijdtafel.html" class="btn btn-tafel">Wedstrijdtafel (Live Overzicht)</a>
+    <a href="beheer.html" class="btn btn-beheer">Beheer & Excel-import</a>
+
+    <div class="section-title">Klokkers per Baan (4G / 5G)</div>
+    <div class="grid-banen">
+      <a href="baan1.html" class="btn btn-baan">Baan 1</a>
+      <a href="baan2.html" class="btn btn-baan">Baan 2</a>
+      <a href="baan3.html" class="btn btn-baan">Baan 3</a>
+      <a href="baan4.html" class="btn btn-baan">Baan 4</a>
+      <a href="baan5.html" class="btn btn-baan btn-baan-5">Baan 5</a>
+    </div>
+  </div>
+</body>
+</html>
