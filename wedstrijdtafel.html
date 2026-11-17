@@ -1,207 +1,115 @@
 <!DOCTYPE html>
+<!--
+  NNFC Digitale Waarneming, scherm voor de wedstrijdtafel (demo).
+  Eén bestand, geen build nodig. Gegevens (L, ST, conf, msgs) zijn verzonnen voorbeelden.
+  Nog niet gekoppeld aan de klokkerschermen.
+  Logo: leg een bestand assets/nnfc-logo.png in de repository, anders blijft het logo weg.
+-->
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NNFC – Wedstrijdtafel</title>
-  <style>
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 50px; }
-    
-    header { background: #0f172a; color: white; padding: 14px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .btn-back { background: #334155; color: white; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
-    .btn-back:hover { background: #475569; }
-
-    .nav-btns { display: flex; flex-wrap: wrap; gap: 6px; }
-    .nav-btns button { background: #1e293b; color: #cbd5e1; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
-    .nav-btns button.active { background: #3b82f6; color: white; }
-    .nav-btns button.btn-extra { background: #16a34a; color: white; }
-    .badge-alert { background: #dc2626; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.8rem; margin-left: 4px; }
-
-    .alert-banner { background: #fef2f2; border-bottom: 2px solid #dc2626; color: #991b1b; padding: 12px 24px; font-weight: bold; display: none; justify-content: space-between; align-items: center; }
-
-    .container { max-width: 1280px; margin: 20px auto; padding: 0 20px; }
-    .grid-banen { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
-    .grid-standen { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; }
-    
-    .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-    .card.clickable { cursor: pointer; transition: transform 0.1s; }
-    .card.clickable:hover { border-color: #3b82f6; transform: translateY(-2px); }
-    .card.has-conflict { border: 2px solid #dc2626; background: #fef2f2; }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
-    th { background: #f8fafc; }
-    select, input { padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.9rem; width: 100%; margin-bottom: 10px; }
-    label { display: block; font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; color: #334155; }
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-    .btn { padding: 8px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
-    .btn-acc { background: #16a34a; color: white; }
-    .btn-rej { background: #dc2626; color: white; }
-    .btn-read { background: #3b82f6; color: white; }
-
-    .check-aanw { width: 22px; height: 22px; cursor: pointer; accent-color: #16a34a; margin: 0; }
-    .badge-ok { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
-    .badge-no { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
-
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px; z-index: 50; }
-    .modal-overlay.open { display: flex; }
-    .modal { background: white; border-radius: 12px; padding: 24px; max-width: 800px; width: 100%; max-height: 85vh; overflow-y: auto; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wedstrijdtafel NNFC</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{--bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;--cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;--cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A}}
+:root[data-theme="dark"]{--bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;--cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif;font-size:18px;line-height:1.3;-webkit-tap-highlight-color:transparent}
+#app{max-width:980px;margin:0 auto;padding:12px}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.top img{width:52px;height:52px;border-radius:50%;flex:none}
+h1{font-size:26px;margin:0;font-weight:700;line-height:1.1}
+.sub{color:var(--mut);font-size:16px}
+button{font:inherit;color:inherit;border:2px solid var(--ln);background:var(--sf);border-radius:12px;min-height:52px;padding:6px 12px;cursor:pointer;font-weight:600}
+button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.nav button.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.c{display:block;width:100%;text-align:left;background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:12px 14px;font-size:17px;font-weight:500}
+.c b{font-weight:700;font-size:21px}
+.c.w{border-color:var(--warn)}
+.m{color:var(--mut);font-size:15px}
+.bar{height:8px;border-radius:5px;background:var(--soft);margin:8px 0}
+.bar i{display:block;height:8px;border-radius:5px;background:var(--ac)}
+.chip{display:inline-block;background:var(--cur);color:var(--curink);border-radius:8px;padding:1px 8px;font-weight:700}
+.warn{color:var(--warn);font-weight:700}
+.banner{background:var(--cur);color:var(--curink);border-color:var(--cur);margin-bottom:12px;font-size:20px;font-weight:700}
+h2{font-size:19px;margin:16px 0 8px}
+.t{display:grid;grid-template-columns:34px 1fr auto;gap:10px;padding:10px 4px;border-top:1px solid var(--ln);align-items:center;font-size:20px}
+.t b{font-size:24px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row button{min-height:64px;font-size:21px}
+.pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
+.box{background:var(--sf);border:3px solid var(--warn);border-radius:16px;padding:14px;margin-bottom:12px}
+.box.n{border-color:var(--ln);border-width:2px}
+.big{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.x{text-decoration:line-through;color:var(--mut)}
+.log{padding-left:20px;margin:0;color:var(--mut);font-size:16px}
+.foot{margin-top:18px;font-size:14px;color:var(--mut)}
+</style>
 </head>
 <body>
-
-<header>
-  <div class="header-left">
-    <a href="index.html" class="btn-back">← Menu</a>
-    <strong style="font-size:1.25rem;">NNFC Wedstrijdtafel</strong>
-    <span id="klokTijd" style="color:#94a3b8; font-weight:bold;"></span>
-  </div>
-  <div class="nav-btns">
-    <button id="btnNavOverzicht" class="active" onclick="showSection('overzicht')">Overzicht</button>
-    <button id="btnNavAanmelding" onclick="showSection('aanmelding')">Aanmelding (Dag zelf)</button>
-    <button id="btnNavExtra" class="btn-extra" onclick="showSection('extra')">+ Extra Deelnemer</button>
-    <button id="btnNavNoodinvoer" onclick="showSection('noodinvoer')">Handmatige Tijd</button>
-    <button id="btnNavMeldingen" onclick="showSection('meldingen')">Meldingen <span id="meldingCount" class="badge-alert" style="display:none;">0</span></button>
-    <button id="btnNavBekers" onclick="showSection('bekers')">Bekers & KCM</button>
-    <button id="btnNavWijzigingen" onclick="showSection('wijzigingen')">Wijzigingen</button>
-  </div>
-</header>
-
-<div class="alert-banner" id="topAlertBanner">
-  <span>Let op: Er staat een openstaand correctieverzoek of tijdconflict klaar!</span>
-  <button class="btn btn-rej" onclick="showSection('meldingen')">Bekijk direct</button>
-</div>
-
-<div class="container">
-  <!-- SECTIE 1: OVERZICHT -->
-  <div id="secOverzicht">
-    <h2>Actieve Banen (klik op een baan voor de lijst)</h2>
-    <div class="grid-banen" id="banenGrid"></div>
-
-    <h2>Eindstanden per Klasse (Totaal seconden A+B+C | * = Buiten mededinging)</h2>
-    <div class="grid-standen" id="standenGrid"></div>
-  </div>
-
-  <!-- SECTIE 2: AANMELDING & AANWEZIGHEID OP DE DAG ZELF -->
-  <div id="secAanmelding" style="display:none;">
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-        <div>
-          <h2 style="margin:0;">Aanmelding Secretariaat (Art. 2.5)</h2>
-          <p style="margin:4px 0 0 0; color:#475569; font-size:0.9rem;">Vink aan wie aanwezig is. De hond wordt direct naar de klokker van die baan gestuurd.</p>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-read" onclick="showSection('extra')">+ Extra deelnemer invoeren</button>
-          <button class="btn btn-acc" onclick="stuurAanwezigenNaarKlokkers()">Synchroniseer alle banen</button>
-        </div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Baan</th>
-            <th>Startnr</th>
-            <th>Hond (Roepnaam / Stamboom)</th>
-            <th>Eigenaar</th>
-            <th>Klasse</th>
-            <th>Betaald</th>
-            <th style="text-align:center;">Aanwezig (Startklaar)</th>
-          </tr>
-        </thead>
-        <tbody id="aanmeldingBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- SECTIE 3: EXTRA DEELNEMER OP DE DAG ZELF TOEVOEGEN -->
-  <div id="secExtra" style="display:none;">
-    <div class="card" style="max-width:650px;">
-      <h2>+ Extra Deelnemer toevoegen op de wedstrijddag</h2>
-      <p style="color:#475569; font-size:0.9rem;">Voor deelnemers die op de dag zelf nog extra worden ingeschreven. Wordt direct aan de gekozen baan en klokker toegevoegd.</p>
-
-      <div class="row-2">
-        <div>
-          <label>Startnummer (uniek)</label>
-          <input type="number" id="exStartnr" placeholder="bijv. 199">
-        </div>
-        <div>
-          <label>Toewijzen aan Baan</label>
-          <select id="exBaan">
-            <option value="1">Baan 1</option>
-            <option value="2">Baan 2</option>
-            <option value="3">Baan 3</option>
-            <option value="4">Baan 4</option>
-            <option value="5">Baan 5</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row-2">
-        <div>
-          <label>Roepnaam hond</label>
-          <input type="text" id="exRoepnaam" placeholder="bijv. Max">
-        </div>
-        <div>
-          <label>Volledige stamboomnaam</label>
-          <input type="text" id="exStamboom" placeholder="bijv. Max van de Waterkant">
-        </div>
-      </div>
-
-      <div class="row-2">
-        <div>
-          <label>Naam eigenaar</label>
-          <input type="text" id="exEigenaar" placeholder="bijv. J. de Vries">
-        </div>
-        <div>
-          <label>Lidnummer (optioneel)</label>
-          <input type="text" id="exLidnr" placeholder="bijv. 10001234">
-        </div>
-      </div>
-
-      <div class="row-2">
-        <div>
-          <label>Geslacht</label>
-          <select id="exGeslacht">
-            <option value="Reu">Reu</option>
-            <option value="Teef">Teef</option>
-          </select>
-        </div>
-        <div>
-          <label>Klasse</label>
-          <select id="exKlasse">
-            <option value="Open">Open (50m)</option>
-            <option value="Jeugd">Jeugd (30m)</option>
-            <option value="Veteranen">Veteranen / Senioren (30m)</option>
-            <option value="Stamboomloos">Stamboomloos (30m)</option>
-            <option value="Specials">Specials (30m)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row-2">
-        <div>
-          <label>Opvolgend Brevet</label>
-          <select id="exBrevet">
-            <option value="Brevet A">Brevet A</option>
-            <option value="Jeugdbrevet">Jeugdbrevet</option>
-            <option value="Brevet B">Brevet B</option>
-            <option value="Brevet C">Brevet C</option>
-            <option value="Brevet D">Brevet D</option>
-            <option value="Brevet E">Brevet E</option>
-            <option value="Seaman Brevet">Seaman Brevet</option>
-          </select>
-        </div>
-        <div style="padding-top:18px;">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-            <input type="checkbox" id="exBetaald" checked style="width:auto; margin:0;">
-            <span>Betaald aan tafel (+ €2,50)</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:6px;">
-            <input type="checkbox" id="exBuitenMed" style="width:auto; margin:0;">
-            <span>Buiten mededinging (*)</span>
-          </label>
-        </div>
-      </div>
-
+<div id="app"></div>
+<script>
+var LOGO='assets/nnfc-logo.png';
+var L=[
+{id:1,n:'Baan 1, Jeugd',ago:1,t:'14:55',d:[[1,'Rex','r','13,20'],[2,'Mila','t','14,02'],[3,'Finn','r',0],[4,'Zoe','t',0]]},
+{id:2,n:'Baan 2, Veteranen',ago:2,t:'14:54',d:[[1,'Duke','r','15,40'],[2,'Nora','t','16,18'],[3,'Bear','r','17,02'],[4,'Oscar','r',0]]},
+{id:3,n:'Baan 3, Open',ago:4,t:'14:52',d:[[1,'Tara','t','12,10'],[2,'Bram','r','14,32'],[3,'Luna','t','11,52'],[4,'Max','r','11,84'],[5,'Bella','t','12,77'],[6,'Odin','r','12,31'],[7,'Sam','r','13,05'],[8,'Fenna','t','13,40']]},
+{id:4,n:'Baan 4, Stamboomloos',ago:0,t:'14:56',d:[[1,'Storm','r','12,90'],[2,'Juno','t','13,75'],[3,'Pip','r',0],[4,'Ravi','r',0]]},
+{id:5,n:'Baan 5, Special',ago:7,t:'14:49',d:[[1,'Kiara','t','12,20'],[2,'Dax','r',0],[3,'Lotte','t',0],[4,'Nox','r',0]]}];
+var ST=[['Open reuen',3,'r'],['Open teven',3,'t'],['Jeugd',1],['Veteranen',2],['Stamboomloos',4],['Special',5]];
+var conf={nr:2,naam:'Bram',lane:3,a:'14,32',b:'13,32'};
+var msgs=[{lane:'Baan 5, Special',t:'14:49',x:'Hond nr 12 komt pas over een kwartier.'}];
+var log=['14:52 Baan 3: tweede tijd voor Bram (13,32 naast 14,32), conflict','14:49 Baan 5: Dax als volgende, Lotte overgeslagen'];
+var v='home';
+function lane(i){return L.filter(function(x){return x.id===i})[0]}
+function val(s){return parseFloat(s.replace(',','.'))}
+function rank(s){return lane(s[1]).d.filter(function(d){return d[3]&&(!s[2]||d[2]===s[2])}).sort(function(a,b){return val(a[3])-val(b[3])})}
+function open(){return (conf?1:0)+msgs.length}
+function go(x){v=x;draw()}
+function pick(w){
+ var d=lane(conf.lane).d[conf.nr-1];
+ if(w==='b')d[3]=conf.b;
+ log.unshift('14:58 Baan 3: conflict Bram beslist, '+(w==='b'?conf.b+' telt':conf.a+' blijft')+' (tafel)');
+ conf=null;draw();
+}
+function read(i){log.unshift('14:58 '+msgs[i].lane+': bericht gelezen');msgs.splice(i,1);draw()}
+function back(){return '<button onclick="go(\'home\')" style="margin-bottom:8px"><span aria-hidden="true">←</span> Overzicht</button>'}
+function draw(){
+ var h='<div class="top"><img src="'+LOGO+'" alt="NNFC" onerror="this.style.display=\'none\'"><div><h1>Wedstrijdtafel</h1><div class="sub">NNFC Trials, 14:56. Demo met verzonnen gegevens</div></div></div>';
+ var nv=function(k,t){return '<button class="'+(v===k?'on':'')+'" onclick="go(\''+k+'\')">'+t+'</button>'};
+ h+='<div class="nav">'+nv('home','Overzicht')+nv('meld','Meldingen'+(open()?' ('+open()+')':''))+nv('hist','Wijzigingen')+'</div>';
+ if(v==='home'){
+  if(open())h+='<button class="c banner" onclick="go(\'meld\')">'+open()+(open()===1?' melding wacht':' meldingen wachten')+' op de tafel</button>';
+  h+='<h2>Banen</h2><div class="g">'+L.map(function(l){
+   var dn=l.d.filter(function(d){return d[3]}).length,nu=l.d[dn],bad=l.ago>=5;
+   return '<button class="c'+((conf&&l.id===3)||bad?' w':'')+'" onclick="go(\'l'+l.id+'\')"><b>'+l.n+'</b><div class="m">Oefening A, '+dn+' van '+l.d.length+'</div><div class="bar"><i style="width:'+Math.round(dn/l.d.length*100)+'%"></i></div>'+(nu?'<span class="chip">Nu</span> '+nu[1]+(l.d[dn+1]?'<span class="m">, daarna '+l.d[dn+1][1]+'</span>':''):'Klaar met oefening A')+'<div class="m" style="margin-top:6px">Laatst gezien '+l.t+(bad?' <span class="warn">('+l.ago+' min geleden, controleer de baan)</span>':'')+'</div></button>'}).join('')+'</div>';
+  h+='<h2>Voorlopige stand na oefening A</h2><div class="g">'+ST.map(function(s,i){var r=rank(s).slice(0,3);return '<button class="c" onclick="go(\'s'+i+'\')"><b>'+s[0]+'</b>'+r.map(function(d,j){return '<div style="display:flex;justify-content:space-between"><span>'+(j+1)+'. '+d[1]+'</span><b style="font-size:19px">'+d[3]+'</b></div>'}).join('')+'</button>'}).join('')+'</div>';
+ }else if(v[0]==='l'){
+  var l=lane(+v.slice(1)),dn=l.d.filter(function(d){return d[3]}).length;
+  h+=back()+'<h2 style="margin-top:4px">'+l.n+'</h2><div class="m">Laatst gezien '+l.t+'</div>'+l.d.map(function(d,i){
+   var st=d[3]||(i===dn?'<span class="chip">Nu</span>':(i===dn+1?'Volgende':'Wacht')),cx=(conf&&l.id===conf.lane&&d[0]===conf.nr)?'<div class="warn m">Conflict: '+conf.b+' naast '+conf.a+'</div>':'';
+   return '<div class="t"><b>'+d[0]+'</b><div>'+d[1]+cx+'</div><span>'+st+'</span></div>'}).join('');
+ }else if(v[0]==='s'){
+  var s=ST[+v.slice(1)];
+  h+=back()+'<h2 style="margin-top:4px">'+s[0]+', volledige stand</h2><div class="m">Na oefening A, snelste eerst</div>'+rank(s).map(function(d,j){return '<div class="t"><b>'+(j+1)+'</b><div>'+d[1]+' <span class="m">nr '+d[0]+'</span></div><b>'+d[3]+'</b></div>'}).join('');
+ }else if(v==='meld'){
+  h+=back();
+  if(conf)h+='<div class="box"><div class="m">Baan 3, Open, oefening A</div><div style="font-size:22px;font-weight:700;margin:2px 0 8px">Conflict: twee tijden voor '+conf.naam+' (nr '+conf.nr+')</div><div class="m">Eerst geregistreerd</div><div class="big">'+conf.a+'</div><div class="m" style="margin-top:6px">Correctie van de klokker</div><div class="big">'+conf.b+'</div><div class="m" style="margin:6px 0 12px">Reden: verkeerd cijfer ingevoerd. Tot de tafel beslist telt '+conf.a+'.</div><div class="row"><button onclick="pick(\'a\')">Houd '+conf.a+'</button><button class="pri" onclick="pick(\'b\')">Neem '+conf.b+' over</button></div></div>';
+  msgs.forEach(function(m,i){h+='<div class="box n"><div class="m">'+m.lane+', '+m.t+'</div><div style="font-size:21px;margin:4px 0 10px">'+m.x+'</div><button onclick="read('+i+')" style="width:100%">Gelezen</button></div>'});
+  if(!open())h+='<div class="m">Geen open meldingen.</div>';
+ }else if(v==='hist'){
+  h+=back()+'<h2 style="margin-top:4px">Wijzigingen</h2><ul class="log">'+log.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>';
+ }
+ h+='<div class="foot">Schets in de vormgeving van het klokkersscherm. Nog niet gekoppeld aan de klokkerstelefoons.</div>';
+ document.getElementById('app').innerHTML=h;
+}
+draw();
+</script>
+</body>
+</html>
