@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NNFC – Wedstrijdtafel (Reglement 2026)</title>
+  <title>NNFC – Wedstrijdtafel v3.0 (Reglement 2026)</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 40px; }
@@ -36,7 +35,7 @@
 
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px; z-index: 50; }
     .modal-overlay.open { display: flex; }
-    .modal { background: white; border-radius: 12px; padding: 24px; max-width: 750px; width: 100%; max-height: 85vh; overflow-y: auto; }
+    .modal { background: white; border-radius: 12px; padding: 24px; max-width: 800px; width: 100%; max-height: 85vh; overflow-y: auto; }
   </style>
 </head>
 <body>
@@ -65,7 +64,7 @@
     <h2>Actieve Banen (klik op een baan voor de lijst)</h2>
     <div class="grid-banen" id="banenGrid"></div>
 
-    <h2>Eindstanden per Klasse (Som A + B + C | Weigering = 10:00,00)</h2>
+    <h2>Eindstanden per Klasse (Totaal seconden A+B+C | * = Buiten mededinging)</h2>
     <div class="grid-standen" id="standenGrid"></div>
   </div>
 
@@ -75,13 +74,12 @@
     <div id="meldingenLijst"></div>
   </div>
 
-  <!-- SECTIE 3: BEKERS & KCM (SPETTERTROFEEËN) -->
+  <!-- SECTIE 3: BEKERS & KCM -->
   <div id="secBekers" style="display:none;">
     <h2>Bekeroverzicht & KCM-puntentabel (Art. 2.16 & 2.17)</h2>
     <div class="grid-standen">
       <div class="card">
         <h3>Spettertrofee (Open Klasse: Trials + KCM)</h3>
-        <p style="font-size:0.85rem; color:#475569;">Selecteer per hond het laatst behaalde KCM-resultaat:</p>
         <table>
           <thead><tr><th>Hond</th><th>Trials pnt</th><th>KCM resultaat</th><th>Totaal</th></tr></thead>
           <tbody id="spetterOpenBody"></tbody>
@@ -89,7 +87,6 @@
       </div>
       <div class="card">
         <h3>Junior Spettertrofee (Jeugdklasse: Trials + KCM)</h3>
-        <p style="font-size:0.85rem; color:#475569;">Selecteer per hond het laatst behaalde KCM-resultaat:</p>
         <table>
           <thead><tr><th>Hond</th><th>Trials pnt</th><th>KCM resultaat</th><th>Totaal</th></tr></thead>
           <tbody id="spetterJeugdBody"></tbody>
@@ -121,6 +118,7 @@
       <thead id="modalHead"></thead>
       <tbody id="modalBody"></tbody>
     </table>
+    <p style="font-size:0.8rem; color:#64748b; margin-top:10px;">* Deze honden hebben buiten mededinging (bijv. met drijfvest in Jeugd/Open) meegedaan.</p>
   </div>
 </div>
 
@@ -135,20 +133,20 @@
     db = firebase.database();
   }
 
-  // Reglement Art. 2.17: KCM-puntentabel
   const KCM_PUNTEN = {
     "GEEN": 0, "BOB": 75, "CAC": 70, "Res. CAC": 65,
     "U1": 55, "U2": 50, "U3": 45, "U4": 40, "U": 35,
     "ZG": 25, "G": 15, "M": 10, "S": 5
   };
 
-  // Reglement Art. 4.1-4.3: Weigering = volle tijd 10 minuten (600.000 ms)
+  // Reglement Art. 4.1-4.3: Weigering = volle tijd 10 minuten = 600,00 seconden (600.000 ms)
   const WEIGERING_MS = 600000;
 
   let registraties = {};
   let meldingen = {};
   let logboek = {};
   let banenStatus = {};
+  let deelnemersMeta = {};
   let kcmSelecties = JSON.parse(localStorage.getItem('nnfc_kcm_2026')) || {};
 
   setInterval(() => {
@@ -160,34 +158,40 @@
     db.ref('wedstrijd/meldingen').on('value', snap => { meldingen = snap.val() || {}; renderMeldingen(); renderAll(); });
     db.ref('wedstrijd/logboek').on('value', snap => { logboek = snap.val() || {}; renderLogboek(); });
     db.ref('wedstrijd/banen_status').on('value', snap => { banenStatus = snap.val() || {}; renderAll(); });
+    db.ref('wedstrijd/beheer_deelnemers').on('value', snap => {
+      const lijst = snap.val() || [];
+      deelnemersMeta = {};
+      lijst.forEach(d => { deelnemersMeta[d.startnummer] = d; });
+      renderAll();
+    });
   }
 
-  function formatMs(ms) {
-    const totalSec = Math.floor(ms / 1000);
-    const min = Math.floor(totalSec / 60);
-    const sec = totalSec % 60;
-    const hond = Math.floor((ms % 1000) / 10);
-    return `${min}:${String(sec).padStart(2, '0')},${String(hond).padStart(2, '0')}`;
+  // Formatteer totaal seconden zoals op het officiële NNFC uitslagenblad (bijv. 372,34 of 1800,00)
+  function formatTotalSeconds(ms, isBuitenMededinging = false) {
+    const sec = (ms / 1000).toFixed(2).replace('.', ',');
+    return isBuitenMededinging ? `${sec}*` : sec;
   }
 
-  // Groepeer registraties per hond en bereken optelsom A + B + C (Art. 2.15)
   function berekenKlassementen() {
     const hondenMap = {};
     Object.values(registraties).forEach(r => {
       if (!['A', 'B', 'C'].includes(r.oefening)) return;
       if (!hondenMap[r.startnummer]) {
+        const meta = deelnemersMeta[r.startnummer] || {};
         hondenMap[r.startnummer] = {
           startnummer: r.startnummer,
           roepnaam: r.roepnaam,
+          stamboom: meta.stamboom || r.roepnaam,
           klasse: r.klasse,
           geslacht: r.geslacht,
+          buitenMededinging: !!(meta.buitenMededinging || r.buitenMededinging),
           oefeningen: {}
         };
       }
       const tijdMs = r.type === 'WEIGERING' ? WEIGERING_MS : (r.tijdMs || 0);
       hondenMap[r.startnummer].oefeningen[r.oefening] = {
         ms: tijdMs,
-        tekst: r.type === 'WEIGERING' ? '10:00,00 (W)' : r.tijdTekst
+        tekst: r.type === 'WEIGERING' ? '600,00 (W)' : r.tijdTekst
       };
     });
 
@@ -195,7 +199,7 @@
       "Open Reuen": [],
       "Open Teven": [],
       "Jeugd": [],
-      "Veteranen": [],
+      "Veteranen (Senioren)": [],
       "Stamboomloos": [],
       "Specials": []
     };
@@ -205,29 +209,3 @@
       const b = h.oefeningen.B ? h.oefeningen.B.ms : 0;
       const c = h.oefeningen.C ? h.oefeningen.C.ms : 0;
       h.totaalMs = a + b + c;
-      h.aantalGedaan = Object.keys(h.oefeningen).length;
-
-      if (h.klasse === 'Open' && h.geslacht === 'Reu') groepen["Open Reuen"].push(h);
-      else if (h.klasse === 'Open' && h.geslacht === 'Teef') groepen["Open Teven"].push(h);
-      else if (h.klasse === 'Jeugd') groepen["Jeugd"].push(h);
-      else if (h.klasse === 'Veteranen') groepen["Veteranen"].push(h);
-      else if (h.klasse === 'Stamboomloos') groepen["Stamboomloos"].push(h);
-      else if (h.klasse === 'Specials') groepen["Specials"].push(h);
-    });
-
-    // Sorteer op meeste voltooide oefeningen, daarna snelste totaal (A+B+C) en ken 250-punten toe
-    Object.keys(groepen).forEach(g => {
-      groepen[g].sort((x, y) => (y.aantalGedaan - x.aantalGedaan) || (x.totaalMs - y.totaalMs));
-      groepen[g].forEach((h, idx) => {
-        h.rang = idx + 1;
-        h.trialPunten = Math.max(0, 250 - (idx * 5)); // Art. 2.15: 250, 245, 240...
-      });
-    });
-
-    return groepen;
-  }
-
-  function renderAll() {
-    // 1. Banen 1 t/m 5
-    let banenHTML = "";
-    for (let i = 1; i <= 5; i++) {
