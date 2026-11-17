@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NNFC – Wedstrijdtafel v3.0 (Reglement 2026)</title>
+  <title>NNFC – Wedstrijdtafel v4.0</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 40px; }
+    body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 50px; }
     
-    header { background: #0f172a; color: white; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
-    .nav-btns button { background: #1e293b; color: #cbd5e1; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-left: 8px; font-size: 0.95rem; }
+    header { background: #0f172a; color: white; padding: 14px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+    .nav-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+    .nav-btns button { background: #1e293b; color: #cbd5e1; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
     .nav-btns button.active { background: #3b82f6; color: white; }
     .badge-alert { background: #dc2626; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.8rem; margin-left: 4px; }
 
     .alert-banner { background: #fef2f2; border-bottom: 2px solid #dc2626; color: #991b1b; padding: 12px 24px; font-weight: bold; display: none; justify-content: space-between; align-items: center; }
 
-    .container { max-width: 1250px; margin: 20px auto; padding: 0 20px; }
-    .grid-banen { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .container { max-width: 1280px; margin: 20px auto; padding: 0 20px; }
+    .grid-banen { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
     .grid-standen { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; }
     
     .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
@@ -26,12 +27,17 @@
 
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
-    select { padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem; }
+    th { background: #f8fafc; }
+    select, input { padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.9rem; }
 
     .btn { padding: 8px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
     .btn-acc { background: #16a34a; color: white; }
     .btn-rej { background: #dc2626; color: white; }
     .btn-read { background: #3b82f6; color: white; }
+
+    .check-aanw { width: 22px; height: 22px; cursor: pointer; accent-color: #16a34a; }
+    .badge-ok { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
+    .badge-no { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
 
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px; z-index: 50; }
     .modal-overlay.open { display: flex; }
@@ -42,11 +48,13 @@
 
 <header>
   <div>
-    <strong style="font-size:1.2rem;">NNFC Wedstrijdtafel</strong>
-    <span id="klokTijd" style="margin-left:16px; color:#94a3b8; font-weight:bold;"></span>
+    <strong style="font-size:1.25rem;">NNFC Wedstrijdtafel</strong>
+    <span id="klokTijd" style="margin-left:14px; color:#94a3b8; font-weight:bold;"></span>
   </div>
   <div class="nav-btns">
     <button id="btnNavOverzicht" class="active" onclick="showSection('overzicht')">Overzicht</button>
+    <button id="btnNavAanmelding" onclick="showSection('aanmelding')">Aanmelding (Dag zelf)</button>
+    <button id="btnNavNoodinvoer" onclick="showSection('noodinvoer')">Handmatige Tijd</button>
     <button id="btnNavMeldingen" onclick="showSection('meldingen')">Meldingen <span id="meldingCount" class="badge-alert" style="display:none;">0</span></button>
     <button id="btnNavBekers" onclick="showSection('bekers')">Bekers & KCM</button>
     <button id="btnNavWijzigingen" onclick="showSection('wijzigingen')">Wijzigingen</button>
@@ -68,13 +76,73 @@
     <div class="grid-standen" id="standenGrid"></div>
   </div>
 
-  <!-- SECTIE 2: MELDINGEN & CONFLICTEN -->
+  <!-- SECTIE 2: AANMELDING & AANWEZIGHEID OP DE DAG ZELF -->
+  <div id="secAanmelding" style="display:none;">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h2 style="margin:0;">Aanmelding Secretariaat (Art. 2.5)</h2>
+          <p style="margin:4px 0 0 0; color:#475569; font-size:0.9rem;">Vink aan wie aanwezig is. De hond wordt direct naar de klokker van die baan gestuurd (ook bij laatkomers).</p>
+        </div>
+        <button class="btn btn-acc" onclick="stuurAanwezigenNaarKlokkers()">Synchroniseer alle banen met klokkers</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Baan</th>
+            <th>Startnr</th>
+            <th>Hond (Roepnaam / Stamboom)</th>
+            <th>Eigenaar</th>
+            <th>Klasse</th>
+            <th>Betaald</th>
+            <th style="text-align:center;">Aanwezig (Startklaar)</th>
+          </tr>
+        </thead>
+        <tbody id="aanmeldingBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTIE 3: HANDMATIGE NOOD-INVOER AAN DE TAFEL -->
+  <div id="secNoodinvoer" style="display:none;">
+    <div class="card" style="max-width:600px;">
+      <h2>Handmatige Tijd / Weigering invoeren</h2>
+      <p style="color:#475569; font-size:0.9rem;">Gebruik dit scherm als een telefoon of mobiele verbinding op een baan hapert en een tijd handmatig aan de uitslag moet worden toegevoegd.</p>
+      
+      <label style="display:block; font-weight:bold; margin-top:10px;">Kies Deelnemer:</label>
+      <select id="noodHondSelect" style="width:100%; margin:6px 0 12px 0;"></select>
+
+      <label style="display:block; font-weight:bold;">Kies Oefening:</label>
+      <select id="noodOefSelect" style="width:100%; margin:6px 0 12px 0;">
+        <option value="A">Oefening A (Object ophalen)</option>
+        <option value="B">Oefening B (Pop ophalen)</option>
+        <option value="C">Oefening C (Springen uit boot)</option>
+        <option value="BREVET">Brevetoefening E t/m J (Zonder tijd)</option>
+      </select>
+
+      <label style="display:block; font-weight:bold;">Resultaat:</label>
+      <select id="noodTypeSelect" onchange="toggleNoodTijdVak()" style="width:100%; margin:6px 0 12px 0;">
+        <option value="TIJD">Geklokte tijd invoeren</option>
+        <option value="WEIGERING">Weigering (600,00 sec)</option>
+        <option value="BREVET_OK">Brevetoefening Uitgevoerd</option>
+      </select>
+
+      <div id="noodTijdVak">
+        <label style="display:block; font-weight:bold;">Tijd in cijfers (bijv. 945 = 9,45 sec | 12345 = 1:23,45):</label>
+        <input type="tel" id="noodCijfers" placeholder="bijv. 1425" style="width:100%; margin:6px 0 12px 0; font-size:1.2rem;">
+      </div>
+
+      <button class="btn btn-acc" style="width:100%; padding:14px; font-size:1rem;" onclick="slaNoodTijdOp()">Resultaat direct toevoegen aan uitslag</button>
+    </div>
+  </div>
+
+  <!-- SECTIE 4: MELDINGEN & CONFLICTEN -->
   <div id="secMeldingen" style="display:none;">
     <h2>Openstaande Correcties, Conflicten & Berichten</h2>
     <div id="meldingenLijst"></div>
   </div>
 
-  <!-- SECTIE 3: BEKERS & KCM -->
+  <!-- SECTIE 5: BEKERS & KCM -->
   <div id="secBekers" style="display:none;">
     <h2>Bekeroverzicht & KCM-puntentabel (Art. 2.16 & 2.17)</h2>
     <div class="grid-standen">
@@ -95,9 +163,9 @@
     </div>
   </div>
 
-  <!-- SECTIE 4: WIJZIGINGEN LOGBOEK -->
+  <!-- SECTIE 6: WIJZIGINGEN LOGBOEK -->
   <div id="secWijzigingen" style="display:none;">
-    <h2>Logboek van de dag (Volgorde & Beslissingen)</h2>
+    <h2>Logboek van de dag (Volgorde, Aanmeldingen & Beslissingen)</h2>
     <div class="card">
       <table>
         <thead><tr><th>Tijdstip</th><th>Baan</th><th>Gebeurtenis</th></tr></thead>
@@ -118,7 +186,7 @@
       <thead id="modalHead"></thead>
       <tbody id="modalBody"></tbody>
     </table>
-    <p style="font-size:0.8rem; color:#64748b; margin-top:10px;">* Deze honden hebben buiten mededinging (bijv. met drijfvest in Jeugd/Open) meegedaan.</p>
+    <p style="font-size:0.8rem; color:#64748b; margin-top:10px;">* Deze honden hebben buiten mededinging meegedaan.</p>
   </div>
 </div>
 
@@ -128,84 +196,8 @@
 
 <script>
   let db = null;
-  if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey !== "JOUW_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-  }
-
-  const KCM_PUNTEN = {
-    "GEEN": 0, "BOB": 75, "CAC": 70, "Res. CAC": 65,
-    "U1": 55, "U2": 50, "U3": 45, "U4": 40, "U": 35,
-    "ZG": 25, "G": 15, "M": 10, "S": 5
-  };
-
-  // Reglement Art. 4.1-4.3: Weigering = volle tijd 10 minuten = 600,00 seconden (600.000 ms)
-  const WEIGERING_MS = 600000;
-
-  let registraties = {};
-  let meldingen = {};
-  let logboek = {};
-  let banenStatus = {};
-  let deelnemersMeta = {};
-  let kcmSelecties = JSON.parse(localStorage.getItem('nnfc_kcm_2026')) || {};
-
-  setInterval(() => {
-    document.getElementById('klokTijd').innerText = new Date().toLocaleTimeString('nl-NL');
-  }, 1000);
-
-  if (db) {
-    db.ref('wedstrijd/registraties').on('value', snap => { registraties = snap.val() || {}; detectConflicts(); renderAll(); });
-    db.ref('wedstrijd/meldingen').on('value', snap => { meldingen = snap.val() || {}; renderMeldingen(); renderAll(); });
-    db.ref('wedstrijd/logboek').on('value', snap => { logboek = snap.val() || {}; renderLogboek(); });
-    db.ref('wedstrijd/banen_status').on('value', snap => { banenStatus = snap.val() || {}; renderAll(); });
-    db.ref('wedstrijd/beheer_deelnemers').on('value', snap => {
-      const lijst = snap.val() || [];
-      deelnemersMeta = {};
-      lijst.forEach(d => { deelnemersMeta[d.startnummer] = d; });
-      renderAll();
-    });
-  }
-
-  // Formatteer totaal seconden zoals op het officiële NNFC uitslagenblad (bijv. 372,34 of 1800,00)
-  function formatTotalSeconds(ms, isBuitenMededinging = false) {
-    const sec = (ms / 1000).toFixed(2).replace('.', ',');
-    return isBuitenMededinging ? `${sec}*` : sec;
-  }
-
-  function berekenKlassementen() {
-    const hondenMap = {};
-    Object.values(registraties).forEach(r => {
-      if (!['A', 'B', 'C'].includes(r.oefening)) return;
-      if (!hondenMap[r.startnummer]) {
-        const meta = deelnemersMeta[r.startnummer] || {};
-        hondenMap[r.startnummer] = {
-          startnummer: r.startnummer,
-          roepnaam: r.roepnaam,
-          stamboom: meta.stamboom || r.roepnaam,
-          klasse: r.klasse,
-          geslacht: r.geslacht,
-          buitenMededinging: !!(meta.buitenMededinging || r.buitenMededinging),
-          oefeningen: {}
-        };
-      }
-      const tijdMs = r.type === 'WEIGERING' ? WEIGERING_MS : (r.tijdMs || 0);
-      hondenMap[r.startnummer].oefeningen[r.oefening] = {
-        ms: tijdMs,
-        tekst: r.type === 'WEIGERING' ? '600,00 (W)' : r.tijdTekst
-      };
-    });
-
-    const groepen = {
-      "Open Reuen": [],
-      "Open Teven": [],
-      "Jeugd": [],
-      "Veteranen (Senioren)": [],
-      "Stamboomloos": [],
-      "Specials": []
-    };
-
-    Object.values(hondenMap).forEach(h => {
-      const a = h.oefeningen.A ? h.oefeningen.A.ms : 0;
-      const b = h.oefeningen.B ? h.oefeningen.B.ms : 0;
-      const c = h.oefeningen.C ? h.oefeningen.C.ms : 0;
-      h.totaalMs = a + b + c;
+  try {
+    if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+    }
