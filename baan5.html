@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NNFC – Baan 5</title>
+  <title>NNFC – Baan 5 (v2.0)</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f4f6f8; color: #1a202c; padding-bottom: 40px; }
@@ -13,8 +13,8 @@
     .sync-badge { font-size: 0.85rem; padding: 4px 10px; border-radius: 12px; background: #15803d; color: white; }
     .sync-pending { background: #d97706; }
     
-    .exercise-bar { display: flex; gap: 8px; margin-top: 10px; }
-    .ex-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; background: #334155; color: #cbd5e1; cursor: pointer; }
+    .exercise-bar { display: flex; gap: 6px; margin-top: 10px; }
+    .ex-btn { flex: 1; padding: 10px 4px; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; background: #334155; color: #cbd5e1; cursor: pointer; }
     .ex-btn.active { background: #3b82f6; color: white; }
     .progress-text { font-size: 0.9rem; margin-top: 8px; color: #94a3b8; }
 
@@ -26,6 +26,7 @@
 
     .current-card { background: #fef08a; border: 2px solid #eab308; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
     .badge-nu { background: #ca8a04; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 6px; }
+    .badge-brevet { background: #1d4ed8; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 6px; margin-left: 6px; }
     .start-nr { font-size: 1.4rem; font-weight: 800; float: right; }
     .roepnaam { font-size: 1.8rem; font-weight: 800; margin: 4px 0 2px 0; }
     .stamboomnaam { font-size: 0.9rem; color: #475569; }
@@ -45,9 +46,11 @@
     .key-action { background: #e2e8f0; font-size: 1.1rem; }
 
     .actions { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 14px; }
-    .btn-save { background: #16a34a; color: white; border: none; border-radius: 10px; padding: 18px; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
+    .actions-brevet { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .btn-save { background: #16a34a; color: white; border: none; border-radius: 10px; padding: 18px; font-size: 1.15rem; font-weight: bold; cursor: pointer; }
     .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
     .btn-refusal { background: #dc2626; color: white; border: none; border-radius: 10px; padding: 18px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+    .btn-refusal:disabled { background: #94a3b8; cursor: not-allowed; }
     .btn-msg { width: 100%; padding: 12px; background: #334155; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
     .dog-item { background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
@@ -70,15 +73,16 @@
 
 <header>
   <div class="header-top">
-    <span>Baan 5 – Klasse Specials</span>
+    <span id="baanHeader">Baan 5</span>
     <span id="syncStatus" class="sync-badge">Wachtrij: 0</span>
   </div>
   <div class="exercise-bar">
-    <button class="ex-btn active" onclick="setOefening('A')">Oefening A</button>
-    <button class="ex-btn" onclick="setOefening('B')">Oefening B</button>
-    <button class="ex-btn" onclick="setOefening('C')">Oefening C</button>
+    <button class="ex-btn active" data-oef="A" onclick="setOefening('A')">Oef. A</button>
+    <button class="ex-btn" data-oef="B" onclick="setOefening('B')">Oef. B</button>
+    <button class="ex-btn" data-oef="C" onclick="setOefening('C')">Oef. C</button>
+    <button class="ex-btn" data-oef="BREVET" onclick="setOefening('BREVET')">Brevet (E–J)</button>
   </div>
-  <div class="progress-text" id="voortgangTekst">Oefening A: 0 van 0 gedaan</div>
+  <div class="progress-text" id="voortgangTekst">Wachten op baanindeling...</div>
 </header>
 
 <div class="tabs">
@@ -90,29 +94,42 @@
   <div id="huidigeHondBlok"></div>
   <div id="volgendeHondBlok"></div>
 
-  <div class="time-display">
-    <div class="time-raw" id="rawDigits">Voer cijfers in (bijv. 945 = 9,45)</div>
-    <div class="time-formatted" id="formattedTime">0,00</div>
+  <div id="timedInvoerBlok">
+    <div class="time-display">
+      <div class="time-raw" id="rawDigits">Voer cijfers in (bijv. 945 = 9,45)</div>
+      <div class="time-formatted" id="formattedTime">0,00</div>
+    </div>
+
+    <div class="keypad">
+      <button class="key" onclick="addDigit('1')">1</button>
+      <button class="key" onclick="addDigit('2')">2</button>
+      <button class="key" onclick="addDigit('3')">3</button>
+      <button class="key" onclick="addDigit('4')">4</button>
+      <button class="key" onclick="addDigit('5')">5</button>
+      <button class="key" onclick="addDigit('6')">6</button>
+      <button class="key" onclick="addDigit('7')">7</button>
+      <button class="key" onclick="addDigit('8')">8</button>
+      <button class="key" onclick="addDigit('9')">9</button>
+      <button class="key key-action" onclick="clearDigits()">Wissen</button>
+      <button class="key" onclick="addDigit('0')">0</button>
+      <button class="key key-action" onclick="backspace()">⌫</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn-save" id="btnSave" onclick="startConfirm('TIJD')" disabled>Tijd opslaan</button>
+      <button class="btn-refusal" id="btnRefusal" onclick="startConfirm('WEIGERING')">Weigering</button>
+    </div>
   </div>
 
-  <div class="keypad">
-    <button class="key" onclick="addDigit('1')">1</button>
-    <button class="key" onclick="addDigit('2')">2</button>
-    <button class="key" onclick="addDigit('3')">3</button>
-    <button class="key" onclick="addDigit('4')">4</button>
-    <button class="key" onclick="addDigit('5')">5</button>
-    <button class="key" onclick="addDigit('6')">6</button>
-    <button class="key" onclick="addDigit('7')">7</button>
-    <button class="key" onclick="addDigit('8')">8</button>
-    <button class="key" onclick="addDigit('9')">9</button>
-    <button class="key key-action" onclick="clearDigits()">Wissen</button>
-    <button class="key" onclick="addDigit('0')">0</button>
-    <button class="key key-action" onclick="backspace()">⌫</button>
-  </div>
-
-  <div class="actions">
-    <button class="btn-save" id="btnSave" onclick="startConfirm('TIJD')" disabled>Tijd opslaan</button>
-    <button class="btn-refusal" id="btnRefusal" onclick="startConfirm('WEIGERING')">Weigering</button>
+  <div id="brevetInvoerBlok" style="display:none;">
+    <div class="time-display" style="background:#eff6ff; border-color:#3b82f6;">
+      <div style="font-weight:bold; color:#1d4ed8;">Vervolgoefening zonder tijdmeting (Art. 4.5–4.9)</div>
+      <div id="brevetOefNaam" style="font-size:1.2rem; font-weight:800; margin-top:6px;">-</div>
+    </div>
+    <div class="actions-brevet">
+      <button class="btn-save" id="btnBrevetOk" onclick="startConfirm('BREVET_OK')">Uitgevoerd</button>
+      <button class="btn-refusal" id="btnBrevetWeig" onclick="startConfirm('WEIGERING')">Weigering</button>
+    </div>
   </div>
 
   <button class="btn-msg" onclick="openMessageModal()">Bericht aan wedstrijdtafel sturen</button>
@@ -155,22 +172,6 @@
   </div>
 </div>
 
-<!-- MODAL BERICHT -->
 <div class="modal-overlay" id="msgModal">
   <div class="modal">
     <h3>Bericht aan wedstrijdtafel</h3>
-    <select id="msgPreset" style="width:100%; padding:12px; font-size:1rem; margin-bottom:10px;">
-      <option value="Hond nog niet aanwezig bij baan">Hond nog niet aanwezig bij baan</option>
-      <option value="Korte pauze / baanonderhoud">Korte pauze / baanonderhoud</option>
-      <option value="Vraag voor baancommissaris">Vraag voor baancommissaris</option>
-      <option value="Anders">Anders (zie toelichting)</option>
-    </select>
-    <input type="text" id="msgCustom" style="width:100%; padding:10px;" placeholder="Korte vrije tekst (optioneel)">
-    <div class="modal-btns">
-      <button style="background:#cbd5e1;" onclick="document.getElementById('msgModal').classList.remove('open')">Annuleren</button>
-      <button style="background:#1d4ed8; color:white;" onclick="sendMessage()">Versturen</button>
-    </div>
-  </div>
-</div>
-
-<script src="https://gstatic.com"></script>
