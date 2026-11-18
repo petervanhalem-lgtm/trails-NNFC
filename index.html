@@ -1,41 +1,59 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NNFC Watertrials – Startmenu</title>
-  <style>
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .card { background: #1e293b; border-radius: 16px; padding: 28px; max-width: 480px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-    h1 { margin: 0 0 6px 0; font-size: 1.5rem; text-align: center; }
-    p { margin: 0 0 24px 0; color: #94a3b8; text-align: center; font-size: 0.95rem; }
-    .section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 18px 0 8px 0; font-weight: bold; }
-    a.btn { display: block; text-decoration: none; text-align: center; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 1.05rem; margin-bottom: 10px; transition: opacity 0.15s; }
-    a.btn:hover { opacity: 0.9; }
-    .btn-tafel { background: #2563eb; color: white; }
-    .btn-beheer { background: #0d9488; color: white; }
-    .grid-banen { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .btn-baan { background: #334155; color: #f8fafc; margin-bottom: 0; }
-    .btn-baan-5 { grid-column: span 2; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NNFC Watertrials – Startmenu</title>
+<link rel="stylesheet" href="https://googleapis.com">
+<style>
+:root{
+  --bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
+  --ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;
+    --ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif;font-size:18px;line-height:1.3;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
+.card{background:var(--sf);border:2px solid var(--ln);border-radius:18px;padding:24px;max-width:480px;width:100%}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.top img{width:52px;height:52px;border-radius:50%;flex:none}
+h1{font-size:26px;margin:0;font-weight:700;line-height:1.1}
+.sub{color:var(--mut);font-size:16px}
+.sec{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin:18px 0 8px}
+a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;border:2px solid var(--ln);background:var(--sf);color:var(--ink);border-radius:12px;min-height:54px;padding:8px 14px;font-weight:700;font-size:20px;margin-bottom:8px}
+a.btn:hover{border-color:var(--ac)}
+a.pri{background:var(--ac);border-color:var(--ac);color:var(--acink)}
+a.ok{background:var(--ok);border-color:var(--ok);color:#FFFFFF}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid a.btn{margin-bottom:0}
+.span2{grid-column:span 2}
+</style>
 </head>
 <body>
   <div class="card">
-    <h1>NNFC Watertrials</h1>
-    <p>Digitaal Waarnemingssysteem (Reglement 2026)</p>
+    <div class="top">
+      <img src="assets/nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
+      <div>
+        <h1>NNFC Watertrials</h1>
+        <div class="sub">Digitaal Waarnemingssysteem • Reglement 2026</div>
+      </div>
+    </div>
 
-    <div class="section-title">Organisatie & Secretariaat</div>
-    <a href="wedstrijdtafel.html" class="btn btn-tafel">Wedstrijdtafel (Live Overzicht)</a>
-    <a href="beheer.html" class="btn btn-beheer">Beheer & Excel-import</a>
+    <div class="sec">Wedstrijdtafel & Voorbereiding</div>
+    <a href="wedstrijdtafel.html" class="btn pri">Wedstrijdtafel (Live Overzicht)</a>
+    <a href="beheer.html" class="btn ok">Beheer, Excel-import & Baanindeling</a>
 
-    <div class="section-title">Klokkers per Baan (4G / 5G)</div>
-    <div class="grid-banen">
-      <a href="baan1.html" class="btn btn-baan">Baan 1</a>
-      <a href="baan2.html" class="btn btn-baan">Baan 2</a>
-      <a href="baan3.html" class="btn btn-baan">Baan 3</a>
-      <a href="baan4.html" class="btn btn-baan">Baan 4</a>
-      <a href="baan5.html" class="btn btn-baan btn-baan-5">Baan 5</a>
+    <div class="sec">Klokkersschermen per Baan</div>
+    <div class="grid">
+      <a href="baan1.html" class="btn">Baan 1</a>
+      <a href="baan2.html" class="btn">Baan 2</a>
+      <a href="baan3.html" class="btn">Baan 3</a>
+      <a href="baan4.html" class="btn">Baan 4</a>
+      <a href="baan5.html" class="btn span2">Baan 5</a>
     </div>
   </div>
 </body>
