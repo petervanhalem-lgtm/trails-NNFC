@@ -182,14 +182,3 @@ if (typeof REFERENTIE_HONDEN_2026 !== 'undefined') {
 function checkRef() {
   if (typeof REFERENTIE_HONDEN_2026 === 'undefined') return;
   var val = document.getElementById('inStam').value.trim().toLowerCase();
-  var m = REFERENTIE_HONDEN_2026.find(function(h) { return h.stamboom.toLowerCase() === val; });
-  if (m) {
-    if (m.roepnaam && !document.getElementById('inRoep').value) document.getElementById('inRoep').value = m.roepnaam;
-    if (m.geslacht) document.getElementById('inGesl').value = m.geslacht;
-  }
-}
-
-var jaar = document.getElementById('selJaar').value;
-var lijst = [];
-try { lijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || []; } catch (e) {}
-
