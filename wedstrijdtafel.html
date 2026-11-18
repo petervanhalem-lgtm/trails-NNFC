@@ -4,106 +4,222 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wedstrijdtafel NNFC</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://googleapis.com">
 <style>
-:root{--bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;--cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;--cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A}}
-:root[data-theme="dark"]{--bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;--cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{
+  --bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
+  --cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;
+    --cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A
+  }
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif;font-size:18px;line-height:1.3;-webkit-tap-highlight-color:transparent}
-#app{max-width:980px;margin:0 auto;padding:12px}
-.top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+#app{max-width:1040px;margin:0 auto;padding:12px 16px 40px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.top-left{display:flex;align-items:center;gap:12px}
 .top img{width:52px;height:52px;border-radius:50%;flex:none}
 h1{font-size:26px;margin:0;font-weight:700;line-height:1.1}
 .sub{color:var(--mut);font-size:16px}
-button{font:inherit;color:inherit;border:2px solid var(--ln);background:var(--sf);border-radius:12px;min-height:52px;padding:6px 12px;cursor:pointer;font-weight:600}
+button, .btn-link{font:inherit;color:inherit;border:2px solid var(--ln);background:var(--sf);border-radius:12px;min-height:48px;padding:6px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
-.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .nav button.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
-.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.nav button.extra{background:var(--ok);border-color:var(--ok);color:#FFFFFF}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.g-stand{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px}
 .c{display:block;width:100%;text-align:left;background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:12px 14px;font-size:17px;font-weight:500}
 .c b{font-weight:700;font-size:21px}
 .c.w{border-color:var(--warn)}
 .m{color:var(--mut);font-size:15px}
 .bar{height:8px;border-radius:5px;background:var(--soft);margin:8px 0}
-.bar i{display:block;height:8px;border-radius:5px;background:var(--ac)}
+.bar i{display:block;height:8px;border-radius:5px;background:var(--ac);transition:width 0.2s}
 .chip{display:inline-block;background:var(--cur);color:var(--curink);border-radius:8px;padding:1px 8px;font-weight:700}
+.chip-ok{display:inline-block;background:var(--ok);color:#fff;border-radius:8px;padding:1px 8px;font-size:14px;font-weight:700}
+.chip-bad{display:inline-block;background:var(--bad);color:#fff;border-radius:8px;padding:1px 8px;font-size:14px;font-weight:700}
 .warn{color:var(--warn);font-weight:700}
 .banner{background:var(--cur);color:var(--curink);border-color:var(--cur);margin-bottom:12px;font-size:20px;font-weight:700}
-h2{font-size:19px;margin:16px 0 8px}
-.t{display:grid;grid-template-columns:34px 1fr auto;gap:10px;padding:10px 4px;border-top:1px solid var(--ln);align-items:center;font-size:20px}
-.t b{font-size:24px}
+h2{font-size:20px;margin:18px 0 8px}
+.t{display:grid;grid-template-columns:46px 1fr auto;gap:10px;padding:10px 6px;border-top:1px solid var(--ln);align-items:center;font-size:19px}
+.t b{font-size:22px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.row button{min-height:64px;font-size:21px}
+.row button{min-height:60px;font-size:20px}
 .pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
 .box{background:var(--sf);border:3px solid var(--warn);border-radius:16px;padding:14px;margin-bottom:12px}
 .box.n{border-color:var(--ln);border-width:2px}
-.big{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
-.x{text-decoration:line-through;color:var(--mut)}
+.big{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums}
 .log{padding-left:20px;margin:0;color:var(--mut);font-size:16px}
-.foot{margin-top:18px;font-size:14px;color:var(--mut)}
+.foot{margin-top:20px;font-size:14px;color:var(--mut)}
+input, select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid var(--ln);border-radius:10px;padding:10px 12px;width:100%;margin-bottom:10px;min-height:46px}
+label{display:block;font-weight:600;font-size:16px;margin-bottom:4px;color:var(--mut)}
+.chk{width:26px;height:26px;accent-color:var(--ok);cursor:pointer;margin:0}
 </style>
 </head>
 <body>
 <div id="app"></div>
+
+<script src="https://gstatic.com"></script>
+<script src="https://gstatic.com"></script>
+<script src="config.js"></script>
+
 <script>
-var LOGO='assets/nnfc-logo.png';
-var L=[
-{id:1,n:'Baan 1, Jeugd',ago:1,t:'14:55',d:[[1,'Rex','r','13,20'],[2,'Mila','t','14,02'],[3,'Finn','r',0],[4,'Zoe','t',0]]},
-{id:2,n:'Baan 2, Veteranen',ago:2,t:'14:54',d:[[1,'Duke','r','15,40'],[2,'Nora','t','16,18'],[3,'Bear','r','17,02'],[4,'Oscar','r',0]]},
-{id:3,n:'Baan 3, Open',ago:4,t:'14:52',d:[[1,'Tara','t','12,10'],[2,'Bram','r','14,32'],[3,'Luna','t','11,52'],[4,'Max','r','11,84'],[5,'Bella','t','12,77'],[6,'Odin','r','12,31'],[7,'Sam','r','13,05'],[8,'Fenna','t','13,40']]},
-{id:4,n:'Baan 4, Stamboomloos',ago:0,t:'14:56',d:[[1,'Storm','r','12,90'],[2,'Juno','t','13,75'],[3,'Pip','r',0],[4,'Ravi','r',0]]},
-{id:5,n:'Baan 5, Special',ago:7,t:'14:49',d:[[1,'Kiara','t','12,20'],[2,'Dax','r',0],[3,'Lotte','t',0],[4,'Nox','r',0]]}];
-var ST=[['Open reuen',3,'r'],['Open teven',3,'t'],['Jeugd',1],['Veteranen',2],['Stamboomloos',4],['Special',5]];
-var conf={nr:2,naam:'Bram',lane:3,a:'14,32',b:'13,32'};
-var msgs=[{lane:'Baan 5, Special',t:'14:49',x:'Hond nr 12 komt pas over een kwartier.'}];
-var log=['14:52 Baan 3: tweede tijd voor Bram (13,32 naast 14,32), conflict','14:49 Baan 5: Dax als volgende, Lotte overgeslagen'];
-var v='home';
-function lane(i){return L.filter(function(x){return x.id===i})[0]}
-function val(s){return parseFloat(s.replace(',','.'))}
-function rank(s){return lane(s[1]).d.filter(function(d){return d[3]&&(!s[2]||d[2]===s[2])}).sort(function(a,b){return val(a[3])-val(b[3])})}
-function open(){return (conf?1:0)+msgs.length}
-function go(x){v=x;draw()}
-function pick(w){
- var d=lane(conf.lane).d[conf.nr-1];
- if(w==='b')d[3]=conf.b;
- log.unshift('14:58 Baan 3: conflict Bram beslist, '+(w==='b'?conf.b+' telt':conf.a+' blijft')+' (tafel)');
- conf=null;draw();
+var LOGO = 'assets/nnfc-logo.png';
+var db = null;
+try {
+  if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  }
+} catch (e) {}
+
+var KCM_PUNTEN = {
+  "GEEN": 0, "BOB": 75, "CAC": 70, "Res. CAC": 65,
+  "U1": 55, "U2": 50, "U3": 45, "U4": 40, "U": 35,
+  "ZG": 25, "G": 15, "M": 10, "S": 5
+};
+var WEIGERING_MS = 600000;
+
+var registraties = {};
+var meldingen = {};
+var logboek = {};
+var banenStatus = {};
+var deelnemersLijst = [];
+var kcmSelecties = {};
+
+try {
+  deelnemersLijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_2027')) || [];
+  kcmSelecties = JSON.parse(localStorage.getItem('nnfc_kcm_2026')) || {};
+} catch (e) {}
+
+var v = 'home';
+
+if (db) {
+  db.ref('wedstrijd/registraties').on('value', function(snap) { registraties = snap.val() || {}; detectConflicts(); draw(); });
+  db.ref('wedstrijd/meldingen').on('value', function(snap) { meldingen = snap.val() || {}; draw(); });
+  db.ref('wedstrijd/logboek').on('value', function(snap) { logboek = snap.val() || {}; if (v === 'hist') draw(); });
+  db.ref('wedstrijd/banen_status').on('value', function(snap) { banenStatus = snap.val() || {}; draw(); });
+  db.ref('wedstrijd/beheer_deelnemers').on('value', function(snap) {
+    var val = snap.val();
+    if (val) {
+      deelnemersLijst = Array.isArray(val) ? val : Object.values(val);
+      draw();
+    }
+  });
 }
-function read(i){log.unshift('14:58 '+msgs[i].lane+': bericht gelezen');msgs.splice(i,1);draw()}
-function back(){return '<button onclick="go(\'home\')" style="margin-bottom:8px"><span aria-hidden="true">←</span> Overzicht</button>'}
-function draw(){
- var h='<div class="top"><img src="'+LOGO+'" alt="NNFC" onerror="this.style.display=\'none\'"><div><h1>Wedstrijdtafel</h1><div class="sub">NNFC Trials, 14:56. Demo met verzonnen gegevens</div></div></div>';
- var nv=function(k,t){return '<button class="'+(v===k?'on':'')+'" onclick="go(\''+k+'\')">'+t+'</button>'};
- h+='<div class="nav">'+nv('home','Overzicht')+nv('meld','Meldingen'+(open()?' ('+open()+')':''))+nv('hist','Wijzigingen')+'</div>';
- if(v==='home'){
-  if(open())h+='<button class="c banner" onclick="go(\'meld\')">'+open()+(open()===1?' melding wacht':' meldingen wachten')+' op de tafel</button>';
-  h+='<h2>Banen</h2><div class="g">'+L.map(function(l){
-   var dn=l.d.filter(function(d){return d[3]}).length,nu=l.d[dn],bad=l.ago>=5;
-   return '<button class="c'+((conf&&l.id===3)||bad?' w':'')+'" onclick="go(\'l'+l.id+'\')"><b>'+l.n+'</b><div class="m">Oefening A, '+dn+' van '+l.d.length+'</div><div class="bar"><i style="width:'+Math.round(dn/l.d.length*100)+'%"></i></div>'+(nu?'<span class="chip">Nu</span> '+nu[1]+(l.d[dn+1]?'<span class="m">, daarna '+l.d[dn+1][1]+'</span>':''):'Klaar met oefening A')+'<div class="m" style="margin-top:6px">Laatst gezien '+l.t+(bad?' <span class="warn">('+l.ago+' min geleden, controleer de baan)</span>':'')+'</div></button>'}).join('')+'</div>';
-  h+='<h2>Voorlopige stand na oefening A</h2><div class="g">'+ST.map(function(s,i){var r=rank(s).slice(0,3);return '<button class="c" onclick="go(\'s'+i+'\')"><b>'+s[0]+'</b>'+r.map(function(d,j){return '<div style="display:flex;justify-content:space-between"><span>'+(j+1)+'. '+d[1]+'</span><b style="font-size:19px">'+d[3]+'</b></div>'}).join('')+'</button>'}).join('')+'</div>';
- }else if(v[0]==='l'){
-  var l=lane(+v.slice(1)),dn=l.d.filter(function(d){return d[3]}).length;
-  h+=back()+'<h2 style="margin-top:4px">'+l.n+'</h2><div class="m">Laatst gezien '+l.t+'</div>'+l.d.map(function(d,i){
-   var st=d[3]||(i===dn?'<span class="chip">Nu</span>':(i===dn+1?'Volgende':'Wacht')),cx=(conf&&l.id===conf.lane&&d[0]===conf.nr)?'<div class="warn m">Conflict: '+conf.b+' naast '+conf.a+'</div>':'';
-   return '<div class="t"><b>'+d[0]+'</b><div>'+d[1]+cx+'</div><span>'+st+'</span></div>'}).join('');
- }else if(v[0]==='s'){
-  var s=ST[+v.slice(1)];
-  h+=back()+'<h2 style="margin-top:4px">'+s[0]+', volledige stand</h2><div class="m">Na oefening A, snelste eerst</div>'+rank(s).map(function(d,j){return '<div class="t"><b>'+(j+1)+'</b><div>'+d[1]+' <span class="m">nr '+d[0]+'</span></div><b>'+d[3]+'</b></div>'}).join('');
- }else if(v==='meld'){
-  h+=back();
-  if(conf)h+='<div class="box"><div class="m">Baan 3, Open, oefening A</div><div style="font-size:22px;font-weight:700;margin:2px 0 8px">Conflict: twee tijden voor '+conf.naam+' (nr '+conf.nr+')</div><div class="m">Eerst geregistreerd</div><div class="big">'+conf.a+'</div><div class="m" style="margin-top:6px">Correctie van de klokker</div><div class="big">'+conf.b+'</div><div class="m" style="margin:6px 0 12px">Reden: verkeerd cijfer ingevoerd. Tot de tafel beslist telt '+conf.a+'.</div><div class="row"><button onclick="pick(\'a\')">Houd '+conf.a+'</button><button class="pri" onclick="pick(\'b\')">Neem '+conf.b+' over</button></div></div>';
-  msgs.forEach(function(m,i){h+='<div class="box n"><div class="m">'+m.lane+', '+m.t+'</div><div style="font-size:21px;margin:4px 0 10px">'+m.x+'</div><button onclick="read('+i+')" style="width:100%">Gelezen</button></div>'});
-  if(!open())h+='<div class="m">Geen open meldingen.</div>';
- }else if(v==='hist'){
-  h+=back()+'<h2 style="margin-top:4px">Wijzigingen</h2><ul class="log">'+log.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>';
- }
- h+='<div class="foot">Schets in de vormgeving van het klokkersscherm. Nog niet gekoppeld aan de klokkerstelefoons.</div>';
- document.getElementById('app').innerHTML=h;
+
+setInterval(function() {
+  if (v === 'home') draw();
+}, 15000);
+
+function go(x) { v = x; draw(); window.scrollTo(0, 0); }
+
+function formatSec(ms, bm) {
+  var s = (ms / 1000).toFixed(2).replace('.', ',');
+  return bm ? s + '*' : s;
 }
-draw();
-</script>
-</body>
-</html>
+
+function getGroepen() {
+  var map = {};
+  Object.values(registraties).forEach(function(r) {
+    if (!r || ['A', 'B', 'C'].indexOf(r.oefening) === -1) return;
+    if (!map[r.startnummer]) {
+      var meta = deelnemersLijst.find(function(d) { return d.startnummer == r.startnummer; }) || {};
+      map[r.startnummer] = {
+        nr: r.startnummer,
+        naam: r.roepnaam,
+        klasse: r.klasse,
+        geslacht: r.geslacht,
+        bm: Boolean(meta.buitenMededinging || r.buitenMededinging),
+        oef: {}
+      };
+    }
+    var ms = r.type === 'WEIGERING' ? WEIGERING_MS : (r.tijdMs || 0);
+    map[r.startnummer].oef[r.oefening] = {
+      ms: ms,
+      txt: r.type === 'WEIGERING' ? '600,00 (W)' : r.tijdTekst
+    };
+  });
+
+  var groepen = [
+    { id: 'or', titel: 'Open reuen', lijst: [] },
+    { id: 'ot', titel: 'Open teven', lijst: [] },
+    { id: 'jg', titel: 'Jeugd', lijst: [] },
+    { id: 'vt', titel: 'Veteranen (Senioren)', lijst: [] },
+    { id: 'sb', titel: 'Stamboomloos', lijst: [] },
+    { id: 'sp', titel: 'Specials', lijst: [] }
+  ];
+
+  Object.values(map).forEach(function(h) {
+    var a = h.oef.A ? h.oef.A.ms : 0;
+    var b = h.oef.B ? h.oef.B.ms : 0;
+    var c = h.oef.C ? h.oef.C.ms : 0;
+    h.totaalMs = a + b + c;
+    h.gedaan = Object.keys(h.oef).length;
+
+    if (h.klasse === 'Open' && h.geslacht === 'Reu') groepen.lijst.push(h);
+    else if (h.klasse === 'Open' && h.geslacht === 'Teef') groepen.lijst.push(h);
+    else if (h.klasse === 'Jeugd') groepen.lijst.push(h);
+    else if (h.klasse === 'Veteranen' || h.klasse === 'Senioren') groepen.lijst.push(h);
+    else if (h.klasse === 'Stamboomloos') groepen.lijst.push(h);
+    else if (h.klasse === 'Specials') groepen.lijst.push(h);
+  });
+
+  groepen.forEach(function(g) {
+    g.lijst.sort(function(x, y) {
+      if (x.bm !== y.bm) return x.bm ? 1 : -1;
+      return (y.gedaan - x.gedaan) || (x.totaalMs - y.totaalMs);
+    });
+    var reg = 0;
+    g.lijst.forEach(function(h, idx) {
+      h.rang = idx + 1;
+      if (!h.bm) {
+        h.pnt = Math.max(0, 250 - (reg * 5));
+        reg++;
+      } else {
+        h.pnt = 0;
+      }
+    });
+  });
+
+  return groepen;
+}
+
+function openMeldingen() {
+  return Object.values(meldingen).filter(function(m) { return m && m.status === 'OPEN'; });
+}
+
+function detectConflicts() {
+  if (!db) return;
+  var seen = {};
+  Object.values(registraties).forEach(function(r) {
+    if (!r) return;
+    var key = r.startnummer + '_' + r.oefening;
+    if (seen[key] && seen[key].id !== r.id) {
+      var cid = 'CONF_' + key;
+      if (!meldingen[cid]) {
+        db.ref('wedstrijd/meldingen/' + cid).set({
+          id: cid, soort: 'CONFLICT', status: 'OPEN', baan: r.baan, oefening: r.oefening,
+          startnummer: r.startnummer, roepnaam: r.roepnaam, oudeTijd: seen[key].tijdTekst,
+          nieuweTijd: r.tijdTekst, nieuweTijdMs: r.tijdMs,
+          reden: 'Dubbele registratie ontvangen voor dezelfde hond/oefening', timestamp: new Date().toISOString()
+        });
+      }
+    }
+    seen[key] = r;
+  });
+}
+
+async function beslis(id, akkoord) {
+  var m = meldingen[id];
+  if (!m) return;
+  if (db) {
+    if (akkoord) {
+      var k = Object.keys(registraties).find(function(key) { return registraties[key].startnummer == m.startnummer && registraties[key].oefening == m.oefening; });
+      if (k) await db.ref('wedstrijd/registraties/' + k).update({ tijdTekst: m.nieuweTijd, tijdMs: m.nieuweTijdMs, type: 'TIJD', gecorrigeerd: true });
+    }
+    await db.ref('wedstrijd/meldingen/' + id).update({ status: akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN' });
+    await db.ref('wedstrijd/logboek/BESL_' + Date.now()).set({
