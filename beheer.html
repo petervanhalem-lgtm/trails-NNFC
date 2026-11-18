@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Beheer & Baanindeling – NNFC</title>
-<link rel="stylesheet" href="https://googleapis.com">
 <style>
 :root{
   --bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
@@ -17,8 +16,8 @@
   }
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif;font-size:18px;line-height:1.3}
-.wrap{max-width:1180px;margin:0 auto;padding:12px 16px 50px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:18px;line-height:1.3}
+.wrap{max-width:1200px;margin:0 auto;padding:12px 16px 50px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .top-l{display:flex;align-items:center;gap:12px}
 .top img{width:52px;height:52px;border-radius:50%;flex:none}
@@ -30,8 +29,8 @@ button,.btn-link{font:inherit;color:inherit;border:2px solid var(--ln);backgroun
 .ok{background:var(--ok)!important;border-color:var(--ok)!important;color:#fff!important}
 .bad{border-color:var(--bad)!important;color:var(--bad)!important;min-height:38px;padding:4px 10px}
 .sm{min-height:38px;padding:4px 10px;font-size:16px}
-.grid{display:grid;grid-template-columns:1fr 1.45fr;gap:14px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:1fr 1.5fr;gap:14px}
+@media(max-width:920px){.grid{grid-template-columns:1fr}}
 .box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:14px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -42,6 +41,7 @@ th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--ln);font-siz
 th{color:var(--mut);font-weight:700}
 .conflict{background:rgba(179,38,30,0.12)}
 .banner{background:var(--cur);color:var(--curink);border-radius:12px;padding:10px 14px;font-weight:700;margin-bottom:12px}
+.banner-err{background:var(--bad);color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;margin-bottom:12px}
 .chip{display:inline-block;background:var(--soft);padding:2px 8px;border-radius:8px;font-size:14px;font-weight:700}
 .chk{width:24px;height:24px;accent-color:var(--ok);cursor:pointer;margin:0}
 </style>
@@ -62,16 +62,19 @@ th{color:var(--mut);font-weight:700}
         <option value="2027" selected>Jaar 2027</option>
         <option value="2028">Jaar 2028</option>
       </select>
-      <button class="ok" onclick="stuurNaarTafel()">Stuur indeling naar Wedstrijdtafel</button>
+      <button onclick="exporteerBackup()">Back-up (JSON)</button>
+      <button class="ok" onclick="stuurNaarTafel()">Synchroniseer met Wedstrijdtafel</button>
       <a href="index.html" class="btn-link">← Menu</a>
     </div>
   </div>
+
+  <div id="importFouten" class="banner-err" style="display:none"></div>
 
   <div class="grid">
     <div>
       <div class="box">
         <h2>1. Importeer deelnemers uit Excel (CSV)</h2>
-        <div class="sub" style="margin-bottom:10px">Sla het inschrijfoverzicht uit Excel op als CSV-bestand, kies het juiste jaar en klik op importeren.</div>
+        <div class="sub" style="margin-bottom:10px">Ondersteunt puntkomma (;) en komma (,), aanhalingstekens en zowel UTF-8 als Windows-tekens.</div>
         <input type="file" id="csvFile" accept=".csv,.txt">
         <button class="pri" style="width:100%" onclick="importeerCsv()">Importeer deelnemers</button>
       </div>
@@ -79,8 +82,8 @@ th{color:var(--mut);font-weight:700}
       <div class="box">
         <h2>2. Handmatig toevoegen</h2>
         <div class="row2">
-          <div><label>Lidnummer</label><input type="text" id="inLid" placeholder="bijv. 10002381"></div>
-          <div><label>Naam eigenaar</label><input type="text" id="inEig" placeholder="bijv. M. Mosch"></div>
+          <div><label>Lidnummer</label><input type="text" id="inLid" placeholder="bijv. 10009999"></div>
+          <div><label>Naam eigenaar</label><input type="text" id="inEig" placeholder="bijv. J. Jansen"></div>
         </div>
         <label>Volledige stamboomnaam (typ voor 2026 spellinghulp)</label>
         <input type="text" id="inStam" list="refLijst" oninput="checkRef()" placeholder="Begin te typen...">
@@ -88,7 +91,7 @@ th{color:var(--mut);font-weight:700}
 
         <div class="row2">
           <div><label>Startnummer</label><input type="number" id="inNr" placeholder="bijv. 101"></div>
-          <div><label>Roepnaam hond</label><input type="text" id="inRoep" placeholder="bijv. Rozi"></div>
+          <div><label>Roepnaam hond</label><input type="text" id="inRoep" placeholder="bijv. Max"></div>
         </div>
 
         <div class="row3">
@@ -169,6 +172,11 @@ try {
   }
 } catch (e) {}
 
+function esc(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 if (typeof REFERENTIE_HONDEN_2026 !== 'undefined') {
   var dl = document.getElementById('refLijst');
   REFERENTIE_HONDEN_2026.forEach(function(h) {
@@ -205,78 +213,155 @@ function save() {
   render();
 }
 
+function parseCsvRegel(regel, sep) {
+  var velden = [], huidig = '', inQuotes = false;
+  for (var i = 0; i < regel.length; i++) {
+    var ch = regel.charAt(i);
+    if (ch === '"') {
+      if (inQuotes && regel.charAt(i + 1) === '"') { huidig += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === sep && !inQuotes) {
+      velden.push(huidig.trim());
+      huidig = '';
+    } else {
+      huidig += ch;
+    }
+  }
+  velden.push(huidig.trim());
+  return velden;
+}
+
+function herkenBrevet(raw) {
+  var s = String(raw || '').trim().toLowerCase();
+  if (!s || s === 'geen' || s === '-' || s === 'nvt') return 'Geen';
+  if (s.indexOf('jeugd') !== -1) return 'Jeugdbrevet';
+  if (s === 'a' || s.indexOf('brevet a') !== -1) return 'Brevet A';
+  if (s === 'b' || s.indexOf('brevet b') !== -1) return 'Brevet B';
+  if (s === 'c' || s.indexOf('brevet c') !== -1) return 'Brevet C';
+  if (s === 'd' || s.indexOf('brevet d') !== -1) return 'Brevet D';
+  if (s === 'e' || s.indexOf('brevet e') !== -1) return 'Brevet E';
+  if (s.indexOf('seaman') !== -1) return 'Seaman Brevet';
+  return null;
+}
+
 function opvolgendBrevet(klasse, huidig) {
   if (klasse === 'Jeugd') return 'Jeugdbrevet';
   var volg = ['Geen', 'Brevet A', 'Brevet B', 'Brevet C', 'Brevet D', 'Brevet E', 'Seaman Brevet'];
   var clean = (!huidig || huidig === 'Jeugdbrevet') ? 'Geen' : huidig;
   var i = volg.indexOf(clean);
-  return (i >= 0 && i < volg.length - 1) ? volg.at(i + 1) : 'Seaman Brevet';
+  if (i >= 0 && i < volg.length - 1) return volg[i + 1];
+  if (i === volg.length - 1) return 'Seaman Brevet';
+  return 'Brevet A';
 }
 
 function importeerCsv() {
   var inp = document.getElementById('csvFile');
   if (!inp.files || !inp.files.length) { alert('Kies eerst een CSV-bestand uit Excel.'); return; }
+  var file = inp.files[0];
   var reader = new FileReader();
+
   reader.onload = function(e) {
-    var regels = e.target.result.split(/\r?\n/).filter(function(r) { return r.trim().length > 0; });
+    var buf = e.target.result;
+    var tekst = new TextDecoder('utf-8').decode(buf);
+    if (tekst.indexOf('\uFFFD') !== -1) {
+      tekst = new TextDecoder('windows-1252').decode(buf);
+    }
+
+    var regels = tekst.split(/\r?\n/).filter(function(r) { return r.trim().length > 0; });
     if (regels.length < 2) { alert('Geen gegevens gevonden in dit bestand.'); return; }
-    var eersteRegel = regels.at(0);
+
+    var eersteRegel = regels[0];
     var sep = eersteRegel.indexOf(';') !== -1 ? ';' : ',';
-    var koppen = eersteRegel.split(sep).map(function(k) { return k.replace(/^"|"$/g, '').trim().toLowerCase(); });
-    var vind = function(termen) { return koppen.findIndex(function(k) { return termen.some(function(t) { return k.indexOf(t) !== -1; }); }); };
+    var koppen = parseCsvRegel(eersteRegel, sep).map(function(k) { return k.toLowerCase(); });
 
-    var iLid = vind(['lidnr', 'lidnummer']);
-    var iEig = vind(['naam eigenaar', 'eigenaar', 'naam']);
-    var iStam = vind(['volledige naam', 'stamboomnaam', 'stamboom']);
-    var iRoep = vind(['roepnaam']);
-    var iGesl = vind(['geslacht', 'reu/teef']);
-    var iKlas = vind(['klasse']);
-    var iBrev = vind(['brevet', 'heeft nu']);
-    var iBet = vind(['betaald', 'betaling', 'status']);
+    var vindExact = function(termen, uitsluiten) {
+      return koppen.findIndex(function(k) {
+        var ok = termen.some(function(t) { return k.indexOf(t) !== -1; });
+        var fout = (uitsluiten || []).some(function(u) { return k.indexOf(u) !== -1; });
+        return ok && !fout;
+      });
+    };
 
-    var count = 0;
+    var iLid = vindExact(['lidnr', 'lidnummer']);
+    var iStam = vindExact(['stamboom', 'volledige naam']);
+    var iRoep = vindExact(['roepnaam']);
+    var iEig = vindExact(['eigenaar', 'inzender', 'naam'], ['stamboom', 'roep', 'hond']);
+    var iGesl = vindExact(['geslacht', 'reu/teef']);
+    var iKlas = vindExact(['klasse']);
+    var iBrev = vindExact(['brevet', 'heeft nu']);
+    var iBet = vindExact(['betaald', 'betaling', 'status']);
+
+    var count = 0, overgeslagenDubbel = 0, fouten = [];
+
     for (var i = 1; i < regels.length; i++) {
-      var kol = regels.at(i).split(sep).map(function(c) { return c.replace(/^"|"$/g, '').trim(); });
-      var stam = iStam >= 0 ? kol.at(iStam) : '';
-      var roep = iRoep >= 0 ? kol.at(iRoep) : '';
+      var kol = parseCsvRegel(regels[i], sep);
+      var stam = iStam >= 0 ? (kol[iStam] || '') : '';
+      var roep = iRoep >= 0 ? (kol[iRoep] || '') : '';
       if (!stam && !roep) continue;
 
-      var klasRaw = iKlas >= 0 ? kol.at(iKlas) : 'Open';
-      var klas = 'Open';
-      if (/jeugd/i.test(klasRaw)) klas = 'Jeugd';
-      else if (/veteraan|senior/i.test(klasRaw)) klas = 'Veteranen';
-      else if (/stamboomloos/i.test(klasRaw)) klas = 'Stamboomloos';
-      else if (/special/i.test(klasRaw)) klas = 'Specials';
+      var dubbeleHond = lijst.some(function(x) {
+        return (stam && x.stamboom.toLowerCase() === stam.toLowerCase()) ||
+               (roep && !stam && x.roepnaam.toLowerCase() === roep.toLowerCase());
+      });
+      if (dubbeleHond) { overgeslagenDubbel++; continue; }
 
-      var brev = (iBrev >= 0 && kol.at(iBrev)) ? kol.at(iBrev) : 'Geen';
-      var betRaw = iBet >= 0 ? kol.at(iBet) : '';
+      var geslRaw = iGesl >= 0 ? (kol[iGesl] || '').trim().toLowerCase() : '';
+      var gesl = '';
+      if (geslRaw === 'reu' || geslRaw === 'r' || geslRaw === 'm') gesl = 'Reu';
+      else if (geslRaw === 'teef' || geslRaw === 't' || geslRaw === 'v') gesl = 'Teef';
+      else { fouten.push('Regel ' + (i + 1) + ' (' + (roep || stam) + '): geslacht "' + geslRaw + '" niet herkend.'); continue; }
+
+      var klasRaw = iKlas >= 0 ? (kol[iKlas] || '').trim().toLowerCase() : '';
+      var klas = '';
+      if (klasRaw.indexOf('jeugd') !== -1) klas = 'Jeugd';
+      else if (klasRaw.indexOf('open') !== -1) klas = 'Open';
+      else if (klasRaw.indexOf('veteraan') !== -1 || klasRaw.indexOf('senior') !== -1) klas = 'Veteranen';
+      else if (klasRaw.indexOf('stamboomloos') !== -1) klas = 'Stamboomloos';
+      else if (klasRaw.indexOf('special') !== -1) klas = 'Specials';
+      else { fouten.push('Regel ' + (i + 1) + ' (' + (roep || stam) + '): klasse "' + klasRaw + '" niet herkend.'); continue; }
+
+      var brevRaw = iBrev >= 0 ? (kol[iBrev] || '') : '';
+      var brev = herkenBrevet(brevRaw);
+      if (!brev) { fouten.push('Regel ' + (i + 1) + ' (' + (roep || stam) + '): brevet "' + brevRaw + '" niet herkend.'); continue; }
+
+      var betRaw = iBet >= 0 ? (kol[iBet] || '') : '';
       var nr = lijst.length ? Math.max.apply(null, lijst.map(function(x) { return x.startnummer; })) + 1 : 101;
+      var voorstelBaan = klas === 'Jeugd' ? '2' : (klas === 'Veteranen' ? '3' : (klas === 'Stamboomloos' ? '4' : (klas === 'Specials' ? '5' : '1')));
 
       lijst.push({
         id: 'IMP_' + jaar + '_' + Date.now() + '_' + i,
         jaar: jaar,
-        lidnr: (iLid >= 0 && kol.at(iLid)) ? kol.at(iLid) : 'ONBEKEND',
-        eigenaar: (iEig >= 0 && kol.at(iEig)) ? kol.at(iEig) : 'Onbekend',
+        lidnr: (iLid >= 0 && kol[iLid]) ? kol[iLid] : 'ONBEKEND',
+        eigenaar: (iEig >= 0 && kol[iEig]) ? kol[iEig] : 'Onbekend',
         startnummer: nr,
-        roepnaam: roep || stam.split(' ').at(0),
+        roepnaam: roep || stam.split(' ')[0],
         stamboom: stam || roep,
-        geslacht: (iGesl >= 0 && /teef/i.test(kol.at(iGesl))) ? 'Teef' : 'Reu',
+        geslacht: gesl,
         klasse: klas,
         huidigBrevet: brev,
         opvolgendBrevet: opvolgendBrevet(klas, brev),
-        baan: klas === 'Jeugd' ? '3' : (klas === 'Specials' ? '5' : '1'),
+        baan: voorstelBaan,
         betaald: /^(ja|yes|1|true|betaald|v)$/i.test(betRaw),
         aanwezig: false,
         buitenMededinging: false
       });
       count++;
     }
+
     save();
     inp.value = '';
-    alert(count + ' deelnemers geïmporteerd voor ' + jaar + '.');
+    var errBox = document.getElementById('importFouten');
+    if (fouten.length) {
+      errBox.style.display = 'block';
+      errBox.innerHTML = 'Niet-herkende regels overgeslagen (corrigeer in Excel of voeg handmatig toe):<br>• ' + fouten.map(esc).join('<br>• ');
+    } else {
+      errBox.style.display = 'none';
+    }
+    alert(count + ' deelnemers geïmporteerd' + (overgeslagenDubbel ? ' (' + overgeslagenDubbel + ' dubbele overgeslagen)' : '') + '.');
   };
-  reader.readAsText(inp.files.at(0), 'UTF-8');
+  reader.readAsArrayBuffer(file);
 }
+
 function voegToe() {
   var roep = document.getElementById('inRoep').value.trim();
   var stam = document.getElementById('inStam').value.trim();
@@ -284,6 +369,11 @@ function voegToe() {
   var klas = document.getElementById('inKlas').value;
   var brev = document.getElementById('inBrev').value;
   var nr = parseInt(document.getElementById('inNr').value, 10) || (lijst.length + 101);
+
+  if (lijst.some(function(x) { return x.startnummer === nr; })) {
+    alert('Startnummer ' + nr + ' bestaat al. Kies een uniek nummer.');
+    return;
+  }
 
   lijst.push({
     id: 'MAN_' + jaar + '_' + Date.now(),
@@ -314,14 +404,22 @@ function voegToe() {
 function setBaan(id, b) { var x = lijst.find(function(i) { return i.id === id; }); if (x) { x.baan = b; save(); } }
 function toggleBet(id) { var x = lijst.find(function(i) { return i.id === id; }); if (x) { x.betaald = !x.betaald; save(); } }
 function toggleBm(id) { var x = lijst.find(function(i) { return i.id === id; }); if (x) { x.buitenMededinging = !x.buitenMededinging; save(); } }
-function move(idx, dir) {
-  var n = idx + dir;
-  if (n < 0 || n >= lijst.length) return;
-  var t = lijst.at(idx);
-  lijst.splice(idx, 1, lijst.at(n));
-  lijst.splice(n, 1, t);
+
+function moveBaan(id, dir) {
+  var item = lijst.find(function(x) { return x.id === id; });
+  if (!item) return;
+  var zelfdeBaan = lijst.filter(function(x) { return x.baan === item.baan; });
+  var pos = zelfdeBaan.findIndex(function(x) { return x.id === id; });
+  var doelPos = pos + dir;
+  if (doelPos < 0 || doelPos >= zelfdeBaan.length) return;
+  var buur = zelfdeBaan[doelPos];
+  var idxA = lijst.findIndex(function(x) { return x.id === item.id; });
+  var idxB = lijst.findIndex(function(x) { return x.id === buur.id; });
+  lijst[idxA] = buur;
+  lijst[idxB] = item;
   save();
 }
+
 function del(id) { if (confirm('Deelnemer verwijderen?')) { lijst = lijst.filter(function(x) { return x.id !== id; }); save(); } }
 
 function genereerNummers() {
@@ -330,53 +428,68 @@ function genereerNummers() {
   save();
 }
 
+function exporteerBackup() {
+  var blob = new Blob([JSON.stringify(lijst, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nnfc_deelnemers_' + jaar + '_backup.json';
+  a.click();
+}
+
 function render() {
   var flt = document.getElementById('fltBaan').value;
   var sub = flt === 'ALLE' ? lijst : lijst.filter(function(x) { return x.baan === flt; });
   var betCount = lijst.filter(function(x) { return x.betaald; }).length;
   document.getElementById('statBalk').innerHTML = 'Totaal: <b>' + lijst.length + ' honden</b> • Betaald: <b style="color:var(--ok)">' + betCount + '</b> • Nog betalen: <b style="color:var(--bad)">' + (lijst.length - betCount) + '</b>';
 
-  var conf = [];
+  var conf = [], nrsGezien = {}, dubbeleNrs = [];
+  lijst.forEach(function(h) {
+    if (nrsGezien[h.startnummer]) dubbeleNrs.push(h.startnummer);
+    nrsGezien[h.startnummer] = true;
+  });
+
   for (var b = 1; b <= 5; b++) {
     var bl = lijst.filter(function(x) { return x.baan === String(b); });
     for (var i = 0; i < bl.length - 1; i++) {
-      var cur = bl.at(i), nxt = bl.at(i + 1);
+      var cur = bl[i], nxt = bl[i + 1];
       if (cur.lidnr !== 'ONBEKEND' && cur.lidnr === nxt.lidnr) {
-        conf.push('Baan ' + b + ': ' + cur.roepnaam + ' en ' + nxt.roepnaam + ' (eigenaar ' + cur.eigenaar + ')');
+        conf.push('Baan ' + b + ': ' + esc(cur.roepnaam) + ' en ' + esc(nxt.roepnaam) + ' (eigenaar ' + esc(cur.eigenaar) + ')');
         cur.c = true; nxt.c = true;
       }
     }
   }
   var wb = document.getElementById('warnBox');
-  if (conf.length) {
+  var meldingen = [];
+  if (dubbeleNrs.length) meldingen.push('Dubbele startnummers gevonden: #' + Array.from(new Set(dubbeleNrs)).join(', #'));
+  if (conf.length) meldingen.push('Zelfde eigenaar direct na elkaar:<br>• ' + conf.join('<br>• '));
+  if (meldingen.length) {
     wb.style.display = 'block';
-    wb.innerHTML = 'Let op: Honden van dezelfde eigenaar mogen niet direct na elkaar starten:<br>• ' + conf.join('<br>• ');
+    wb.innerHTML = meldingen.join('<br><br>');
   } else {
     wb.style.display = 'none';
   }
 
   var tbody = document.getElementById('tblBody');
   if (!sub.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="sub">Nog geen deelnemers ingevoerd voor ' + jaar + '.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="sub">Nog geen deelnemers ingevoerd voor ' + esc(jaar) + '.</td></tr>';
     return;
   }
 
   tbody.innerHTML = sub.map(function(h) {
-    var idx = lijst.findIndex(function(x) { return x.id === h.id; });
     var isC = h.c; h.c = false;
-    var opts = '12345'.split('').map(function(n) { return '<option value="' + n + '" ' + (h.baan == n ? 'selected' : '') + '>Baan ' + n + '</option>'; }).join('');
+    var opts = ['1', '2', '3', '4', '5'].map(function(n) { return '<option value="' + n + '" ' + (h.baan == n ? 'selected' : '') + '>Baan ' + n + '</option>'; }).join('');
     return '<tr class="' + (isC ? 'conflict' : '') + '">' +
-      '<td><select style="width:auto;margin:0;min-height:38px" onchange="setBaan(\'' + h.id + '\',this.value)">' + opts + '</select></td>' +
-      '<td><b>#' + h.startnummer + '</b></td>' +
-      '<td><b>' + h.roepnaam + '</b> (' + h.geslacht + ')<br><span class="sub" style="font-size:14px">' + h.stamboom + '</span>' + (h.buitenMededinging ? ' <span class="chip">* Buiten med.</span>' : '') + '</td>' +
-      '<td>' + h.eigenaar + '<br><span class="sub" style="font-size:14px">Lidnr: ' + h.lidnr + '</span></td>' +
-      '<td><span class="chip">' + h.klasse + '</span><br><span class="sub" style="font-size:14px">' + h.opvolgendBrevet + '</span></td>' +
-      '<td style="text-align:center"><input type="checkbox" class="chk" ' + (h.betaald ? 'checked' : '') + ' onchange="toggleBet(\'' + h.id + '\')"></td>' +
+      '<td><select style="width:auto;margin:0;min-height:38px" onchange="setBaan(\'' + esc(h.id) + '\',this.value)">' + opts + '</select></td>' +
+      '<td><b>#' + esc(h.startnummer) + '</b></td>' +
+      '<td><b>' + esc(h.roepnaam) + '</b> (' + esc(h.geslacht) + ')<br><span class="sub" style="font-size:14px">' + esc(h.stamboom) + '</span>' + (h.buitenMededinging ? ' <span class="chip">* Buiten med.</span>' : '') + '</td>' +
+      '<td>' + esc(h.eigenaar) + '<br><span class="sub" style="font-size:14px">Lidnr: ' + esc(h.lidnr) + '</span></td>' +
+      '<td><span class="chip">' + esc(h.klasse) + '</span><br><span class="sub" style="font-size:14px">' + esc(h.opvolgendBrevet) + '</span></td>' +
+      '<td style="text-align:center"><input type="checkbox" class="chk" ' + (h.betaald ? 'checked' : '') + ' onchange="toggleBet(\'' + esc(h.id) + '\')"></td>' +
       '<td style="white-space:nowrap">' +
-        '<button class="sm" onclick="move(' + idx + ',-1)">↑</button> ' +
-        '<button class="sm" onclick="move(' + idx + ',1)">↓</button> ' +
-        '<button class="sm" onclick="toggleBm(\'' + h.id + '\')" title="Wissel buiten mededinging (*)">*</button> ' +
-        '<button class="bad" onclick="del(\'' + h.id + '\')">✕</button>' +
+        '<button class="sm" onclick="moveBaan(\'' + esc(h.id) + '\',-1)">↑</button> ' +
+        '<button class="sm" onclick="moveBaan(\'' + esc(h.id) + '\',1)">↓</button> ' +
+        '<button class="sm" onclick="toggleBm(\'' + esc(h.id) + '\')" title="Wissel buiten mededinging (*)">*</button> ' +
+        '<button class="bad" onclick="del(\'' + esc(h.id) + '\')">✕</button>' +
       '</td></tr>';
   }).join('');
 }
@@ -384,9 +497,26 @@ function render() {
 async function stuurNaarTafel() {
   if (!db) { alert('Firebase is nog niet gekoppeld in config.js. De indeling is wel lokaal opgeslagen.'); return; }
   try {
+    var snap = await db.ref('wedstrijd/beheer_deelnemers').once('value');
+    var bestaand = snap.val();
+    var huidigeTafelLijst = bestaand ? (Array.isArray(bestaand) ? bestaand : Object.values(bestaand)) : [];
+
+    var samengevoegd = lijst.map(function(h) {
+      var match = huidigeTafelLijst.find(function(t) { return t && t.startnummer == h.startnummer; });
+      return Object.assign({}, h, { aanwezig: match ? Boolean(match.aanwezig) : Boolean(h.aanwezig) });
+    });
+
+    huidigeTafelLijst.forEach(function(t) {
+      if (t && String(t.id).indexOf('EXTRA_') === 0 && !samengevoegd.some(function(s) { return s.startnummer == t.startnummer; })) {
+        samengevoegd.push(t);
+      }
+    });
+
+    lijst = samengevoegd;
+    save();
     await db.ref('wedstrijd/actief_jaar').set(jaar);
     await db.ref('wedstrijd/beheer_deelnemers').set(lijst);
-    alert('De indeling van ' + jaar + ' (' + lijst.length + ' honden) is doorgestuurd naar de Wedstrijdtafel!');
+    alert('Gesynchroniseerd met Wedstrijdtafel (' + lijst.length + ' honden, aanwezigheid & daginschrijvingen behouden).');
   } catch (err) {
     alert('Fout bij versturen: ' + err.message);
   }
