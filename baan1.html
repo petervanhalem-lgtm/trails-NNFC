@@ -1,179 +1,218 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NNFC – Baan 1 (v2.0)</title>
-  <style>
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: #f4f6f8; color: #1a202c; padding-bottom: 40px; }
-    
-    header { background: #0f172a; color: white; padding: 12px 16px; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.15rem; }
-    .sync-badge { font-size: 0.85rem; padding: 4px 10px; border-radius: 12px; background: #15803d; color: white; }
-    .sync-pending { background: #d97706; }
-    
-    .exercise-bar { display: flex; gap: 6px; margin-top: 10px; }
-    .ex-btn { flex: 1; padding: 10px 4px; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; background: #334155; color: #cbd5e1; cursor: pointer; }
-    .ex-btn.active { background: #3b82f6; color: white; }
-    .progress-text { font-size: 0.9rem; margin-top: 8px; color: #94a3b8; }
-
-    .tabs { display: flex; background: white; border-bottom: 2px solid #e2e8f0; }
-    .tab { flex: 1; padding: 14px; text-align: center; font-weight: bold; font-size: 1.05rem; border: none; background: none; cursor: pointer; color: #64748b; }
-    .tab.active { color: #1d4ed8; border-bottom: 3px solid #1d4ed8; }
-
-    .container { padding: 14px; max-width: 500px; margin: 0 auto; }
-
-    .current-card { background: #fef08a; border: 2px solid #eab308; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-    .badge-nu { background: #ca8a04; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 6px; }
-    .badge-brevet { background: #1d4ed8; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 6px; margin-left: 6px; }
-    .start-nr { font-size: 1.4rem; font-weight: 800; float: right; }
-    .roepnaam { font-size: 1.8rem; font-weight: 800; margin: 4px 0 2px 0; }
-    .stamboomnaam { font-size: 0.9rem; color: #475569; }
-
-    .next-card { background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
-    .next-label { font-size: 0.85rem; color: #64748b; font-weight: bold; }
-    .next-name { font-size: 1.1rem; font-weight: 700; }
-
-    .time-display { background: white; border: 2px solid #94a3b8; border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 12px; }
-    .time-raw { font-size: 0.85rem; color: #64748b; min-height: 18px; }
-    .time-formatted { font-size: 2.4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-    .time-invalid { color: #dc2626; }
-
-    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-    .key { padding: 18px 0; font-size: 1.5rem; font-weight: bold; background: white; border: 1px solid #cbd5e1; border-radius: 10px; cursor: pointer; touch-action: manipulation; }
-    .key:active { background: #e2e8f0; }
-    .key-action { background: #e2e8f0; font-size: 1.1rem; }
-
-    .actions { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 14px; }
-    .actions-brevet { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-    .btn-save { background: #16a34a; color: white; border: none; border-radius: 10px; padding: 18px; font-size: 1.15rem; font-weight: bold; cursor: pointer; }
-    .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
-    .btn-refusal { background: #dc2626; color: white; border: none; border-radius: 10px; padding: 18px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
-    .btn-refusal:disabled { background: #94a3b8; cursor: not-allowed; }
-    .btn-msg { width: 100%; padding: 12px; background: #334155; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-    .dog-item { background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .dog-item.is-nu { background: #fef08a; border-color: #eab308; }
-    .dog-item.is-done { opacity: 0.7; background: #f8fafc; }
-    .btn-small { padding: 8px 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
-    .btn-next { background: #1d4ed8; color: white; }
-    .btn-corr { background: #f59e0b; color: white; }
-
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
-    .modal-overlay.open { display: flex; }
-    .modal { background: white; border-radius: 14px; padding: 20px; width: 100%; max-width: 400px; }
-    .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
-    .modal-btns button { flex: 1; padding: 14px; border-radius: 8px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
-
-    .log-box { background: #e2e8f0; border-radius: 8px; padding: 10px; font-size: 0.85rem; margin-top: 16px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Baan 1 – NNFC Klokkersscherm</title>
+<link rel="stylesheet" href="https://googleapis.com">
+<style>
+:root{--bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;--cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;--cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif;font-size:18px;line-height:1.3;-webkit-tap-highlight-color:transparent}
+#app{max-width:520px;margin:0 auto;padding:12px 12px 40px}
+h1{font-size:24px;margin:0;font-weight:700;line-height:1.1}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 10px}
+.top-l{display:flex;align-items:center;gap:10px}
+.top img{width:46px;height:46px;border-radius:50%;flex:none}
+.sub{color:var(--mut);font-size:15px;margin:2px 0 0}
+.sync{font-size:14px;font-weight:700;padding:4px 10px;border-radius:10px;background:var(--ok);color:#fff;white-space:nowrap}
+.sync.pend{background:var(--warn)}
+button,.btn-link{font:inherit;color:inherit;border:2px solid var(--ln);background:var(--sf);border-radius:12px;min-height:48px;padding:6px 12px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+button:disabled{opacity:.4;cursor:default}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.seg button.on,.tabs button.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
+.cur{background:var(--cur);color:var(--curink);border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cur small{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.cur .nm{font-size:40px;font-weight:700;line-height:1.05}
+.cur .st{font-size:15px;opacity:.85}
+.cur .br{display:inline-block;background:rgba(0,0,0,.12);padding:2px 8px;border-radius:6px;font-size:14px;font-weight:700;margin-top:4px}
+.nr{font-size:48px;font-weight:700;line-height:1;text-align:right}
+.nxt{display:flex;justify-content:space-between;align-items:baseline;padding:8px 4px;color:var(--mut);font-size:19px}
+.nxt b{color:var(--ink);font-size:22px}
+.disp{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:8px 16px;text-align:right}
+.disp .t{font-size:56px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.disp .t.ph{color:var(--mut);opacity:.55}
+.msg{min-height:22px;font-size:16px;color:var(--mut);margin-top:4px}
+.msg.err{color:var(--bad);font-weight:600}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.pad button{min-height:66px;font-size:28px}
+.acts,.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acts button,.row button{min-height:62px;font-size:20px}
+.pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
+.bad{border-color:var(--bad)!important;color:var(--bad)!important}
+.conf{background:var(--sf);border:3px solid var(--ac);border-radius:16px;padding:12px;margin-top:8px}
+.conf p{margin:0 0 10px;font-size:21px}
+.list{display:grid;gap:8px}
+.r{display:grid;grid-template-columns:46px 1fr auto;gap:10px;align-items:center;background:var(--sf);border:2px solid var(--ln);border-radius:12px;padding:8px 10px;min-height:60px}
+.r.cu{border-color:var(--cur);background:var(--cur);color:var(--curink)}
+.r .n{font-size:24px;font-weight:700}
+.r .a{font-size:20px;font-weight:700}
+.r .b{font-size:14px;color:var(--mut)}
+.r.cu .b{color:var(--curink)}
+.tag{font-size:16px;font-weight:700;color:var(--mut)}
+.tag.ok{color:var(--ok)}.tag.w{color:var(--bad)}
+.r button{min-height:44px;font-size:16px}
+h2{font-size:18px;margin:16px 0 6px}
+.log{font-size:15px;color:var(--mut);margin:0;padding-left:18px}
+.box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:14px;margin-top:10px}
+input,select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid var(--ln);border-radius:10px;padding:10px;width:100%;margin-bottom:8px}
+</style>
 </head>
 <body>
+<div id="app"></div>
 
-<header>
-  <div class="header-top">
-    <span id="baanHeader">Baan 1</span>
-    <span id="syncStatus" class="sync-badge">Wachtrij: 0</span>
-  </div>
-  <div class="exercise-bar">
-    <button class="ex-btn active" data-oef="A" onclick="setOefening('A')">Oef. A</button>
-    <button class="ex-btn" data-oef="B" onclick="setOefening('B')">Oef. B</button>
-    <button class="ex-btn" data-oef="C" onclick="setOefening('C')">Oef. C</button>
-    <button class="ex-btn" data-oef="BREVET" onclick="setOefening('BREVET')">Brevet (E–J)</button>
-  </div>
-  <div class="progress-text" id="voortgangTekst">Wachten op baanindeling...</div>
-</header>
+<script src="https://gstatic.com"></script>
+<script src="https://gstatic.com"></script>
+<script src="config.js"></script>
 
-<div class="tabs">
-  <button class="tab active" id="tabBtnReg" onclick="switchTab('reg')">Registratie</button>
-  <button class="tab" id="tabBtnLijst" onclick="switchTab('lijst')">Lijst</button>
-</div>
+<script>
+var BAAN_NR = "1";
+var LOGO = 'assets/nnfc-logo.png';
+var db = null;
+try {
+  if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  }
+} catch (e) {}
 
-<div class="container" id="viewReg">
-  <div id="huidigeHondBlok"></div>
-  <div id="volgendeHondBlok"></div>
+var KEY_STATE = 'nnfc_klokker_state_' + BAAN_NR;
+var KEY_DOGS = 'nnfc_klokker_dogs_' + BAAN_NR;
+var KEY_OUTBOX = 'nnfc_klokker_outbox_' + BAAN_NR;
 
-  <!-- BLOK VOOR GETIMEDE OEFENINGEN (A, B, C) -->
-  <div id="timedInvoerBlok">
-    <div class="time-display">
-      <div class="time-raw" id="rawDigits">Voer cijfers in (bijv. 945 = 9,45)</div>
-      <div class="time-formatted" id="formattedTime">0,00</div>
-    </div>
+var DOGS = [];
+try { DOGS = JSON.parse(localStorage.getItem(KEY_DOGS)) || []; } catch (e) {}
 
-    <div class="keypad">
-      <button class="key" onclick="addDigit('1')">1</button>
-      <button class="key" onclick="addDigit('2')">2</button>
-      <button class="key" onclick="addDigit('3')">3</button>
-      <button class="key" onclick="addDigit('4')">4</button>
-      <button class="key" onclick="addDigit('5')">5</button>
-      <button class="key" onclick="addDigit('6')">6</button>
-      <button class="key" onclick="addDigit('7')">7</button>
-      <button class="key" onclick="addDigit('8')">8</button>
-      <button class="key" onclick="addDigit('9')">9</button>
-      <button class="key key-action" onclick="clearDigits()">Wissen</button>
-      <button class="key" onclick="addDigit('0')">0</button>
-      <button class="key key-action" onclick="backspace()">⌫</button>
-    </div>
+function mk() { return { q: [], res: {}, skip: {} }; }
+function fresh() { return { ex: 'A', tab: 'reg', ox: { A: mk(), B: mk(), C: mk(), BREVET: mk() }, log: [] }; }
 
-    <div class="actions">
-      <button class="btn-save" id="btnSave" onclick="startConfirm('TIJD')" disabled>Tijd opslaan</button>
-      <button class="btn-refusal" id="btnRefusal" onclick="startConfirm('WEIGERING')">Weigering</button>
-    </div>
-  </div>
+var S = null;
+try { S = JSON.parse(localStorage.getItem(KEY_STATE)); } catch (e) {}
+if (!S || !S.ox || !S.ox.BREVET) S = fresh();
 
-  <!-- BLOK VOOR TIJDLOZE BREVETOEFENINGEN (E t/m J) -->
-  <div id="brevetInvoerBlok" style="display:none;">
-    <div class="time-display" style="background:#eff6ff; border-color:#3b82f6;">
-      <div style="font-weight:bold; color:#1d4ed8;">Vervolgoefening zonder tijdmeting (Art. 4.5–4.9)</div>
-      <div id="brevetOefNaam" style="font-size:1.2rem; font-weight:800; margin-top:6px;">-</div>
-    </div>
-    <div class="actions-brevet">
-      <button class="btn-save" id="btnBrevetOk" onclick="startConfirm('BREVET_OK')">Uitgevoerd</button>
-      <button class="btn-refusal" id="btnBrevetWeig" onclick="startConfirm('WEIGERING')">Weigering</button>
-    </div>
-  </div>
+var inp = '', conf = null, corrId = null, msgOpen = false;
 
-  <button class="btn-msg" onclick="openMessageModal()">Bericht aan wedstrijdtafel sturen</button>
-</div>
+function save() {
+  try {
+    localStorage.setItem(KEY_DOGS, JSON.stringify(DOGS));
+    localStorage.setItem(KEY_STATE, JSON.stringify(S));
+  } catch (e) {}
+}
 
-<div class="container" id="viewLijst" style="display:none;">
-  <div id="lijstContainer"></div>
-  <div class="log-box">
-    <strong>Wijzigingen in de volgorde (Baan 1):</strong>
-    <ul id="volgordeLog"></ul>
-  </div>
-</div>
+function isBrevetHond(d) {
+  return ['Brevet B', 'Brevet C', 'Brevet D', 'Brevet E', 'Seaman Brevet'].indexOf(d.opvolgendBrevet) !== -1;
+}
 
-<!-- MODAL DUBBELE BEVESTIGING -->
-<div class="modal-overlay" id="confirmModal">
-  <div class="modal">
-    <h3 id="confirmStepTitle">Stap 1 van 2: Controleer invoer</h3>
-    <p id="confirmText" style="font-size: 1.1rem; line-height: 1.5;"></p>
-    <div class="modal-btns">
-      <button style="background:#cbd5e1;" onclick="closeConfirm()">Annuleren</button>
-      <button id="confirmNextBtn" style="background:#16a34a; color:white;" onclick="nextConfirmStep()">Bevestigen</button>
-    </div>
-  </div>
-</div>
+function getBrevetLabel(br) {
+  if (br === 'Brevet B') return 'Oefening E: Object bij Drenkeling (30m)';
+  if (br === 'Brevet C') return 'Oefening F: Losse lijn bij boot (30m)';
+  if (br === 'Brevet D') return 'Oefening G: Springen & andere boot (30m)';
+  if (br === 'Brevet E') return 'Oefening H: Peddel naar boot (30m)';
+  if (br === 'Seaman Brevet') return 'Oefening J: Pop achter boot (30m)';
+  return 'Vervolgoefening';
+}
 
-<!-- MODAL CORRECTIE -->
-<div class="modal-overlay" id="corrModal">
-  <div class="modal">
-    <h3>Correctie aanvragen</h3>
-    <p id="corrDogInfo"></p>
-    <label>Nieuwe tijd (alleen cijfers):</label>
-    <input type="tel" id="corrDigits" oninput="previewCorr()" style="width:100%; padding:12px; font-size:1.3rem; margin:6px 0;" placeholder="bijv. 1234">
-    <div id="corrPreview" style="font-weight:bold; margin-bottom:10px;">Herkend: 0,00</div>
-    <label>Reden (optioneel):</label>
-    <input type="text" id="corrReason" style="width:100%; padding:10px; margin-top:4px;" placeholder="Bijv. tikfout">
-    <div class="modal-btns">
-      <button style="background:#cbd5e1;" onclick="document.getElementById('corrModal').classList.remove('open')">Sluiten</button>
-      <button style="background:#f59e0b; color:white;" onclick="submitCorrection()">Versturen</button>
-    </div>
-  </div>
-</div>
+if (db) {
+  db.ref('wedstrijd/baan_lijsten/baan_' + BAAN_NR).on('value', function(snap) {
+    var nieuw = snap.val() || [];
+    if (nieuw.length > 0) {
+      DOGS = nieuw.map(function(h) {
+        return {
+          id: h.nr, nr: h.nr, roep: h.roepnaam, stam: h.stamboom,
+          klasse: h.klasse, geslacht: h.geslacht,
+          opvolgendBrevet: h.opvolgendBrevet,
+          buitenMededinging: Boolean(h.buitenMededinging)
+        };
+      });
+      ['A', 'B', 'C'].forEach(function(oef) {
+        DOGS.forEach(function(d) {
+          if (S.ox[oef].q.indexOf(d.id) === -1 && !S.ox[oef].res[d.id]) {
+            S.ox[oef].q.push(d.id);
+          }
+        });
+      });
+      DOGS.filter(isBrevetHond).forEach(function(d) {
+        if (S.ox.BREVET.q.indexOf(d.id) === -1 && !S.ox.BREVET.res[d.id]) {
+          S.ox.BREVET.q.push(d.id);
+        }
+      });
+      save();
+      render();
+      pushStatus();
+    }
+  });
+}
 
-<!-- MODAL BERICHT -->
-<div class="modal-overlay" id="msgModal">
-  <div class="modal">
+function dog(id) { return DOGS.filter(function(d) { return d.id === id; }); }
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function fmt(cs) { var m = Math.floor(cs / 6000), s = Math.floor(cs % 6000 / 100), c = cs % 100; return m ? m + ':' + pad(s) + ',' + pad(c) : s + ',' + pad(c); }
+
+function parse(str) {
+  if (!str) return null;
+  var n = ('0000' + str).slice(-Math.max(4, str.length));
+  var c = +n.slice(-2), s = +n.slice(-4, -2), m = +n.slice(0, -4) || 0;
+  if (s > 59) return { err: 'Seconden moeten onder 60 liggen.' };
+  var t = m * 6000 + s * 100 + c;
+  if (t === 0) return { err: 'Een tijd van 0,00 is niet mogelijk.' };
+  return { cs: t, ms: t * 10 };
+}
+
+function now() { return new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }); }
+
+function enqueue(padNaam, data) {
+  var box = [];
+  try { box = JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []; } catch (e) {}
+  box.push({ pad: padNaam, data: data });
+  localStorage.setItem(KEY_OUTBOX, JSON.stringify(box));
+  flushOutbox();
+}
+
+async function flushOutbox() {
+  var box = [];
+  try { box = JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []; } catch (e) {}
+  renderSyncBadge(box.length);
+  if (!box.length || !db || !navigator.onLine) return;
+
+  var item = box;
+  try {
+    await db.ref('wedstrijd/' + item.pad + '/' + item.data.id).set(item.data);
+    box.shift();
+    localStorage.setItem(KEY_OUTBOX, JSON.stringify(box));
+    pushStatus();
+    flushOutbox();
+  } catch (e) {}
+}
+
+function pushStatus() {
+  if (!db || !navigator.onLine) return;
+  var o = S.ox[S.ex];
+  var rel = S.ex === 'BREVET' ? DOGS.filter(isBrevetHond) : DOGS;
+  var cd = dog(o.q);
+  db.ref('wedstrijd/banen_status/baan_' + BAAN_NR).set({
+    laatstGezien: new Date().toISOString(),
+    oefening: S.ex,
+    klaar: Object.keys(o.res).length,
+    totaal: rel.length,
+    nuHond: cd ? ('#' + cd.nr + ' ' + cd.roep) : 'Klaar'
+  });
+}
+
+function renderSyncBadge(count) {
+  var el = document.getElementById('syncBadge');
+  if (!el) return;
+  el.textContent = count > 0 ? ('Wachtrij: ' + count) : (db ? 'Live' : 'Lokaal');
+  el.className = count > 0 ? 'sync pend' : 'sync';
+}
+
+window.addEventListener('online', flushOutbox);
+setInterval(flushOutbox, 5000);
+
+function render() {
+  var o = S.ox[S.ex];
+  var relDogs = S.ex === 'BREVET' ? DOGS.filter(isBrevetHond) : DOGS;
+  var cd = dog(o.q);
+  var nd = dog(o.q);
+  var done = Object.keys(o.res).length;
