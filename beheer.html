@@ -158,19 +158,21 @@ th{color:var(--mut);font-weight:700}
   </div>
 </div>
 
-<script src="https://gstatic.com"></script>
-<script src="https://gstatic.com"></script>
+
 <script src="config.js"></script>
 <script src="referentie2026.js"></script>
 
 <script>
 var db = null;
-try {
-  if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-  }
-} catch (e) {}
+function initFirebase() {
+  try {
+    if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+    }
+  } catch (e) {}
+}
+initFirebase();
 
 function esc(str) {
   return String(str == null ? '' : str)
