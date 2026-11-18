@@ -4,29 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wedstrijdtafel NNFC</title>
-<link rel="stylesheet" href="https://googleapis.com">
 <style>
-:root{
-  --bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
-  --cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309;
-  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;
-    --cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A
-  }
-}
+:root{--bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;--cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;--cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif;font-size:18px;line-height:1.3;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:18px;line-height:1.3}
 #app{max-width:980px;margin:0 auto;padding:12px 14px 40px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
 .top-l{display:flex;align-items:center;gap:12px}
 .top img{width:52px;height:52px;border-radius:50%;flex:none}
 h1{font-size:26px;margin:0;font-weight:700;line-height:1.1}
-.sub{color:var(--mut);font-size:16px}
-button, .btn-link{font:inherit;color:inherit;border:2px solid var(--ln);background:var(--sf);border-radius:12px;min-height:50px;padding:6px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+h2{font-size:19px;margin:16px 0 8px}
+.sub,.m{color:var(--mut);font-size:15px}
+button,.btn-link{font:inherit;color:inherit;border:2px solid var(--ln);background:var(--sf);border-radius:12px;min-height:48px;padding:6px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .nav button.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
 .nav button.extra{background:var(--ok);border-color:var(--ok);color:#FFFFFF}
@@ -34,7 +24,6 @@ button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 .c{display:block;width:100%;text-align:left;background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:12px 14px;font-size:17px;font-weight:500}
 .c b{font-weight:700;font-size:21px}
 .c.w{border-color:var(--warn)}
-.m{color:var(--mut);font-size:15px}
 .bar{height:8px;border-radius:5px;background:var(--soft);margin:8px 0}
 .bar i{display:block;height:8px;border-radius:5px;background:var(--ac)}
 .chip{display:inline-block;background:var(--cur);color:var(--curink);border-radius:8px;padding:1px 8px;font-weight:700}
@@ -42,121 +31,92 @@ button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 .chip-bad{display:inline-block;background:var(--bad);color:#fff;border-radius:8px;padding:1px 8px;font-size:14px;font-weight:700}
 .warn{color:var(--warn);font-weight:700}
 .banner{background:var(--cur);color:var(--curink);border-color:var(--cur);margin-bottom:12px;font-size:20px;font-weight:700}
-h2{font-size:19px;margin:16px 0 8px}
 .t{display:grid;grid-template-columns:44px 1fr auto;gap:10px;padding:10px 4px;border-top:1px solid var(--ln);align-items:center;font-size:20px}
 .t b{font-size:23px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.row button{min-height:60px;font-size:20px}
+.row button{min-height:58px;font-size:19px}
 .pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
 .box{background:var(--sf);border:3px solid var(--warn);border-radius:16px;padding:14px;margin-bottom:12px}
 .box.n{border-color:var(--ln);border-width:2px}
-.big{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.big{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums}
 .log{padding-left:20px;margin:0;color:var(--mut);font-size:16px}
 .foot{margin-top:18px;font-size:14px;color:var(--mut)}
-input, select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid var(--ln);border-radius:12px;padding:10px 12px;width:100%;margin-bottom:10px;min-height:48px}
+input,select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid var(--ln);border-radius:12px;padding:10px 12px;width:100%;margin-bottom:10px;min-height:46px}
 label{display:block;font-weight:600;font-size:16px;margin-bottom:4px;color:var(--mut)}
 .chk{width:28px;height:28px;accent-color:var(--ok);cursor:pointer;margin:0}
 </style>
 </head>
 <body>
 <div id="app"></div>
-
-<script src="https://gstatic.com"></script>
-<script src="https://gstatic.com"></script>
 <script src="config.js"></script>
-
 <script>
-var LOGO = 'assets/nnfc-logo.png';
-var db = null;
-try {
-  if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-  }
-} catch (e) {}
-
-var KCM_PUNTEN = {
-  "GEEN": 0, "BOB": 75, "CAC": 70, "Res. CAC": 65,
-  "U1": 55, "U2": 50, "U3": 45, "U4": 40, "U": 35,
-  "ZG": 25, "G": 15, "M": 10, "S": 5
-};
-var WEIGERING_MS = 600000;
-
-var registraties = {};
-var meldingen = {};
-var logboek = {};
-var banenStatus = {};
-var deelnemersLijst = [];
-var kcmSelecties = {};
+var LOGO = 'assets/nnfc-logo.png', db = null;
+var KCM_PUNTEN = {"GEEN":0,"BOB":75,"CAC":70,"Res. CAC":65,"U1":55,"U2":50,"U3":45,"U4":40,"U":35,"ZG":25,"G":15,"M":10,"S":5};
+var WEIGERING_MS = 600000, registraties = {}, meldingen = {}, logboek = {}, banenStatus = {}, deelnemersLijst = [], kcmSelecties = {}, v = 'home';
 
 try {
   deelnemersLijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_2027')) || [];
   kcmSelecties = JSON.parse(localStorage.getItem('nnfc_kcm_2026')) || {};
 } catch (e) {}
 
-var v = 'home';
+function esc(str) {
+  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function safeDraw() {
+  if (v === 'extra' || v === 'nood') return;
+  draw();
+}
 
-if (db) {
-  db.ref('wedstrijd/registraties').on('value', function(snap) { registraties = snap.val() || {}; detectConflicts(); draw(); });
-  db.ref('wedstrijd/meldingen').on('value', function(snap) { meldingen = snap.val() || {}; draw(); });
-  db.ref('wedstrijd/logboek').on('value', function(snap) { logboek = snap.val() || {}; if (v === 'hist') draw(); });
-  db.ref('wedstrijd/banen_status').on('value', function(snap) { banenStatus = snap.val() || {}; draw(); });
-  db.ref('wedstrijd/beheer_deelnemers').on('value', function(snap) {
-    var val = snap.val();
-    if (val) {
-      deelnemersLijst = Array.isArray(val) ? val : Object.values(val);
-      draw();
+function initFirebase() {
+  try {
+    if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      db.ref('wedstrijd/registraties').on('value', function(s) { registraties = s.val() || {}; detectConflicts(); safeDraw(); });
+      db.ref('wedstrijd/meldingen').on('value', function(s) { meldingen = s.val() || {}; safeDraw(); });
+      db.ref('wedstrijd/logboek').on('value', function(s) { logboek = s.val() || {}; if (v === 'hist') draw(); });
+      db.ref('wedstrijd/banen_status').on('value', function(s) { banenStatus = s.val() || {}; safeDraw(); });
+      db.ref('wedstrijd/beheer_deelnemers').on('value', function(s) {
+        var val = s.val();
+        if (val) { deelnemersLijst = Array.isArray(val) ? val : Object.values(val); safeDraw(); }
+      });
     }
-  });
+  } catch (e) {}
 }
 
 function go(x) { v = x; draw(); window.scrollTo(0, 0); }
-
-function formatSec(ms, bm) {
-  var s = (ms / 1000).toFixed(2).replace('.', ',');
-  return bm ? s + '*' : s;
-}
+function formatSec(ms, bm) { var s = (ms / 1000).toFixed(2).replace('.', ','); return bm ? s + '*' : s; }
 
 function getGroepen() {
   var map = {};
   Object.values(registraties).forEach(function(r) {
-    if (!r || (r.oefening !== 'A' && r.oefening !== 'B' && r.oefening !== 'C')) return;
+    if (!r || r.status === 'AFGEWEZEN' || (r.oefening !== 'A' && r.oefening !== 'B' && r.oefening !== 'C')) return;
     if (!map[r.startnummer]) {
       var meta = deelnemersLijst.find(function(d) { return d.startnummer == r.startnummer; }) || {};
-      map[r.startnummer] = {
-        nr: r.startnummer, naam: r.roepnaam, klasse: r.klasse, geslacht: r.geslacht,
-        bm: Boolean(meta.buitenMededinging || r.buitenMededinging), oef: {}
-      };
+      map[r.startnummer] = { nr: r.startnummer, naam: r.roepnaam, klasse: r.klasse, geslacht: r.geslacht, bm: Boolean(meta.buitenMededinging || r.buitenMededinging), oef: {} };
     }
     var ms = r.type === 'WEIGERING' ? WEIGERING_MS : (r.tijdMs || 0);
     map[r.startnummer].oef[r.oefening] = { ms: ms, txt: r.type === 'WEIGERING' ? '600,00 (W)' : r.tijdTekst };
   });
 
-  var groepen = [
-    { titel: 'Open reuen', lijst: [] },
-    { titel: 'Open teven', lijst: [] },
-    { titel: 'Jeugd', lijst: [] },
-    { titel: 'Veteranen', lijst: [] },
-    { titel: 'Stamboomloos', lijst: [] },
-    { titel: 'Special', lijst: [] }
+  var gr = [
+    { titel: 'Open reuen', lijst: [] }, { titel: 'Open teven', lijst: [] },
+    { titel: 'Jeugd', lijst: [] }, { titel: 'Veteranen', lijst: [] },
+    { titel: 'Stamboomloos', lijst: [] }, { titel: 'Special', lijst: [] }
   ];
 
   Object.values(map).forEach(function(h) {
-    var a = h.oef.A ? h.oef.A.ms : 0;
-    var b = h.oef.B ? h.oef.B.ms : 0;
-    var c = h.oef.C ? h.oef.C.ms : 0;
-    h.totaalMs = a + b + c;
+    h.totaalMs = (h.oef.A ? h.oef.A.ms : 0) + (h.oef.B ? h.oef.B.ms : 0) + (h.oef.C ? h.oef.C.ms : 0);
     h.gedaan = Object.keys(h.oef).length;
-
-    if (h.klasse === 'Open' && h.geslacht === 'Reu') groepen.at(0).lijst.push(h);
-    else if (h.klasse === 'Open' && h.geslacht === 'Teef') groepen.at(1).lijst.push(h);
-    else if (h.klasse === 'Jeugd') groepen.at(2).lijst.push(h);
-    else if (h.klasse === 'Veteranen' || h.klasse === 'Senioren') groepen.at(3).lijst.push(h);
-    else if (h.klasse === 'Stamboomloos') groepen.at(4).lijst.push(h);
-    else if (h.klasse === 'Specials') groepen.at(5).lijst.push(h);
+    if (h.klasse === 'Open' && h.geslacht === 'Reu') gr.slice(0, 1).pop().lijst.push(h);
+    else if (h.klasse === 'Open' && h.geslacht === 'Teef') gr.slice(1, 2).pop().lijst.push(h);
+    else if (h.klasse === 'Jeugd') gr.slice(2, 3).pop().lijst.push(h);
+    else if (h.klasse === 'Veteranen' || h.klasse === 'Senioren') gr.slice(3, 4).pop().lijst.push(h);
+    else if (h.klasse === 'Stamboomloos') gr.slice(4, 5).pop().lijst.push(h);
+    else if (h.klasse === 'Specials') gr.slice(5, 6).pop().lijst.push(h);
   });
 
-  groepen.forEach(function(g) {
+  gr.forEach(function(g) {
     g.lijst.sort(function(x, y) {
       if (x.bm !== y.bm) return x.bm ? 1 : -1;
       return (y.gedaan - x.gedaan) || (x.totaalMs - y.totaalMs);
@@ -164,16 +124,13 @@ function getGroepen() {
     var reg = 0;
     g.lijst.forEach(function(h, idx) {
       h.rang = idx + 1;
-      if (!h.bm) { h.pnt = Math.max(0, 250 - (reg * 5)); reg++; }
-      else { h.pnt = 0; }
+      if (!h.bm) { h.pnt = Math.max(0, 250 - (reg * 5)); reg++; } else { h.pnt = 0; }
     });
   });
-  return groepen;
+  return gr;
 }
 
-function openMeldingen() {
-  return Object.values(meldingen).filter(function(m) { return m && m.status === 'OPEN'; });
-}
+function openMeldingen() { return Object.values(meldingen).filter(function(m) { return m && m.status === 'OPEN'; }); }
 
 function detectConflicts() {
   if (!db) return;
@@ -188,7 +145,7 @@ function detectConflicts() {
           id: cid, soort: 'CONFLICT', status: 'OPEN', baan: r.baan, oefening: r.oefening,
           startnummer: r.startnummer, roepnaam: r.roepnaam, oudeTijd: seen[key].tijdTekst,
           nieuweTijd: r.tijdTekst, nieuweTijdMs: r.tijdMs,
-          reden: 'Dubbele registratie ontvangen voor dezelfde hond/oefening', timestamp: new Date().toISOString()
+          reden: 'Dubbele registratie voor dezelfde hond/oefening', timestamp: new Date().toISOString()
         });
       }
     }
@@ -197,129 +154,84 @@ function detectConflicts() {
 }
 
 async function beslis(id, akkoord) {
-  var m = meldingen[id];
-  if (!m) return;
+  var m = meldingen[id]; if (!m) return;
   if (db) {
     if (akkoord) {
       var k = Object.keys(registraties).find(function(key) { return registraties[key].startnummer == m.startnummer && registraties[key].oefening == m.oefening; });
       if (k) await db.ref('wedstrijd/registraties/' + k).update({ tijdTekst: m.nieuweTijd, tijdMs: m.nieuweTijdMs, type: 'TIJD' });
     }
     await db.ref('wedstrijd/meldingen/' + id).update({ status: akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN' });
-    await db.ref('wedstrijd/logboek/BESL_' + Date.now()).set({
-      baan: m.baan, actie: 'Tafel ' + (akkoord ? 'accepteert' : 'wijst af') + ' correctie #' + m.startnummer + ' (' + m.oudeTijd + ' -> ' + m.nieuweTijd + ')', timestamp: new Date().toISOString()
-    });
-  } else {
-    meldingen[id].status = akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN';
-    draw();
-  }
+    await db.ref('wedstrijd/logboek/BESL_' + Date.now()).set({ baan: m.baan, actie: 'Tafel ' + (akkoord ? 'accepteert' : 'wijst af') + ' correctie #' + m.startnummer, timestamp: new Date().toISOString() });
+  } else { meldingen[id].status = akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN'; draw(); }
 }
 
-async function leesBericht(id) {
-  if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' });
-  else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); }
-}
+async function leesBericht(id) { if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' }); else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); } }
 
 async function toggleAanwezig(nr) {
-  var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; });
-  if (!d) return;
-  d.aanwezig = !d.aanwezig;
-  localStorage.setItem('nnfc_deelnemers_2027', JSON.stringify(deelnemersLijst));
-  draw();
-  if (db) {
-    await db.ref('wedstrijd/beheer_deelnemers').set(deelnemersLijst);
-    await stuurBaan(d.baan);
-  }
+  var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; }); if (!d) return;
+  d.aanwezig = !d.aanwezig; localStorage.setItem('nnfc_deelnemers_2027', JSON.stringify(deelnemersLijst)); draw();
+  if (db) { await db.ref('wedstrijd/beheer_deelnemers/' + d.id).update({ aanwezig: d.aanwezig }); await stuurBaan(d.baan); }
 }
 
 async function stuurBaan(baanNr) {
   if (!db) return;
   var lijst = deelnemersLijst.filter(function(x) { return x.baan == baanNr && x.aanwezig; }).map(function(h) {
-    return {
-      nr: h.startnummer, roepnaam: h.roepnaam, stamboom: h.stamboom,
-      geslacht: h.geslacht, klasse: h.klasse, opvolgendBrevet: h.opvolgendBrevet,
-      buitenMededinging: Boolean(h.buitenMededinging)
-    };
+    return { nr: h.startnummer, roepnaam: h.roepnaam, klasse: h.klasse, geslacht: h.geslacht, opvolgendBrevet: h.opvolgendBrevet, buitenMededinging: Boolean(h.buitenMededinging) };
   });
   await db.ref('wedstrijd/baan_lijsten/baan_' + baanNr).set(lijst);
 }
 
-async function syncAlleBanen() {
-  if (!db) { alert('Firebase is nog niet gekoppeld in config.js.'); return; }
-  for (var b = 1; b <= 5; b++) await stuurBaan(b);
-  alert('Alle aanwezige honden zijn doorgestuurd naar Baan 1 t/m 5.');
-}
+async function syncAlleBanen() { if (!db) { alert('Firebase is nog niet gekoppeld in config.js.'); return; } for (var b = 1; b <= 5; b++) await stuurBaan(b); alert('Alle aanwezige honden zijn doorgestuurd naar Baan 1 t/m 5.'); }
 
 async function slaExtraOp() {
-  var roep = document.getElementById('exRoep').value.trim();
-  var stam = document.getElementById('exStam').value.trim();
+  var roep = document.getElementById('exRoep').value.trim(), stam = document.getElementById('exStam').value.trim();
   if (!roep && !stam) { alert('Vul minimaal een roepnaam of stamboomnaam in.'); return; }
-  var nr = parseInt(document.getElementById('exNr').value, 10) || (deelnemersLijst.length + 101);
-  var baan = document.getElementById('exBaan').value;
-
-  var nieuw = {
-    id: 'EXTRA_' + Date.now(), startnummer: nr, baan: baan,
-    roepnaam: roep || stam, stamboom: stam || roep,
-    eigenaar: document.getElementById('exEig').value.trim() || 'Daginschrijving',
-    geslacht: document.getElementById('exGesl').value,
-    klasse: document.getElementById('exKlas').value,
-    opvolgendBrevet: document.getElementById('exBrev').value,
-    betaald: document.getElementById('exBet').checked,
-    buitenMededinging: document.getElementById('exBm').checked,
-    aanwezig: true
-  };
-
-  deelnemersLijst.push(nieuw);
-  localStorage.setItem('nnfc_deelnemers_2027', JSON.stringify(deelnemersLijst));
-  if (db) {
-    await db.ref('wedstrijd/beheer_deelnemers').set(deelnemersLijst);
-    await stuurBaan(baan);
-  }
+  var nr = parseInt(document.getElementById('exNr').value, 10) || (deelnemersLijst.length + 101), baan = document.getElementById('exBaan').value;
+  if (deelnemersLijst.some(function(x) { return x.startnummer == nr; })) { alert('Startnummer ' + nr + ' bestaat al.'); return; }
+  var nieuw = { id: 'EXTRA_' + Date.now(), startnummer: nr, baan: baan, roepnaam: roep || stam, stamboom: stam || roep, eigenaar: document.getElementById('exEig').value.trim() || 'Daginschrijving', geslacht: document.getElementById('exGesl').value, klasse: document.getElementById('exKlas').value, opvolgendBrevet: document.getElementById('exBrev').value, betaald: document.getElementById('exBet').checked, buitenMededinging: document.getElementById('exBm').checked, aanwezig: true };
+  deelnemersLijst.push(nieuw); localStorage.setItem('nnfc_deelnemers_2027', JSON.stringify(deelnemersLijst));
+  if (db) { await db.ref('wedstrijd/beheer_deelnemers').set(deelnemersLijst); await stuurBaan(baan); }
   go('aanm');
 }
 
 async function slaNoodOp() {
-  var nr = document.getElementById('ndHond').value;
-  var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; });
+  var nr = document.getElementById('ndHond').value, d = deelnemersLijst.find(function(x) { return x.startnummer == nr; });
   if (!d) { alert('Kies eerst een deelnemer.'); return; }
-  var oef = document.getElementById('ndOef').value;
-  var type = document.getElementById('ndType').value;
-  var txt = type === 'WEIGERING' ? 'WEIGERING' : 'UITGEVOERD';
-  var ms = null;
-
+  var oef = document.getElementById('ndOef').value, type = document.getElementById('ndType').value, txt = type === 'WEIGERING' ? 'WEIGERING' : 'UITGEVOERD', ms = null;
   if (type === 'TIJD') {
-    var raw = document.getElementById('ndCijf').value.replace(/\D/g, '');
-    if (!raw) { alert('Voer cijfers in.'); return; }
-    var pad = raw.padStart(3, '0');
-    var h = parseInt(pad.slice(-2), 10);
-    var s = parseInt(pad.slice(-4, -2) || '0', 10);
-    var m = parseInt(pad.slice(0, -4) || '0', 10);
+    var raw = document.getElementById('ndCijf').value.replace(/\D/g, ''); if (!raw) { alert('Voer cijfers in.'); return; }
+    var pad = raw.padStart(3, '0'), h = parseInt(pad.slice(-2), 10), s = parseInt(pad.slice(-4, -2) || '0', 10), m = parseInt(pad.slice(0, -4) || '0', 10);
     if (s > 59) { alert('Seconden moeten onder 60 liggen.'); return; }
     ms = (m * 60000) + (s * 1000) + (h * 10);
+    if (ms === 0) { alert('Tijd van 0,00 is niet toegestaan.'); return; }
     txt = m > 0 ? (m + ':' + String(s).padStart(2, '0') + ',' + String(h).padStart(2, '0')) : (s + ',' + String(h).padStart(2, '0'));
   }
-
   var rid = 'TAFEL_' + d.baan + '_' + oef + '_' + d.startnummer + '_' + Date.now();
-  var payload = {
-    id: rid, baan: d.baan, klasse: d.klasse, oefening: oef,
-    startnummer: d.startnummer, roepnaam: d.roepnaam, geslacht: d.geslacht,
-    buitenMededinging: Boolean(d.buitenMededinging), type: type,
-    tijdTekst: txt, tijdMs: ms, timestamp: new Date().toISOString()
-  };
-
-  if (db) await db.ref('wedstrijd/registraties/' + rid).set(payload);
-  else registraties[rid] = payload;
+  var payload = { id: rid, baan: d.baan, klasse: d.klasse, oefening: oef, startnummer: d.startnummer, roepnaam: d.roepnaam, geslacht: d.geslacht, buitenMededinging: Boolean(d.buitenMededinging), type: type, tijdTekst: txt, tijdMs: ms, timestamp: new Date().toISOString() };
+  if (db) await db.ref('wedstrijd/registraties/' + rid).set(payload); else registraties[rid] = payload;
   go('home');
 }
 
-function setKcm(nr, val) {
-  kcmSelecties[nr] = val;
-  localStorage.setItem('nnfc_kcm_2026', JSON.stringify(kcmSelecties));
-  draw();
+function setKcm(nr, val) { kcmSelecties[nr] = val; localStorage.setItem('nnfc_kcm_2026', JSON.stringify(kcmSelecties)); draw(); }
+function back() { return '<button onclick="go(\'home\')" style="margin-bottom:8px"><span aria-hidden="true">←</span> Overzicht</button>'; }
+function exporteerUitslagCsv() {
+  var regels = ['Klasse;Plaats;Startnummer;Roepnaam;Oefening A;Oefening B;Oefening C;Totaal Seconden;Bekerpunten;Buiten Mededinging'];
+  getGroepen().forEach(function(g) {
+    g.lijst.forEach(function(d, j) {
+      regels.push([
+        g.titel, j + 1, d.nr, d.naam,
+        d.oef.A ? d.oef.A.txt : '-', d.oef.B ? d.oef.B.txt : '-', d.oef.C ? d.oef.C.txt : '-',
+        formatSec(d.totaalMs, false), d.bm ? 0 : d.pnt, d.bm ? 'Ja' : 'Nee'
+      ].join(';'));
+    });
+  });
+  var blob = new Blob(['\uFEFF' + regels.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nnfc_officiele_uitslag.csv';
+  a.click();
 }
 
-function back() {
-  return '<button onclick="go(\'home\')" style="margin-bottom:8px"><span aria-hidden="true">←</span> Overzicht</button>';
-}
 function draw() {
   var nuTijd = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
   var openM = openMeldingen();
@@ -367,24 +279,24 @@ function draw() {
       }
 
       h += '<button class="c' + (heeftWarn ? ' w' : '') + '" onclick="go(\'l' + i + '\')">' +
-        '<b>' + titel + '</b>' +
-        '<div class="m">Oefening ' + st.oefening + ', ' + st.klaar + ' van ' + tot + '</div>' +
+        '<b>' + esc(titel) + '</b>' +
+        '<div class="m">Oefening ' + esc(st.oefening) + ', ' + st.klaar + ' van ' + tot + '</div>' +
         '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
-        (st.nuHond && st.nuHond !== 'Klaar' ? '<span class="chip">Nu</span> ' + st.nuHond : 'Klaar met oefening ' + st.oefening) +
+        (st.nuHond && st.nuHond !== 'Klaar' ? '<span class="chip">Nu</span> ' + esc(st.nuHond) : 'Klaar met oefening ' + esc(st.oefening)) +
         '<div class="m" style="margin-top:6px">' + tijdStr + '</div>' +
         '</button>';
     }
     h += '</div>';
 
     var groepen = getGroepen();
-    h += '<h2>Voorlopige stand (Som A+B+C in seconden)</h2><div class="g">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px"><h2 style="margin:0">Voorlopige stand (Som A+B+C in seconden)</h2><button onclick="exporteerUitslagCsv()">Exporteer Uitslag (CSV)</button></div><div class="g" style="margin-top:8px">';
     groepen.forEach(function(g, idx) {
       var top3 = g.lijst.slice(0, 3);
-      h += '<button class="c" onclick="go(\'s' + idx + '\')"><b>' + g.titel + '</b>';
+      h += '<button class="c" onclick="go(\'s' + idx + '\')"><b>' + esc(g.titel) + '</b>';
       if (top3.length) {
         top3.forEach(function(d, j) {
           h += '<div style="display:flex;justify-content:space-between;margin-top:4px">' +
-            '<span>' + (j + 1) + '. ' + d.naam + '</span>' +
+            '<span>' + (j + 1) + '. ' + esc(d.naam) + '</span>' +
             '<b style="font-size:19px">' + formatSec(d.totaalMs, d.bm) + '</b></div>';
         });
       } else {
@@ -400,31 +312,33 @@ function draw() {
     h += back() + '<h2 style="margin-top:4px">Baan ' + bNr + '</h2>';
     if (recs.length) {
       recs.forEach(function(r) {
-        h += '<div class="t"><b>' + r.startnummer + '</b><div>' + r.roepnaam + ' <span class="m">(Oef. ' + r.oefening + ')</span></div><b>' + r.tijdTekst + '</b></div>';
+        h += '<div class="t"><b>' + esc(r.startnummer) + '</b><div>' + esc(r.roepnaam) + ' <span class="m">(Oef. ' + esc(r.oefening) + ')</span></div><b>' + esc(r.tijdTekst) + '</b></div>';
       });
     } else {
       h += '<div class="m">Nog geen geregistreerde tijden op Baan ' + bNr + '.</div>';
     }
 
   } else if (v.charAt(0) === 's') {
-    var grp = getGroepen().at(+v.slice(1));
-    h += back() + '<h2 style="margin-top:4px">' + grp.titel + ', volledige stand</h2><div class="m">Som A + B + C in seconden, snelste eerst</div>';
+    var grpIdx = parseInt(v.slice(1), 10);
+    var grp = getGroepen().slice(grpIdx, grpIdx + 1).pop();
+    h += back() + '<h2 style="margin-top:4px">' + esc(grp.titel) + ', volledige stand</h2><div class="m">Som A + B + C in seconden, snelste eerst</div>';
     if (grp.lijst.length) {
       grp.lijst.forEach(function(d, j) {
-        h += '<div class="t"><b>' + (j + 1) + '</b><div>' + d.naam + ' <span class="m">nr ' + d.nr + '</span><div class="m">A: ' + (d.oef.A ? d.oef.A.txt : '-') + ' | B: ' + (d.oef.B ? d.oef.B.txt : '-') + ' | C: ' + (d.oef.C ? d.oef.C.txt : '-') + '</div></div><b>' + formatSec(d.totaalMs, d.bm) + '</b></div>';
+        h += '<div class="t"><b>' + (j + 1) + '</b><div>' + esc(d.naam) + ' <span class="m">nr ' + esc(d.nr) + '</span><div class="m">A: ' + (d.oef.A ? esc(d.oef.A.txt) : '-') + ' | B: ' + (d.oef.B ? esc(d.oef.B.txt) : '-') + ' | C: ' + (d.oef.C ? esc(d.oef.C.txt) : '-') + '</div></div><b>' + formatSec(d.totaalMs, d.bm) + '</b></div>';
       });
     } else {
       h += '<div class="m" style="margin-top:10px">Nog geen tijden in deze klasse.</div>';
     }
+
   } else if (v === 'aanm') {
     h += back() + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">' +
       '<div><h2 style="margin:0">Aanmelding Secretariaat (Art. 2.5)</h2><div class="m">Vink aanwezigen aan (ook laatkomers). Gaat direct naar de klokker.</div></div>' +
       '<button class="pri" onclick="syncAlleBanen()">Synchroniseer alle banen</button></div>';
     if (deelnemersLijst.length) {
       deelnemersLijst.forEach(function(d) {
-        h += '<div class="t"><b>B' + d.baan + '</b><div>#' + d.startnummer + ' ' + d.roepnaam + ' <span class="' + (d.betaald ? 'chip-ok' : 'chip-bad') + '">' + (d.betaald ? 'Betaald' : 'Nog betalen') + '</span>' +
-          '<div class="m">' + d.stamboom + ' • ' + (d.eigenaar || '-') + ' (' + d.klasse + ')</div></div>' +
-          '<input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + d.startnummer + ')"></div>';
+        h += '<div class="t"><b>B' + esc(d.baan) + '</b><div>#' + esc(d.startnummer) + ' ' + esc(d.roepnaam) + ' <span class="' + (d.betaald ? 'chip-ok' : 'chip-bad') + '">' + (d.betaald ? 'Betaald' : 'Nog betalen') + '</span>' +
+          '<div class="m">' + esc(d.stamboom) + ' • ' + esc(d.eigenaar || '-') + ' (' + esc(d.klasse) + ')</div></div>' +
+          '<input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + esc(d.startnummer) + ')"></div>';
       });
     } else {
       h += '<div class="box n"><div class="m">Nog geen deelnemers ingeladen. Gebruik "+ Extra deelnemer" of laad vanuit Beheer.</div></div>';
@@ -436,7 +350,7 @@ function draw() {
       '<div><label>Baan</label><select id="exBaan"><option value="1">Baan 1</option><option value="2">Baan 2</option><option value="3">Baan 3</option><option value="4">Baan 4</option><option value="5">Baan 5</option></select></div></div>' +
       '<div class="row"><div><label>Roepnaam hond</label><input type="text" id="exRoep" placeholder="bijv. Max"></div>' +
       '<div><label>Stamboomnaam</label><input type="text" id="exStam" placeholder="bijv. Max v.d. Waterkant"></div></div>' +
-      '<div class="row"><div><label>Naam eigenaar</label><input type="text" id="exEig" placeholder="bijv. J. de Vries"></div>' +
+      '<div class="row"><div><label>Naam eigenaar</label><input type="text" id="exEig" placeholder="bijv. J. Jansen"></div>' +
       '<div><label>Geslacht</label><select id="exGesl"><option value="Reu">Reu</option><option value="Teef">Teef</option></select></div></div>' +
       '<div class="row"><div><label>Klasse</label><select id="exKlas"><option value="Open">Open (50m)</option><option value="Jeugd">Jeugd (30m)</option><option value="Veteranen">Veteranen (30m)</option><option value="Stamboomloos">Stamboomloos (30m)</option><option value="Specials">Specials (30m)</option></select></div>' +
       '<div><label>Opvolgend brevet</label><select id="exBrev"><option value="Brevet A">Brevet A</option><option value="Jeugdbrevet">Jeugdbrevet</option><option value="Brevet B">Brevet B</option><option value="Brevet C">Brevet C</option><option value="Brevet D">Brevet D</option><option value="Brevet E">Brevet E</option><option value="Seaman Brevet">Seaman Brevet</option></select></div></div>' +
@@ -446,39 +360,13 @@ function draw() {
 
   } else if (v === 'nood') {
     var opties = deelnemersLijst.length
-      ? deelnemersLijst.map(function(d) { return '<option value="' + d.startnummer + '">Baan ' + d.baan + ' | #' + d.startnummer + ' ' + d.roepnaam + ' (' + d.klasse + ')</option>'; }).join('')
-      : '<option value="">Geen deelnemers beschikbaar</option>';
-    h += back() + '<div class="box n" style="max-width:600px"><h2 style="margin-top:0">Handmatige tijd / weigering invoeren</h2>' +
-      '<label>Deelnemer</label><select id="ndHond">' + opties + '</select>' +
-      '<label>Oefening</label><select id="ndOef"><option value="A">Oefening A (Object)</option><option value="B">Oefening B (Pop)</option><option value="C">Oefening C (Springen)</option><option value="BREVET">Brevetoefening E t/m J</option></select>' +
-      '<label>Resultaat</label><select id="ndType" onchange="document.getElementById(\'ndVak\').style.display=this.value===\'TIJD\'?\'block\':\'none\'"><option value="TIJD">Geklokte tijd</option><option value="WEIGERING">Weigering (600,00 sec)</option><option value="BREVET_OK">Brevet uitgevoerd</option></select>' +
-      '<div id="ndVak"><label>Tijd in cijfers (bijv. 945 = 9,45 sec)</label><input type="tel" id="ndCijf" placeholder="bijv. 1425"></div>' +
-      '<button class="pri" style="width:100%" onclick="slaNoodOp()">Resultaat direct toevoegen</button></div>';
-
-  } else if (v === 'meld') {
-    h += back();
-    if (!openM.length) h += '<div class="m">Geen open meldingen.</div>';
-    openM.forEach(function(m) {
-      if (m.soort === 'BERICHT') {
-        h += '<div class="box n"><div class="m">Baan ' + m.baan + ', Oefening ' + m.oefening + '</div><div style="font-size:21px;margin:4px 0 10px">' + m.tekst + '</div><button onclick="leesBericht(\'' + m.id + '\')" style="width:100%">Gelezen</button></div>';
-      } else {
-        h += '<div class="box"><div class="m">Baan ' + m.baan + ', Oefening ' + m.oefening + '</div>' +
-          '<div style="font-size:22px;font-weight:700;margin:2px 0 8px">Conflict: twee tijden voor ' + m.roepnaam + ' (nr ' + m.startnummer + ')</div>' +
-          '<div class="m">Eerst geregistreerd</div><div class="big">' + m.oudeTijd + '</div>' +
-          '<div class="m" style="margin-top:6px">Correctie van de klokker</div><div class="big">' + m.nieuweTijd + '</div>' +
-          '<div class="m" style="margin:6px 0 12px">Reden: ' + m.reden + '. Tot de tafel beslist telt ' + m.oudeTijd + '.</div>' +
-          '<div class="row"><button onclick="beslis(\'' + m.id + '\', false)">Houd ' + m.oudeTijd + '</button>' +
-          '<button class="pri" onclick="beslis(\'' + m.id + '\', true)">Neem ' + m.nieuweTijd + ' over</button></div></div>';
-      }
-    });
-
   } else if (v === 'beker') {
     var gr = getGroepen();
-    var openH = gr.at(0).lijst.concat(gr.at(1).lijst).filter(function(x) { return !x.bm; });
-    var jeugdH = gr.at(2).lijst.filter(function(x) { return !x.bm; });
+    var openH = gr.slice(0, 1).pop().lijst.concat(gr.slice(1, 2).pop().lijst).filter(function(x) { return !x.bm; });
+    var jeugdH = gr.slice(2, 3).pop().lijst.filter(function(x) { return !x.bm; });
 
     var bouwSpetter = function(titel, lijst) {
-      var s = '<div class="box n"><h2 style="margin-top:0">' + titel + '</h2>';
+      var s = '<div class="box n"><h2 style="margin-top:0">' + esc(titel) + '</h2>';
       if (!lijst.length) return s + '<div class="m">Nog geen deelnemers binnen mededinging.</div></div>';
       var metTot = lijst.map(function(d) {
         var k = kcmSelecties[d.nr] || 'GEEN';
@@ -487,10 +375,11 @@ function draw() {
 
       metTot.forEach(function(d) {
         var opts = Object.entries(KCM_PUNTEN).map(function(e) {
-          return '<option value="' + e.at(0) + '" ' + (d.kcm === e.at(0) ? 'selected' : '') + '>' + e.at(0) + ' (+' + e.at(1) + ')</option>';
+          var kNaam = e.slice(0, 1).pop(), kPnt = e.slice(1, 2).pop();
+          return '<option value="' + esc(kNaam) + '" ' + (d.kcm === kNaam ? 'selected' : '') + '>' + esc(kNaam) + ' (+' + kPnt + ')</option>';
         }).join('');
-        s += '<div class="t"><b>' + d.tot + '</b><div>' + d.naam + ' <span class="m">nr ' + d.nr + ' • Trials: ' + d.pnt + '</span></div>' +
-          '<select style="width:auto;margin:0" onchange="setKcm(' + d.nr + ', this.value)">' + opts + '</select></div>';
+        s += '<div class="t"><b>' + d.tot + '</b><div>' + esc(d.naam) + ' <span class="m">nr ' + esc(d.nr) + ' • Trials: ' + d.pnt + '</span></div>' +
+          '<select style="width:auto;margin:0" onchange="setKcm(' + esc(d.nr) + ', this.value)">' + opts + '</select></div>';
       });
       return s + '</div>';
     };
@@ -503,7 +392,7 @@ function draw() {
     if (logs.length) {
       h += '<ul class="log">' + logs.map(function(l) {
         var t = new Date(l.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-        return '<li>' + t + ' Baan ' + l.baan + ': ' + l.actie + '</li>';
+        return '<li>' + t + ' Baan ' + esc(l.baan) + ': ' + esc(l.actie) + '</li>';
       }).join('') + '</ul>';
     } else {
       h += '<div class="m">Nog geen wijzigingen geregistreerd.</div>';
@@ -514,6 +403,7 @@ function draw() {
   document.getElementById('app').innerHTML = h;
 }
 
+initFirebase();
 draw();
 </script>
 </body>
