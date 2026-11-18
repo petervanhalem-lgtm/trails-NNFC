@@ -202,12 +202,3 @@ function pushStatus() {
 function renderSyncBadge(count) {
   var el = document.getElementById('syncBadge');
   if (!el) return;
-  el.textContent = count > 0 ? ('Wachtrij: ' + count) : (db ? 'Live' : 'Lokaal');
-  el.className = count > 0 ? 'sync pend' : 'sync';
-}
-
-window.addEventListener('online', flushOutbox);
-setInterval(flushOutbox, 5000);
-
-function render() {
-  var o = S.ox[S.ex];
