@@ -9,12 +9,11 @@
 :root{
   --bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
   --cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309;
-  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;
-    --cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A
+    --cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A;
   }
 }
 *{box-sizing:border-box}
@@ -26,7 +25,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Con
 h1{font-size:26px;margin:0;font-weight:700;line-height:1.1}
 .sub{color:var(--mut);font-size:16px}
 button, .btn-link{font:inherit;color:inherit;border:2px solid var(--ln);background:var(--sf);border-radius:12px;min-height:48px;padding:6px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .nav button.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
 .nav button.extra{background:var(--ok);border-color:var(--ok);color:#FFFFFF}
@@ -37,7 +35,7 @@ button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 .c.w{border-color:var(--warn)}
 .m{color:var(--mut);font-size:15px}
 .bar{height:8px;border-radius:5px;background:var(--soft);margin:8px 0}
-.bar i{display:block;height:8px;border-radius:5px;background:var(--ac);transition:width 0.2s}
+.bar i{display:block;height:8px;border-radius:5px;background:var(--ac)}
 .chip{display:inline-block;background:var(--cur);color:var(--curink);border-radius:8px;padding:1px 8px;font-weight:700}
 .chip-ok{display:inline-block;background:var(--ok);color:#fff;border-radius:8px;padding:1px 8px;font-size:14px;font-weight:700}
 .chip-bad{display:inline-block;background:var(--bad);color:#fff;border-radius:8px;padding:1px 8px;font-size:14px;font-weight:700}
@@ -111,9 +109,7 @@ if (db) {
   });
 }
 
-setInterval(function() {
-  if (v === 'home') draw();
-}, 15000);
+setInterval(function() { if (v === 'home') draw(); }, 15000);
 
 function go(x) { v = x; draw(); window.scrollTo(0, 0); }
 
@@ -125,7 +121,7 @@ function formatSec(ms, bm) {
 function getGroepen() {
   var map = {};
   Object.values(registraties).forEach(function(r) {
-    if (!r || ['A', 'B', 'C'].indexOf(r.oefening) === -1) return;
+    if (!r || (r.oefening !== 'A' && r.oefening !== 'B' && r.oefening !== 'C')) return;
     if (!map[r.startnummer]) {
       var meta = deelnemersLijst.find(function(d) { return d.startnummer == r.startnummer; }) || {};
       map[r.startnummer] = {
@@ -160,12 +156,12 @@ function getGroepen() {
     h.totaalMs = a + b + c;
     h.gedaan = Object.keys(h.oef).length;
 
-    if (h.klasse === 'Open' && h.geslacht === 'Reu') groepen.lijst.push(h);
-    else if (h.klasse === 'Open' && h.geslacht === 'Teef') groepen.lijst.push(h);
-    else if (h.klasse === 'Jeugd') groepen.lijst.push(h);
-    else if (h.klasse === 'Veteranen' || h.klasse === 'Senioren') groepen.lijst.push(h);
-    else if (h.klasse === 'Stamboomloos') groepen.lijst.push(h);
-    else if (h.klasse === 'Specials') groepen.lijst.push(h);
+    if (h.klasse === 'Open' && h.geslacht === 'Reu') groepen.at(0).lijst.push(h);
+    else if (h.klasse === 'Open' && h.geslacht === 'Teef') groepen.at(1).lijst.push(h);
+    else if (h.klasse === 'Jeugd') groepen.at(2).lijst.push(h);
+    else if (h.klasse === 'Veteranen' || h.klasse === 'Senioren') groepen.at(3).lijst.push(h);
+    else if (h.klasse === 'Stamboomloos') groepen.at(4).lijst.push(h);
+    else if (h.klasse === 'Specials') groepen.at(5).lijst.push(h);
   });
 
   groepen.forEach(function(g) {
@@ -223,3 +219,6 @@ async function beslis(id, akkoord) {
     }
     await db.ref('wedstrijd/meldingen/' + id).update({ status: akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN' });
     await db.ref('wedstrijd/logboek/BESL_' + Date.now()).set({
+      baan: m.baan, actie: 'Tafel ' + (akkoord ? 'accepteert' : 'wijst af') + ' correctie #' + m.startnummer + ' (' + m.oudeTijd + ' -> ' + m.nieuweTijd + ')', timestamp: new Date().toISOString()
+    });
+  } else {
