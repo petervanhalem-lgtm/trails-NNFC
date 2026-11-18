@@ -362,4 +362,52 @@ document.getElementById('app').addEventListener('click', function(e) {
       o.q.splice(i, 1);
       o.q.splice(1, 0, mid);
       delete o.skip[mid];
+      var msg = 'Oef. ' + S.ex + ': #' + dog(mid).nr + ' ' + dog(mid).roep + ' als volgende (overgeslagen: ' + by.map(function(x) { return dog(x).roep; }).join(', ') + ')';
+      S.log.push(now() + ' ' + msg);
+      enqueue('logboek', { id: 'LOG_' + BAAN_NR + '_' + Date.now(), baan: BAAN_NR, actie: msg, timestamp: new Date().toISOString() });
+      S.tab = 'reg';
+    }
+  }
+  else if (a === 'msgopen') { msgOpen = true; }
+  else if (a === 'msgclose') { msgOpen = false; }
+  else if (a === 'msgsend') {
+    var sel = document.getElementById('msgSel').value;
+    var extra = document.getElementById('msgTxt').value.trim();
+    enqueue('meldingen', {
+      id: 'MSG_' + BAAN_NR + '_' + Date.now(),
+      soort: 'BERICHT', status: 'OPEN', baan: BAAN_NR, oefening: S.ex,
+      tekst: extra ? (sel + ': ' + extra) : sel,
+      timestamp: new Date().toISOString()
+    });
+    msgOpen = false;
+  }
+  else if (a === 'corropen') { corrId = +v; }
+  else if (a === 'corrclose') { corrId = null; }
+  else if (a === 'corrsend') {
+    var raw = document.getElementById('corrInp').value.replace(/\D/g, '');
+    var parsed = parse(raw);
+    if (!parsed || !parsed.cs) { alert(parsed ? parsed.err : 'Voer een geldige tijd in.'); return; }
+    var cd2 = dog(corrId), oldR2 = o.res[corrId];
+    enqueue('meldingen', {
+      id: 'CORR_' + BAAN_NR + '_' + Date.now(),
+      soort: 'CORRECTIE', status: 'OPEN', baan: BAAN_NR, oefening: S.ex,
+      startnummer: cd2.nr, roepnaam: cd2.roep,
+      oudeTijd: oldR2.t === 'tijd' ? fmt(oldR2.cs) : 'Weigering',
+      nieuweTijd: fmt(parsed.cs), nieuweTijdMs: parsed.ms,
+      reden: document.getElementById('corrReden').value.trim() || 'Geen reden opgegeven',
+      timestamp: new Date().toISOString()
+    });
+    corrId = null;
+  }
+
+  save();
+  render();
+});
+
+initFirebase();
+render();
+flushOutbox();
+</script>
+</body>
+</html>
 
