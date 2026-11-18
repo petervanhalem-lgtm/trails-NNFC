@@ -1,1 +1,221 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NNFC Klokkersscherm</title>
+<style>
+:root{--bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;--cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;--cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:18px;line-height:1.3;-webkit-tap-highlight-color:transparent}
+#app{max-width:520px;margin:0 auto;padding:12px 12px 40px}
+h1{font-size:24px;margin:0;font-weight:700;line-height:1.1}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 10px}
+.top-l{display:flex;align-items:center;gap:10px}
+.top img{width:46px;height:46px;border-radius:50%;flex:none}
+.sub{color:var(--mut);font-size:15px;margin:2px 0 0}
+.sync{font-size:14px;font-weight:700;padding:4px 10px;border-radius:10px;background:var(--ok);color:#fff;white-space:nowrap}
+.sync.pend{background:var(--warn)}
+button,.btn-link{font:inherit;color:inherit;border:2px solid var(--ln);background:var(--sf);border-radius:12px;min-height:48px;padding:6px 12px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+button:disabled{opacity:.4;cursor:default}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.seg button.on,.tabs button.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
+.cur{background:var(--cur);color:var(--curink);border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cur small{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.cur .nm{font-size:40px;font-weight:700;line-height:1.05}
+.cur .st{font-size:15px;opacity:.85}
+.cur .br{display:inline-block;background:rgba(0,0,0,.12);padding:2px 8px;border-radius:6px;font-size:14px;font-weight:700;margin-top:4px}
+.nr{font-size:48px;font-weight:700;line-height:1;text-align:right}
+.nxt{display:flex;justify-content:space-between;align-items:baseline;padding:8px 4px;color:var(--mut);font-size:19px}
+.nxt b{color:var(--ink);font-size:22px}
+.disp{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:8px 16px;text-align:right}
+.disp .t{font-size:56px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.disp .t.ph{color:var(--mut);opacity:.55}
+.msg{min-height:22px;font-size:16px;color:var(--mut);margin-top:4px}
+.msg.err{color:var(--bad);font-weight:600}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.pad button{min-height:66px;font-size:28px}
+.acts,.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acts button,.row button{min-height:62px;font-size:20px}
+.pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
+.bad{border-color:var(--bad)!important;color:var(--bad)!important}
+.conf{background:var(--sf);border:3px solid var(--ac);border-radius:16px;padding:12px;margin-top:8px}
+.conf p{margin:0 0 10px;font-size:21px}
+.list{display:grid;gap:8px}
+.r{display:grid;grid-template-columns:46px 1fr auto;gap:10px;align-items:center;background:var(--sf);border:2px solid var(--ln);border-radius:12px;padding:8px 10px;min-height:60px}
+.r.cu{border-color:var(--cur);background:var(--cur);color:var(--curink)}
+.r .n{font-size:24px;font-weight:700}
+.r .a{font-size:20px;font-weight:700}
+.r .b{font-size:14px;color:var(--mut)}
+.r.cu .b{color:var(--curink)}
+.tag{font-size:16px;font-weight:700;color:var(--mut)}
+.tag.ok{color:var(--ok)}.tag.w{color:var(--bad)}
+.r button{min-height:44px;font-size:16px}
+h2{font-size:18px;margin:16px 0 6px}
+.log{font-size:15px;color:var(--mut);margin:0;padding-left:18px}
+.box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:14px;margin-top:10px}
+input,select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid var(--ln);border-radius:10px;padding:10px;width:100%;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="config.js"></script>
+<script>
+var params = new URLSearchParams(window.location.search);
+var BAAN_NR = String(params.get('baan') || '1').replace(/[^1-5]/g, '') || '1';
+document.title = 'Baan ' + BAAN_NR + ' – NNFC Klokkersscherm';
+var LOGO = 'assets/nnfc-logo.png';
+
+function esc(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+var db = null;
+var KEY_STATE = 'nnfc_klokker_state_' + BAAN_NR;
+var KEY_DOGS = 'nnfc_klokker_dogs_' + BAAN_NR;
+var KEY_OUTBOX = 'nnfc_klokker_outbox_' + BAAN_NR;
+
+var DOGS = [];
+try { DOGS = JSON.parse(localStorage.getItem(KEY_DOGS)) || []; } catch (e) {}
+
+function mk() { return { q: [], res: {}, skip: {} }; }
+function fresh() { return { ex: 'A', tab: 'reg', ox: { A: mk(), B: mk(), C: mk(), BREVET: mk() }, log: [] }; }
+
+var S = null;
+try { S = JSON.parse(localStorage.getItem(KEY_STATE)); } catch (e) {}
+if (!S || !S.ox || !S.ox.BREVET) S = fresh();
+
+var inp = '', conf = null, corrId = null, msgOpen = false, sending = false;
+
+function save() {
+  try {
+    localStorage.setItem(KEY_DOGS, JSON.stringify(DOGS));
+    localStorage.setItem(KEY_STATE, JSON.stringify(S));
+  } catch (e) {}
+}
+
+function isBrevetHond(d) {
+  return ['Brevet B', 'Brevet C', 'Brevet D', 'Brevet E', 'Seaman Brevet'].indexOf(d.opvolgendBrevet) !== -1;
+}
+
+function getBrevetLabel(br) {
+  if (br === 'Brevet B') return 'Oefening E: Object bij Drenkeling (30m)';
+  if (br === 'Brevet C') return 'Oefening F: Losse lijn bij boot (30m)';
+  if (br === 'Brevet D') return 'Oefening G: Springen & andere boot (30m)';
+  if (br === 'Brevet E') return 'Oefening H: Peddel naar boot (30m)';
+  if (br === 'Seaman Brevet') return 'Oefening J: Pop achter boot (30m)';
+  return 'Vervolgoefening';
+}
+
+function initFirebase() {
+  try {
+    if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      db.ref('wedstrijd/baan_lijsten/baan_' + BAAN_NR).on('value', function(snap) {
+        var val = snap.val();
+        var nieuw = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+        var geldigeIds = {};
+        DOGS = nieuw.map(function(h) {
+          geldigeIds[h.nr] = true;
+          return {
+            id: h.nr, nr: h.nr, roep: h.roepnaam, stam: h.stamboom || '',
+            klasse: h.klasse, geslacht: h.geslacht || '',
+            opvolgendBrevet: h.opvolgendBrevet || '',
+            buitenMededinging: Boolean(h.buitenMededinging)
+          };
+        });
+
+        ['A', 'B', 'C'].forEach(function(oef) {
+          S.ox[oef].q = S.ox[oef].q.filter(function(id) { return geldigeIds[id]; });
+          DOGS.forEach(function(d) {
+            if (S.ox[oef].q.indexOf(d.id) === -1 && !S.ox[oef].res[d.id]) S.ox[oef].q.push(d.id);
+          });
+        });
+
+        S.ox.BREVET.q = S.ox.BREVET.q.filter(function(id) { return geldigeIds[id]; });
+        DOGS.filter(isBrevetHond).forEach(function(d) {
+          if (S.ox.BREVET.q.indexOf(d.id) === -1 && !S.ox.BREVET.res[d.id]) S.ox.BREVET.q.push(d.id);
+        });
+
+        save();
+        render();
+        pushStatus();
+      });
+      flushOutbox();
+    }
+  } catch (e) {}
+}
+
+function dog(id) { return DOGS.find(function(d) { return d.id === id; }); }
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function fmt(cs) { var m = Math.floor(cs / 6000), s = Math.floor(cs % 6000 / 100), c = cs % 100; return m ? m + ':' + pad(s) + ',' + pad(c) : s + ',' + pad(c); }
+
+function parse(str) {
+  if (!str) return null;
+  var n = ('0000' + str).slice(-Math.max(4, str.length));
+  var c = +n.slice(-2), s = +n.slice(-4, -2), m = +n.slice(0, -4) || 0;
+  if (s > 59) return { err: 'Seconden moeten onder 60 liggen.' };
+  var t = m * 6000 + s * 100 + c;
+  if (t === 0) return { err: 'Een tijd van 0,00 is niet mogelijk.' };
+  return { cs: t, ms: t * 10 };
+}
+
+function now() { return new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }); }
+
+function enqueue(padNaam, data) {
+  var box = [];
+  try { box = JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []; } catch (e) {}
+  box.push({ pad: padNaam, data: data });
+  localStorage.setItem(KEY_OUTBOX, JSON.stringify(box));
+  flushOutbox();
+}
+
+async function flushOutbox() {
+  var box = [];
+  try { box = JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []; } catch (e) {}
+  renderSyncBadge(box.length);
+  if (sending || !box.length || !db || !navigator.onLine) return;
+
+  sending = true;
+  var item = box.slice(0, 1).pop();
+  try {
+    await db.ref('wedstrijd/' + item.pad + '/' + item.data.id).set(item.data);
+    var actueel = JSON.parse(localStorage.getItem(KEY_OUTBOX)) || [];
+    actueel.shift();
+    localStorage.setItem(KEY_OUTBOX, JSON.stringify(actueel));
+    sending = false;
+    pushStatus();
+    flushOutbox();
+  } catch (e) {
+    sending = false;
+  }
+}
+
+function pushStatus() {
+  if (!db || !navigator.onLine) return;
+  var o = S.ox[S.ex];
+  var rel = S.ex === 'BREVET' ? DOGS.filter(isBrevetHond) : DOGS;
+  var cd = dog(o.q.slice(0, 1).pop());
+  db.ref('wedstrijd/banen_status/baan_' + BAAN_NR).set({
+    laatstGezien: new Date().toISOString(),
+    oefening: S.ex,
+    klaar: Object.keys(o.res).length,
+    totaal: rel.length,
+    nuHond: cd ? ('#' + cd.nr + ' ' + cd.roep) : 'Klaar'
+  });
+}
+
+function renderSyncBadge(count) {
+  var el = document.getElementById('syncBadge');
+  if (!el) return;
+  el.textContent = count > 0 ? ('Wachtrij: ' + count) : (db ? 'Live' : 'Lokaal');
+  el.className = count > 0 ? 'sync pend' : 'sync';
+}
+
+window.addEventListener('online', flushOutbox);
+setInterval(flushOutbox, 5000);
 
