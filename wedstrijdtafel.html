@@ -215,3 +215,306 @@ async function beslis(id, akkoord) {
 }
 
 async function leesBericht(id) {
+  if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' });
+  else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); }
+}
+
+async function toggleAanwezig(nr) {
+  var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; });
+  if (!d) return;
+  d.aanwezig = !d.aanwezig;
+  localStorage.setItem('nnfc_deelnemers_2027', JSON.stringify(deelnemersLijst));
+  draw();
+  if (db) {
+    await db.ref('wedstrijd/beheer_deelnemers').set(deelnemersLijst);
+    await stuurBaan(d.baan);
+  }
+}
+
+async function stuurBaan(baanNr) {
+  if (!db) return;
+  var lijst = deelnemersLijst.filter(function(x) { return x.baan == baanNr && x.aanwezig; }).map(function(h) {
+    return {
+      nr: h.startnummer, roepnaam: h.roepnaam, stamboom: h.stamboom,
+      geslacht: h.geslacht, klasse: h.klasse, opvolgendBrevet: h.opvolgendBrevet,
+      buitenMededinging: Boolean(h.buitenMededinging)
+    };
+  });
+  await db.ref('wedstrijd/baan_lijsten/baan_' + baanNr).set(lijst);
+}
+
+async function syncAlleBanen() {
+  if (!db) { alert('Firebase is nog niet gekoppeld in config.js.'); return; }
+  for (var b = 1; b <= 5; b++) await stuurBaan(b);
+  alert('Alle aanwezige honden zijn doorgestuurd naar Baan 1 t/m 5.');
+}
+
+async function slaExtraOp() {
+  var roep = document.getElementById('exRoep').value.trim();
+  var stam = document.getElementById('exStam').value.trim();
+  if (!roep && !stam) { alert('Vul minimaal een roepnaam of stamboomnaam in.'); return; }
+  var nr = parseInt(document.getElementById('exNr').value, 10) || (deelnemersLijst.length + 101);
+  var baan = document.getElementById('exBaan').value;
+
+  var nieuw = {
+    id: 'EXTRA_' + Date.now(), startnummer: nr, baan: baan,
+    roepnaam: roep || stam, stamboom: stam || roep,
+    eigenaar: document.getElementById('exEig').value.trim() || 'Daginschrijving',
+    geslacht: document.getElementById('exGesl').value,
+    klasse: document.getElementById('exKlas').value,
+    opvolgendBrevet: document.getElementById('exBrev').value,
+    betaald: document.getElementById('exBet').checked,
+    buitenMededinging: document.getElementById('exBm').checked,
+    aanwezig: true
+  };
+
+  deelnemersLijst.push(nieuw);
+  localStorage.setItem('nnfc_deelnemers_2027', JSON.stringify(deelnemersLijst));
+  if (db) {
+    await db.ref('wedstrijd/beheer_deelnemers').set(deelnemersLijst);
+    await stuurBaan(baan);
+  }
+  go('aanm');
+}
+
+async function slaNoodOp() {
+  var nr = document.getElementById('ndHond').value;
+  var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; });
+  if (!d) { alert('Kies eerst een deelnemer.'); return; }
+  var oef = document.getElementById('ndOef').value;
+  var type = document.getElementById('ndType').value;
+  var txt = type === 'WEIGERING' ? 'WEIGERING' : 'UITGEVOERD';
+  var ms = null;
+
+  if (type === 'TIJD') {
+    var raw = document.getElementById('ndCijf').value.replace(/\D/g, '');
+    if (!raw) { alert('Voer cijfers in.'); return; }
+    var pad = raw.padStart(3, '0');
+    var h = parseInt(pad.slice(-2), 10);
+    var s = parseInt(pad.slice(-4, -2) || '0', 10);
+    var m = parseInt(pad.slice(0, -4) || '0', 10);
+    if (s > 59) { alert('Seconden moeten onder 60 liggen.'); return; }
+    ms = (m * 60000) + (s * 1000) + (h * 10);
+    txt = m > 0 ? (m + ':' + String(s).padStart(2, '0') + ',' + String(h).padStart(2, '0')) : (s + ',' + String(h).padStart(2, '0'));
+  }
+
+  var rid = 'TAFEL_' + d.baan + '_' + oef + '_' + d.startnummer + '_' + Date.now();
+  var payload = {
+    id: rid, baan: d.baan, klasse: d.klasse, oefening: oef,
+    startnummer: d.startnummer, roepnaam: d.roepnaam, geslacht: d.geslacht,
+    buitenMededinging: Boolean(d.buitenMededinging), type: type,
+    tijdTekst: txt, tijdMs: ms, timestamp: new Date().toISOString()
+  };
+
+  if (db) await db.ref('wedstrijd/registraties/' + rid).set(payload);
+  else registraties[rid] = payload;
+  go('home');
+}
+
+function setKcm(nr, val) {
+  kcmSelecties[nr] = val;
+  localStorage.setItem('nnfc_kcm_2026', JSON.stringify(kcmSelecties));
+  draw();
+}
+
+function back() {
+  return '<button onclick="go(\'home\')" style="margin-bottom:8px"><span aria-hidden="true">←</span> Overzicht</button>';
+}
+function draw() {
+  var nuTijd = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+  var openM = openMeldingen();
+  var openCorr = openM.filter(function(m) { return m.soort !== 'BERICHT'; });
+
+  var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'"><div><h1>Wedstrijdtafel</h1><div class="sub">NNFC Trials, ' + nuTijd + (db ? ' • Live' : ' • Lokaal') + '</div></div></div><a href="index.html" class="btn-link">← Menu</a></div>';
+
+  var nv = function(k, t, extraClass) {
+    return '<button class="' + (v === k ? 'on ' : '') + (extraClass || '') + '" onclick="go(\'' + k + '\')">' + t + '</button>';
+  };
+
+  h += '<div class="nav">' +
+    nv('home', 'Overzicht') +
+    nv('aanm', 'Aanmelding (' + deelnemersLijst.filter(function(d) { return d.aanwezig; }).length + '/' + deelnemersLijst.length + ')') +
+    nv('extra', '+ Extra deelnemer', 'extra') +
+    nv('nood', 'Handmatige tijd') +
+    nv('meld', 'Meldingen' + (openM.length ? ' (' + openM.length + ')' : '')) +
+    nv('beker', 'Bekers & KCM') +
+    nv('hist', 'Wijzigingen') +
+    '</div>';
+
+  if (v === 'home') {
+    if (openM.length) {
+      h += '<button class="c banner" onclick="go(\'meld\')">' + openM.length + (openM.length === 1 ? ' melding wacht' : ' meldingen wachten') + ' op de tafel</button>';
+    }
+
+    h += '<h2>Banen</h2><div class="g">';
+    for (var i = 1; i <= 5; i++) {
+      var baanDeeln = deelnemersLijst.filter(function(d) { return d.baan == i && d.aanwezig; });
+      var klassen = Array.from(new Set(baanDeeln.map(function(d) { return d.klasse; }))).join(', ');
+      var titel = 'Baan ' + i + (klassen ? ', ' + klassen : '');
+      var st = banenStatus['baan_' + i] || { oefening: 'A', klaar: 0, totaal: baanDeeln.length, nuHond: 'Wacht op start', laatstGezien: null };
+      var tot = st.totaal || baanDeeln.length || 0;
+      var pct = tot > 0 ? Math.min(100, Math.round((st.klaar / tot) * 100)) : 0;
+      var heeftWarn = openCorr.some(function(m) { return m.baan == i; });
+      var tijdStr = 'Nog geen data';
+      if (st.laatstGezien) {
+        var dt = new Date(st.laatstGezien);
+        var minGeleden = Math.floor((Date.now() - dt.getTime()) / 60000);
+        tijdStr = 'Laatst gezien ' + dt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+        if (minGeleden >= 5 && st.klaar < tot) {
+          heeftWarn = true;
+          tijdStr += ' <span class="warn">(' + minGeleden + ' min geleden, controleer de baan)</span>';
+        }
+      }
+
+      h += '<button class="c' + (heeftWarn ? ' w' : '') + '" onclick="go(\'l' + i + '\')">' +
+        '<b>' + titel + '</b>' +
+        '<div class="m">Oefening ' + st.oefening + ', ' + st.klaar + ' van ' + tot + '</div>' +
+        '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+        (st.nuHond && st.nuHond !== 'Klaar' ? '<span class="chip">Nu</span> ' + st.nuHond : 'Klaar met oefening ' + st.oefening) +
+        '<div class="m" style="margin-top:6px">' + tijdStr + '</div>' +
+        '</button>';
+    }
+    h += '</div>';
+
+    var groepen = getGroepen();
+    h += '<h2>Voorlopige stand (Som A+B+C in seconden)</h2><div class="g">';
+    groepen.forEach(function(g, idx) {
+      var top3 = g.lijst.slice(0, 3);
+      h += '<button class="c" onclick="go(\'s' + idx + '\')"><b>' + g.titel + '</b>';
+      if (top3.length) {
+        top3.forEach(function(d, j) {
+          h += '<div style="display:flex;justify-content:space-between;margin-top:4px">' +
+            '<span>' + (j + 1) + '. ' + d.naam + '</span>' +
+            '<b style="font-size:19px">' + formatSec(d.totaalMs, d.bm) + '</b></div>';
+        });
+      } else {
+        h += '<div class="m" style="margin-top:6px">Nog geen tijden</div>';
+      }
+      h += '</button>';
+    });
+    h += '</div>';
+
+  } else if (v.charAt(0) === 'l') {
+    var bNr = +v.slice(1);
+    var recs = Object.values(registraties).filter(function(r) { return r && r.baan == bNr; });
+    h += back() + '<h2 style="margin-top:4px">Baan ' + bNr + '</h2>';
+    if (recs.length) {
+      recs.forEach(function(r) {
+        h += '<div class="t"><b>' + r.startnummer + '</b><div>' + r.roepnaam + ' <span class="m">(Oef. ' + r.oefening + ')</span></div><b>' + r.tijdTekst + '</b></div>';
+      });
+    } else {
+      h += '<div class="m">Nog geen geregistreerde tijden op Baan ' + bNr + '.</div>';
+    }
+
+  } else if (v.charAt(0) === 's') {
+    var grp = getGroepen().at(+v.slice(1));
+    h += back() + '<h2 style="margin-top:4px">' + grp.titel + ', volledige stand</h2><div class="m">Som A + B + C in seconden, snelste eerst</div>';
+    if (grp.lijst.length) {
+      grp.lijst.forEach(function(d, j) {
+        h += '<div class="t"><b>' + (j + 1) + '</b><div>' + d.naam + ' <span class="m">nr ' + d.nr + '</span><div class="m">A: ' + (d.oef.A ? d.oef.A.txt : '-') + ' | B: ' + (d.oef.B ? d.oef.B.txt : '-') + ' | C: ' + (d.oef.C ? d.oef.C.txt : '-') + '</div></div><b>' + formatSec(d.totaalMs, d.bm) + '</b></div>';
+      });
+    } else {
+      h += '<div class="m" style="margin-top:10px">Nog geen tijden in deze klasse.</div>';
+    }
+  } else if (v === 'aanm') {
+    h += back() + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">' +
+      '<div><h2 style="margin:0">Aanmelding Secretariaat (Art. 2.5)</h2><div class="m">Vink aanwezigen aan (ook laatkomers). Gaat direct naar de klokker.</div></div>' +
+      '<button class="pri" onclick="syncAlleBanen()">Synchroniseer alle banen</button></div>';
+    if (deelnemersLijst.length) {
+      deelnemersLijst.forEach(function(d) {
+        h += '<div class="t"><b>B' + d.baan + '</b><div>#' + d.startnummer + ' ' + d.roepnaam + ' <span class="' + (d.betaald ? 'chip-ok' : 'chip-bad') + '">' + (d.betaald ? 'Betaald' : 'Nog betalen') + '</span>' +
+          '<div class="m">' + d.stamboom + ' • ' + (d.eigenaar || '-') + ' (' + d.klasse + ')</div></div>' +
+          '<input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + d.startnummer + ')"></div>';
+      });
+    } else {
+      h += '<div class="box n"><div class="m">Nog geen deelnemers ingeladen. Gebruik "+ Extra deelnemer" of laad vanuit Beheer.</div></div>';
+    }
+
+  } else if (v === 'extra') {
+    h += back() + '<div class="box n" style="max-width:600px"><h2 style="margin-top:0">+ Extra deelnemer (Daginschrijving)</h2>' +
+      '<div class="row"><div><label>Startnummer</label><input type="number" id="exNr" value="' + (deelnemersLijst.length + 101) + '"></div>' +
+      '<div><label>Baan</label><select id="exBaan"><option value="1">Baan 1</option><option value="2">Baan 2</option><option value="3">Baan 3</option><option value="4">Baan 4</option><option value="5">Baan 5</option></select></div></div>' +
+      '<div class="row"><div><label>Roepnaam hond</label><input type="text" id="exRoep" placeholder="bijv. Max"></div>' +
+      '<div><label>Stamboomnaam</label><input type="text" id="exStam" placeholder="bijv. Max v.d. Waterkant"></div></div>' +
+      '<div class="row"><div><label>Naam eigenaar</label><input type="text" id="exEig" placeholder="bijv. J. de Vries"></div>' +
+      '<div><label>Geslacht</label><select id="exGesl"><option value="Reu">Reu</option><option value="Teef">Teef</option></select></div></div>' +
+      '<div class="row"><div><label>Klasse</label><select id="exKlas"><option value="Open">Open (50m)</option><option value="Jeugd">Jeugd (30m)</option><option value="Veteranen">Veteranen (30m)</option><option value="Stamboomloos">Stamboomloos (30m)</option><option value="Specials">Specials (30m)</option></select></div>' +
+      '<div><label>Opvolgend brevet</label><select id="exBrev"><option value="Brevet A">Brevet A</option><option value="Jeugdbrevet">Jeugdbrevet</option><option value="Brevet B">Brevet B</option><option value="Brevet C">Brevet C</option><option value="Brevet D">Brevet D</option><option value="Brevet E">Brevet E</option><option value="Seaman Brevet">Seaman Brevet</option></select></div></div>' +
+      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" id="exBet" checked style="width:auto;margin:0;min-height:auto"> Betaald aan tafel (+ €2,50)</label>' +
+      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0 14px"><input type="checkbox" id="exBm" style="width:auto;margin:0;min-height:auto"> Buiten mededinging (*)</label>' +
+      '<button class="pri" style="width:100%" onclick="slaExtraOp()">Opslaan en direct naar klokker sturen</button></div>';
+
+  } else if (v === 'nood') {
+    var opties = deelnemersLijst.length
+      ? deelnemersLijst.map(function(d) { return '<option value="' + d.startnummer + '">Baan ' + d.baan + ' | #' + d.startnummer + ' ' + d.roepnaam + ' (' + d.klasse + ')</option>'; }).join('')
+      : '<option value="">Geen deelnemers beschikbaar</option>';
+    h += back() + '<div class="box n" style="max-width:600px"><h2 style="margin-top:0">Handmatige tijd / weigering invoeren</h2>' +
+      '<label>Deelnemer</label><select id="ndHond">' + opties + '</select>' +
+      '<label>Oefening</label><select id="ndOef"><option value="A">Oefening A (Object)</option><option value="B">Oefening B (Pop)</option><option value="C">Oefening C (Springen)</option><option value="BREVET">Brevetoefening E t/m J</option></select>' +
+      '<label>Resultaat</label><select id="ndType" onchange="document.getElementById(\'ndVak\').style.display=this.value===\'TIJD\'?\'block\':\'none\'"><option value="TIJD">Geklokte tijd</option><option value="WEIGERING">Weigering (600,00 sec)</option><option value="BREVET_OK">Brevet uitgevoerd</option></select>' +
+      '<div id="ndVak"><label>Tijd in cijfers (bijv. 945 = 9,45 sec)</label><input type="tel" id="ndCijf" placeholder="bijv. 1425"></div>' +
+      '<button class="pri" style="width:100%" onclick="slaNoodOp()">Resultaat direct toevoegen</button></div>';
+
+  } else if (v === 'meld') {
+    h += back();
+    if (!openM.length) h += '<div class="m">Geen open meldingen.</div>';
+    openM.forEach(function(m) {
+      if (m.soort === 'BERICHT') {
+        h += '<div class="box n"><div class="m">Baan ' + m.baan + ', Oefening ' + m.oefening + '</div><div style="font-size:21px;margin:4px 0 10px">' + m.tekst + '</div><button onclick="leesBericht(\'' + m.id + '\')" style="width:100%">Gelezen</button></div>';
+      } else {
+        h += '<div class="box"><div class="m">Baan ' + m.baan + ', Oefening ' + m.oefening + '</div>' +
+          '<div style="font-size:22px;font-weight:700;margin:2px 0 8px">Conflict: twee tijden voor ' + m.roepnaam + ' (nr ' + m.startnummer + ')</div>' +
+          '<div class="m">Eerst geregistreerd</div><div class="big">' + m.oudeTijd + '</div>' +
+          '<div class="m" style="margin-top:6px">Correctie van de klokker</div><div class="big">' + m.nieuweTijd + '</div>' +
+          '<div class="m" style="margin:6px 0 12px">Reden: ' + m.reden + '. Tot de tafel beslist telt ' + m.oudeTijd + '.</div>' +
+          '<div class="row"><button onclick="beslis(\'' + m.id + '\', false)">Houd ' + m.oudeTijd + '</button>' +
+          '<button class="pri" onclick="beslis(\'' + m.id + '\', true)">Neem ' + m.nieuweTijd + ' over</button></div></div>';
+      }
+    });
+
+  } else if (v === 'beker') {
+    var gr = getGroepen();
+    var openH = gr.at(0).lijst.concat(gr.at(1).lijst).filter(function(x) { return !x.bm; });
+    var jeugdH = gr.at(2).lijst.filter(function(x) { return !x.bm; });
+
+    var bouwSpetter = function(titel, lijst) {
+      var s = '<div class="box n"><h2 style="margin-top:0">' + titel + '</h2>';
+      if (!lijst.length) return s + '<div class="m">Nog geen deelnemers binnen mededinging.</div></div>';
+      var metTot = lijst.map(function(d) {
+        var k = kcmSelecties[d.nr] || 'GEEN';
+        return Object.assign({}, d, { kcm: k, tot: d.pnt + (KCM_PUNTEN[k] || 0) });
+      }).sort(function(a, b) { return b.tot - a.tot; });
+
+      metTot.forEach(function(d) {
+        var opts = Object.entries(KCM_PUNTEN).map(function(e) {
+          return '<option value="' + e.at(0) + '" ' + (d.kcm === e.at(0) ? 'selected' : '') + '>' + e.at(0) + ' (+' + e.at(1) + ')</option>';
+        }).join('');
+        s += '<div class="t"><b>' + d.tot + '</b><div>' + d.naam + ' <span class="m">nr ' + d.nr + ' • Trials: ' + d.pnt + '</span></div>' +
+          '<select style="width:auto;margin:0" onchange="setKcm(' + d.nr + ', this.value)">' + opts + '</select></div>';
+      });
+      return s + '</div>';
+    };
+
+    h += back() + '<div class="g">' + bouwSpetter('Spettertrofee (Open + KCM)', openH) + bouwSpetter('Junior Spettertrofee (Jeugd + KCM)', jeugdH) + '</div>';
+
+  } else if (v === 'hist') {
+    var logs = Object.values(logboek).filter(Boolean).sort(function(a, b) { return b.timestamp.localeCompare(a.timestamp); });
+    h += back() + '<h2 style="margin-top:4px">Wijzigingen</h2>';
+    if (logs.length) {
+      h += '<ul class="log">' + logs.map(function(l) {
+        var t = new Date(l.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+        return '<li>' + t + ' Baan ' + l.baan + ': ' + l.actie + '</li>';
+      }).join('') + '</ul>';
+    } else {
+      h += '<div class="m">Nog geen wijzigingen geregistreerd.</div>';
+    }
+  }
+
+  h += '<div class="foot">NNFC Digitale Waarneming • Reglement Trials 4 oktober 2026</div>';
+  document.getElementById('app').innerHTML = h;
+}
+
+draw();
+</script>
+</body>
+</html>
