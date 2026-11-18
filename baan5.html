@@ -68,7 +68,7 @@ input,select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid
 <script src="config.js"></script>
 
 <script>
-var BAAN_NR = "1";
+var BAAN_NR = "5";
 var LOGO = 'assets/nnfc-logo.png';
 var db = null;
 try {
@@ -202,3 +202,200 @@ function pushStatus() {
 function renderSyncBadge(count) {
   var el = document.getElementById('syncBadge');
   if (!el) return;
+  el.textContent = count > 0 ? ('Wachtrij: ' + count) : (db ? 'Live' : 'Lokaal');
+  el.className = count > 0 ? 'sync pend' : 'sync';
+}
+
+window.addEventListener('online', flushOutbox);
+setInterval(flushOutbox, 5000);
+function render() {
+  var o = S.ox[S.ex];
+  var relDogs = S.ex === 'BREVET' ? DOGS.filter(isBrevetHond) : DOGS;
+  var cd = dog(o.q.at(0));
+  var nd = dog(o.q.at(1));
+  var done = Object.keys(o.res).length;
+  var klassen = Array.from(new Set(DOGS.map(function(d) { return d.klasse; }))).join(', ');
+  var boxLen = 0;
+  try { boxLen = (JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []).length; } catch (e) {}
+
+  var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'">' +
+    '<div><h1>Baan ' + BAAN_NR + (klassen ? ', ' + klassen : '') + '</h1>' +
+    '<p class="sub">' + (DOGS.length ? ('Oefening ' + S.ex + ': ' + done + ' van ' + relDogs.length + ' gedaan') : 'Wacht op aanmelding bij tafel') + '</p></div></div>' +
+    '<div style="display:flex;gap:6px;align-items:center"><span id="syncBadge" class="sync ' + (boxLen ? 'pend' : '') + '">' + (boxLen ? 'Wachtrij: ' + boxLen : (db ? 'Live' : 'Lokaal')) + '</span><a href="index.html" class="btn-link">← Menu</a></div></div>';
+
+  h += '<div class="seg">' + ['A', 'B', 'C', 'BREVET'].map(function(x) {
+    var lbl = x === 'BREVET' ? 'Brevet' : ('Oef. ' + x);
+    return '<button data-a="ex" data-v="' + x + '" class="' + (S.ex === x ? 'on' : '') + '">' + lbl + '</button>';
+  }).join('') + '</div>';
+
+  h += '<div class="tabs"><button data-a="tab" data-v="reg" class="' + (S.tab === 'reg' ? 'on' : '') + '">Registratie</button><button data-a="tab" data-v="list" class="' + (S.tab === 'list' ? 'on' : '') + '">Lijst (' + relDogs.length + ')</button></div>';
+
+  h += S.tab === 'reg' ? reg(o, cd, nd) : lijst(o, relDogs);
+  document.getElementById('app').innerHTML = h;
+}
+
+function reg(o, cd, nd) {
+  if (!DOGS.length) {
+    return '<div class="cur"><div><small>Wachten</small><div class="nm">Geen honden</div><div class="st">Zodra het secretariaat deelnemers voor Baan ' + BAAN_NR + ' op Aanwezig zet, verschijnen ze hier.</div></div></div>';
+  }
+  if (!cd) {
+    return '<div class="cur"><div><div class="nm">Klaar</div><div class="st">Alle honden hebben oefening ' + S.ex + ' gedaan. Kies een andere oefening hierboven.</div></div></div>';
+  }
+
+  var h = '<div class="cur"><div><small>Nu aan de beurt</small><div class="nm">' + cd.roep + '</div><div class="st">' + cd.stam + '</div><div class="br">' + cd.opvolgendBrevet + '</div></div><div class="nr"><small>nr</small><br>' + cd.nr + '</div></div>';
+  h += '<div class="nxt"><span>Volgende</span>' + (nd ? '<span><b>' + nd.roep + '</b> nr ' + nd.nr + '</span>' : '<span>Laatste hond</span>') + '</div>';
+
+  if (S.ex === 'BREVET') {
+    h += '<div class="disp" style="text-align:left;padding:14px"><div style="font-weight:700;color:var(--ac)">Vervolgoefening zonder tijdmeting</div><div style="font-size:21px;font-weight:700;margin-top:4px">' + getBrevetLabel(cd.opvolgendBrevet) + '</div></div>';
+    if (conf === 'ok') h += '<div class="conf"><p><b>Uitgevoerd</b> opslaan voor ' + cd.roep + ' (nr ' + cd.nr + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, opslaan</button><button data-a="no">Terug</button></div></div>';
+    else if (conf === 'w') h += '<div class="conf"><p><b>Weigering</b> registreren voor ' + cd.roep + ' (nr ' + cd.nr + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, weigering</button><button data-a="no">Terug</button></div></div>';
+    else h += '<div class="acts" style="margin-top:12px"><button class="pri" data-a="cok">Uitgevoerd</button><button class="bad" data-a="cw">Weigering</button></div>';
+  } else {
+    var p = parse(inp), ok = p && p.cs;
+    h += '<div class="disp"><div class="t' + (inp ? '' : ' ph') + '">' + (ok ? fmt(p.cs) : (inp ? '…' : '0,00')) + '</div></div>';
+    h += '<div class="msg' + (p && p.err ? ' err' : '') + '">' + (p && p.err ? p.err : (inp ? 'Controleer de tijd en sla op.' : 'Voer alleen cijfers in, bijvoorbeeld 1234 voor 12,34.')) + '</div>';
+    h += '<div class="pad">' + '123456789'.split('').map(function(k) { return '<button data-a="k" data-v="' + k + '">' + k + '</button>'; }).join('') + '<button data-a="clr">Wis</button><button data-a="k" data-v="0">0</button><button data-a="del" aria-label="Wissen">⌫</button></div>';
+
+    if (conf === 't') h += '<div class="conf"><p>Tijd <b>' + fmt(p.cs) + '</b> opslaan voor ' + cd.roep + ' (nr ' + cd.nr + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, opslaan</button><button data-a="no">Terug</button></div></div>';
+    else if (conf === 'w') h += '<div class="conf"><p>Weigering registreren voor ' + cd.roep + ' (nr ' + cd.nr + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, weigering</button><button data-a="no">Terug</button></div></div>';
+    else h += '<div class="acts"><button class="pri" data-a="ct"' + (ok ? '' : ' disabled') + '>Tijd opslaan</button><button class="bad" data-a="cw">Weigering</button></div>';
+  }
+
+  h += '<button style="width:100%;margin-top:12px" data-a="msgopen">Bericht aan wedstrijdtafel sturen</button>';
+  if (msgOpen) {
+    h += '<div class="box"><label>Kies standaardbericht:</label><select id="msgSel"><option value="Hond nog niet aanwezig bij baan">Hond nog niet aanwezig bij baan</option><option value="Korte pauze / baanonderhoud">Korte pauze / baanonderhoud</option><option value="Vraag voor baancommissaris">Vraag voor baancommissaris</option></select>' +
+      '<input type="text" id="msgTxt" placeholder="Optionele extra toelichting">' +
+      '<div class="row"><button class="pri" data-a="msgsend">Versturen</button><button data-a="msgclose">Annuleren</button></div></div>';
+  }
+  return h;
+}
+
+function lijst(o, relDogs) {
+  var h = '<div class="list">';
+  relDogs.forEach(function(d) {
+    var i = o.q.indexOf(d.id), r = o.res[d.id], cls = 'r', tag = '', btn = '';
+    if (r) {
+      var valTxt = r.t === 'tijd' ? fmt(r.cs) : (r.t === 'ok' ? 'Uitgevoerd' : 'Weigering');
+      tag = '<span class="tag ' + (r.t === 'weigering' ? 'w' : 'ok') + '">' + valTxt + '</span>';
+      if (S.ex !== 'BREVET') btn = tag + ' <button data-a="corropen" data-v="' + d.id + '" style="margin-left:6px">Corrigeer</button>';
+    } else if (i === 0) { cls += ' cu'; tag = '<span class="tag" style="color:inherit">Nu</span>'; }
+    else if (i === 1) tag = '<span class="tag">Volgende</span>';
+    else if (i > 1) btn = '<button data-a="mv" data-v="' + d.id + '">Als volgende</button>';
+
+    if (!r && o.skip[d.id] && !btn && i !== 0) tag += ' <span class="tag">overgeslagen</span>';
+    var sub = (!r && o.skip[d.id] && btn) ? 'Overgeslagen, wacht nog' : (d.stam + ' • ' + d.opvolgendBrevet);
+    h += '<div class="' + cls + '"><div class="n">' + d.nr + '</div><div><div class="a">' + d.roep + '</div><div class="b">' + sub + '</div></div><div>' + (btn || tag) + '</div></div>';
+  });
+  h += '</div>';
+
+  if (corrId) {
+    var cd = dog(corrId), oldR = o.res[corrId];
+    var oldStr = oldR.t === 'tijd' ? fmt(oldR.cs) : 'Weigering';
+    h += '<div class="box"><h2 style="margin-top:0">Correctie aanvragen: #' + cd.nr + ' ' + cd.roep + '</h2><div class="m" style="margin-bottom:8px">Huidige waarde: <b>' + oldStr + '</b> (blijft geldig tot de tafel beslist)</div>' +
+      '<input type="tel" id="corrInp" placeholder="Nieuwe tijd in cijfers (bijv. 1234)">' +
+      '<input type="text" id="corrReden" placeholder="Reden (bijv. tikfout)">' +
+      '<div class="row"><button class="pri" data-a="corrsend">Verstuur naar tafel</button><button data-a="corrclose">Annuleren</button></div></div>';
+  }
+
+  h += '<h2>Wijzigingen in de volgorde</h2>';
+  h += S.log.length ? '<ul class="log">' + S.log.slice(-8).reverse().map(function(l) { return '<li>' + l + '</li>'; }).join('') + '</ul>' : '<p class="log" style="padding:0">Nog geen wijzigingen.</p>';
+  return h;
+}
+
+document.getElementById('app').addEventListener('click', function(e) {
+  var b = e.target.closest('button');
+  if (!b) return;
+  var a = b.dataset.a, v = b.dataset.v, o = S.ox[S.ex];
+
+  if (a === 'ex') { S.ex = v; inp = ''; conf = null; corrId = null; pushStatus(); }
+  else if (a === 'tab') { S.tab = v; conf = null; corrId = null; }
+  else if (a === 'k') { if (inp.length < 6) inp += v; }
+  else if (a === 'del') inp = inp.slice(0, -1);
+  else if (a === 'clr') inp = '';
+  else if (a === 'ct') { var p = parse(inp); if (p && p.cs) conf = 't'; }
+  else if (a === 'cok') conf = 'ok';
+  else if (a === 'cw') conf = 'w';
+  else if (a === 'no') conf = null;
+  else if (a === 'yes') {
+    var id = o.q.at(0), d = dog(id), p2 = parse(inp);
+    var recType = 'WEIGERING', txtVal = 'WEIGERING', msVal = null;
+    if (conf === 't' && p2 && p2.cs) {
+      o.res[id] = { t: 'tijd', cs: p2.cs };
+      recType = 'TIJD'; txtVal = fmt(p2.cs); msVal = p2.ms;
+    } else if (conf === 'ok') {
+      o.res[id] = { t: 'ok' };
+      recType = 'BREVET_OK'; txtVal = 'UITGEVOERD';
+    } else if (conf === 'w') {
+      o.res[id] = { t: 'weigering' };
+    } else { conf = null; render(); return; }
+
+    o.q.shift();
+    delete o.skip[id];
+    S.log.push(now() + ' Oef. ' + S.ex + ': #' + d.nr + ' ' + d.roep + ' → ' + txtVal);
+
+    enqueue('registraties', {
+      id: 'B' + BAAN_NR + '_' + S.ex + '_' + d.nr + '_' + Date.now(),
+      baan: BAAN_NR, klasse: d.klasse, oefening: S.ex,
+      startnummer: d.nr, roepnaam: d.roep, geslacht: d.geslacht,
+      buitenMededinging: Boolean(d.buitenMededinging),
+      type: recType, tijdTekst: txtVal, tijdMs: msVal,
+      timestamp: new Date().toISOString()
+    });
+
+    inp = ''; conf = null;
+  }
+  else if (a === 'mv') {
+    var mid = +v, i = o.q.indexOf(mid);
+    if (i > 1) {
+      var by = o.q.slice(1, i);
+      by.forEach(function(x) { o.skip[x] = 1; });
+      o.q.splice(i, 1);
+      o.q.splice(1, 0, mid);
+      delete o.skip[mid];
+      var msg = 'Oef. ' + S.ex + ': #' + dog(mid).nr + ' ' + dog(mid).roep + ' als volgende (overgeslagen: ' + by.map(function(x) { return dog(x).roep; }).join(', ') + ')';
+      S.log.push(now() + ' ' + msg);
+      enqueue('logboek', { id: 'LOG_' + BAAN_NR + '_' + Date.now(), baan: BAAN_NR, actie: msg, timestamp: new Date().toISOString() });
+      S.tab = 'reg';
+    }
+  }
+  else if (a === 'msgopen') { msgOpen = true; }
+  else if (a === 'msgclose') { msgOpen = false; }
+  else if (a === 'msgsend') {
+    var sel = document.getElementById('msgSel').value;
+    var extra = document.getElementById('msgTxt').value.trim();
+    enqueue('meldingen', {
+      id: 'MSG_' + BAAN_NR + '_' + Date.now(),
+      soort: 'BERICHT', status: 'OPEN', baan: BAAN_NR, oefening: S.ex,
+      tekst: extra ? (sel + ': ' + extra) : sel,
+      timestamp: new Date().toISOString()
+    });
+    msgOpen = false;
+  }
+  else if (a === 'corropen') { corrId = +v; }
+  else if (a === 'corrclose') { corrId = null; }
+  else if (a === 'corrsend') {
+    var raw = document.getElementById('corrInp').value.replace(/\D/g, '');
+    var parsed = parse(raw);
+    if (!parsed || !parsed.cs) { alert(parsed ? parsed.err : 'Voer een geldige tijd in.'); return; }
+    var cd2 = dog(corrId), oldR2 = o.res[corrId];
+    enqueue('meldingen', {
+      id: 'CORR_' + BAAN_NR + '_' + Date.now(),
+      soort: 'CORRECTIE', status: 'OPEN', baan: BAAN_NR, oefening: S.ex,
+      startnummer: cd2.nr, roepnaam: cd2.roep,
+      oudeTijd: oldR2.t === 'tijd' ? fmt(oldR2.cs) : 'Weigering',
+      nieuweTijd: fmt(parsed.cs), nieuweTijdMs: parsed.ms,
+      reden: document.getElementById('corrReden').value.trim() || 'Geen reden opgegeven',
+      timestamp: new Date().toISOString()
+    });
+    corrId = null;
+  }
+
+  save();
+  render();
+});
+
+render();
+flushOutbox();
+</script>
+</body>
+</html>
