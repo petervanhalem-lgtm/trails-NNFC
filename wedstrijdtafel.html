@@ -59,18 +59,8 @@ try {
   deelnemersLijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + actiefJaar)) || [];
   kcmSelecties = JSON.parse(localStorage.getItem('nnfc_kcm_' + actiefJaar)) || {};
 } catch (e) {}
-
 function esc(str) {
   return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function safeDraw() {
-  if (v === 'extra' || v === 'nood') return;
-  draw();
-}
-
-function back() {
-  return '<button onclick="go(\'home\')" style="margin-bottom:12px">← Terug naar overzicht</button>';
 }
 
 function initFirebase() {
