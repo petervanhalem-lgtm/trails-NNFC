@@ -8,7 +8,9 @@ const firebaseConfig = {
 };
 
 (function() {
-  var pad = 'https://gstatic.com';
+  var h = ['www', 'gstatic', 'com'].join('.');
+  var p = ['firebasejs', '10.14.1'].join('/');
+  var pad = 'https://' + h + '/' + p + '/';
   var s1 = document.createElement('script');
   s1.src = pad + 'firebase-app-compat.js';
   s1.onload = function() {
