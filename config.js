@@ -1,16 +1,14 @@
-var proto = window.location.protocol + '//';
 var project = 'nnfc-trails';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAEAitVKVQ5LkFHBeUh4WdHFSamYcBNEbI",
   authDomain: project + ".firebaseapp.com",
-  databaseURL: proto + project + "-default-rtdb.europe-west1.firebasedatabase.app",
+  databaseURL: "https://" + project + "-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: project
 };
 
 (function() {
-  var host = ['www', 'gstatic', 'com'].join('.');
-  var pad = proto + host + '/firebasejs/10.14.1/';
+  var pad = 'https://gstatic.com';
   var s1 = document.createElement('script');
   s1.src = pad + 'firebase-app-compat.js';
   s1.onload = function() {
