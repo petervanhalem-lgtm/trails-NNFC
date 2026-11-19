@@ -64,12 +64,10 @@ th{color:var(--mut);font-weight:700}
       </select>
       <button onclick="exporteerBackup()">Back-up (JSON)</button>
       <button class="ok" onclick="stuurNaarTafel()">Synchroniseer met Wedstrijdtafel</button>
-      <a href="index.html" class="btn-link">← Menu</a>
+      <a href="index.html" class="btn-link">← Beheermenu</a>
     </div>
   </div>
-
   <div id="importFouten" class="banner-err" style="display:none"></div>
-
   <div class="grid">
     <div>
       <div class="box">
@@ -158,10 +156,8 @@ th{color:var(--mut);font-weight:700}
   </div>
 </div>
 
-
 <script src="config.js"></script>
 <script src="referentie2026.js"></script>
-
 <script>
 var db = null;
 function initFirebase() {
@@ -175,9 +171,7 @@ function initFirebase() {
 initFirebase();
 
 function esc(str) {
-  return String(str == null ? '' : str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 if (typeof REFERENTIE_HONDEN_2026 !== 'undefined') {
   var dl = document.getElementById('refLijst');
@@ -259,20 +253,18 @@ function opvolgendBrevet(klasse, huidig) {
 function importeerCsv() {
   var inp = document.getElementById('csvFile');
   if (!inp.files || !inp.files.length) { alert('Kies eerst een CSV-bestand uit Excel.'); return; }
-  var file = inp.files[0];
+  var file = inp.files.item(0);
   var reader = new FileReader();
 
   reader.onload = function(e) {
     var buf = e.target.result;
     var tekst = new TextDecoder('utf-8').decode(buf);
-    if (tekst.indexOf('\uFFFD') !== -1) {
-      tekst = new TextDecoder('windows-1252').decode(buf);
-    }
+    if (tekst.indexOf('\uFFFD') !== -1) tekst = new TextDecoder('windows-1252').decode(buf);
 
     var regels = tekst.split(/\r?\n/).filter(function(r) { return r.trim().length > 0; });
     if (regels.length < 2) { alert('Geen gegevens gevonden in dit bestand.'); return; }
 
-    var eersteRegel = regels[0];
+    var eersteRegel = regels.shift();
     var sep = eersteRegel.indexOf(';') !== -1 ? ';' : ',';
     var koppen = parseCsvRegel(eersteRegel, sep).map(function(k) { return k.toLowerCase(); });
 
@@ -295,7 +287,7 @@ function importeerCsv() {
 
     var count = 0, overgeslagenDubbel = 0, fouten = [];
 
-    for (var i = 1; i < regels.length; i++) {
+    for (var i = 0; i < regels.length; i++) {
       var kol = parseCsvRegel(regels[i], sep);
       var stam = iStam >= 0 ? (kol[iStam] || '') : '';
       var roep = iRoep >= 0 ? (kol[iRoep] || '') : '';
@@ -311,7 +303,7 @@ function importeerCsv() {
       var gesl = '';
       if (geslRaw === 'reu' || geslRaw === 'r' || geslRaw === 'm') gesl = 'Reu';
       else if (geslRaw === 'teef' || geslRaw === 't' || geslRaw === 'v') gesl = 'Teef';
-      else { fouten.push('Regel ' + (i + 1) + ' (' + (roep || stam) + '): geslacht "' + geslRaw + '" niet herkend.'); continue; }
+      else { fouten.push('Regel ' + (i + 2) + ' (' + (roep || stam) + '): geslacht "' + geslRaw + '" niet herkend.'); continue; }
 
       var klasRaw = iKlas >= 0 ? (kol[iKlas] || '').trim().toLowerCase() : '';
       var klas = '';
@@ -320,11 +312,11 @@ function importeerCsv() {
       else if (klasRaw.indexOf('veteraan') !== -1 || klasRaw.indexOf('senior') !== -1) klas = 'Veteranen';
       else if (klasRaw.indexOf('stamboomloos') !== -1) klas = 'Stamboomloos';
       else if (klasRaw.indexOf('special') !== -1) klas = 'Specials';
-      else { fouten.push('Regel ' + (i + 1) + ' (' + (roep || stam) + '): klasse "' + klasRaw + '" niet herkend.'); continue; }
+      else { fouten.push('Regel ' + (i + 2) + ' (' + (roep || stam) + '): klasse "' + klasRaw + '" niet herkend.'); continue; }
 
       var brevRaw = iBrev >= 0 ? (kol[iBrev] || '') : '';
       var brev = herkenBrevet(brevRaw);
-      if (!brev) { fouten.push('Regel ' + (i + 1) + ' (' + (roep || stam) + '): brevet "' + brevRaw + '" niet herkend.'); continue; }
+      if (!brev) { fouten.push('Regel ' + (i + 2) + ' (' + (roep || stam) + '): brevet "' + brevRaw + '" niet herkend.'); continue; }
 
       var betRaw = iBet >= 0 ? (kol[iBet] || '') : '';
       var nr = lijst.length ? Math.max.apply(null, lijst.map(function(x) { return x.startnummer; })) + 1 : 101;
@@ -336,7 +328,7 @@ function importeerCsv() {
         lidnr: (iLid >= 0 && kol[iLid]) ? kol[iLid] : 'ONBEKEND',
         eigenaar: (iEig >= 0 && kol[iEig]) ? kol[iEig] : 'Onbekend',
         startnummer: nr,
-        roepnaam: roep || stam.split(' ')[0],
+        roepnaam: roep || stam.split(' ').shift(),
         stamboom: stam || roep,
         geslacht: gesl,
         klasse: klas,
@@ -355,7 +347,7 @@ function importeerCsv() {
     var errBox = document.getElementById('importFouten');
     if (fouten.length) {
       errBox.style.display = 'block';
-      errBox.innerHTML = 'Niet-herkende regels overgeslagen (corrigeer in Excel of voeg handmatig toe):<br>• ' + fouten.map(esc).join('<br>• ');
+      errBox.innerHTML = 'Niet-herkende regels overgeslagen:<br>• ' + fouten.map(esc).join('<br>• ');
     } else {
       errBox.style.display = 'none';
     }
@@ -363,7 +355,6 @@ function importeerCsv() {
   };
   reader.readAsArrayBuffer(file);
 }
-
 function voegToe() {
   var roep = document.getElementById('inRoep').value.trim();
   var stam = document.getElementById('inStam').value.trim();
@@ -500,25 +491,19 @@ async function stuurNaarTafel() {
   if (!db) { alert('Firebase is nog niet gekoppeld in config.js. De indeling is wel lokaal opgeslagen.'); return; }
   try {
     var snap = await db.ref('wedstrijd/beheer_deelnemers').once('value');
-    var bestaand = snap.val();
-    var huidigeTafelLijst = bestaand ? (Array.isArray(bestaand) ? bestaand : Object.values(bestaand)) : [];
+    var bestaand = snap.val() || {};
+    var tafelItems = Array.isArray(bestaand) ? bestaand.filter(Boolean) : Object.values(bestaand).filter(Boolean);
 
-    var samengevoegd = lijst.map(function(h) {
-      var match = huidigeTafelLijst.find(function(t) { return t && t.startnummer == h.startnummer; });
-      return Object.assign({}, h, { aanwezig: match ? Boolean(match.aanwezig) : Boolean(h.aanwezig) });
+    var updates = {};
+    lijst.forEach(function(h) {
+      var match = tafelItems.find(function(t) { return t.startnummer == h.startnummer; });
+      var merged = Object.assign({}, h, { aanwezig: match ? Boolean(match.aanwezig) : Boolean(h.aanwezig) });
+      updates[h.id] = merged;
     });
 
-    huidigeTafelLijst.forEach(function(t) {
-      if (t && String(t.id).indexOf('EXTRA_') === 0 && !samengevoegd.some(function(s) { return s.startnummer == t.startnummer; })) {
-        samengevoegd.push(t);
-      }
-    });
-
-    lijst = samengevoegd;
-    save();
     await db.ref('wedstrijd/actief_jaar').set(jaar);
-    await db.ref('wedstrijd/beheer_deelnemers').set(lijst);
-    alert('Gesynchroniseerd met Wedstrijdtafel (' + lijst.length + ' honden, aanwezigheid & daginschrijvingen behouden).');
+    await db.ref('wedstrijd/beheer_deelnemers').update(updates);
+    alert('Gesynchroniseerd met Wedstrijdtafel (' + lijst.length + ' honden per ID bijgewerkt, aanwezigheid & daginschrijvingen behouden).');
   } catch (err) {
     alert('Fout bij versturen: ' + err.message);
   }
