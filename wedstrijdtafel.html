@@ -136,20 +136,22 @@ function detectConflicts() {
   if (!db) return;
   var seen = {};
   Object.values(registraties).forEach(function(r) {
-    if (!r) return;
+    if (!r || r.status === 'AFGEWEZEN') return;
     var key = r.startnummer + '_' + r.oefening;
     if (seen[key] && seen[key].id !== r.id) {
-      var cid = 'CONF_' + key;
+      var cid = 'CONF_' + r.id;
       if (!meldingen[cid]) {
         db.ref('wedstrijd/meldingen/' + cid).set({
           id: cid, soort: 'CONFLICT', status: 'OPEN', baan: r.baan, oefening: r.oefening,
-          startnummer: r.startnummer, roepnaam: r.roepnaam, oudeTijd: seen[key].tijdTekst,
-          nieuweTijd: r.tijdTekst, nieuweTijdMs: r.tijdMs,
+          startnummer: r.startnummer, roepnaam: r.roepnaam,
+          oudeRegId: seen[key].id, oudeTijd: seen[key].tijdTekst,
+          nieuweRegId: r.id, nieuweTijd: r.tijdTekst, nieuweTijdMs: r.tijdMs,
           reden: 'Dubbele registratie voor dezelfde hond/oefening', timestamp: new Date().toISOString()
         });
       }
+    } else {
+      seen[key] = r;
     }
-    seen[key] = r;
   });
 }
 
@@ -157,21 +159,42 @@ async function beslis(id, akkoord) {
   var m = meldingen[id]; if (!m) return;
   if (db) {
     if (akkoord) {
-      var k = Object.keys(registraties).find(function(key) { return registraties[key].startnummer == m.startnummer && registraties[key].oefening == m.oefening; });
-      if (k) await db.ref('wedstrijd/registraties/' + k).update({ tijdTekst: m.nieuweTijd, tijdMs: m.nieuweTijdMs, type: 'TIJD' });
+      if (m.oudeRegId && registraties[m.oudeRegId]) {
+        await db.ref('wedstrijd/registraties/' + m.oudeRegId).update({ status: 'AFGEWEZEN' });
+      }
+      if (m.nieuweRegId && registraties[m.nieuweRegId]) {
+        await db.ref('wedstrijd/registraties/' + m.nieuweRegId).update({ status: 'GEACCEPTEERD' });
+      } else {
+        var k = Object.keys(registraties).find(function(key) { return registraties[key].startnummer == m.startnummer && registraties[key].oefening == m.oefening && registraties[key].status !== 'AFGEWEZEN'; });
+        if (k) await db.ref('wedstrijd/registraties/' + k).update({ tijdTekst: m.nieuweTijd, tijdMs: m.nieuweTijdMs, type: 'TIJD' });
+      }
+    } else if (m.nieuweRegId && registraties[m.nieuweRegId]) {
+      await db.ref('wedstrijd/registraties/' + m.nieuweRegId).update({ status: 'AFGEWEZEN' });
     }
     await db.ref('wedstrijd/meldingen/' + id).update({ status: akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN' });
-    await db.ref('wedstrijd/logboek/BESL_' + Date.now()).set({ baan: m.baan, actie: 'Tafel ' + (akkoord ? 'accepteert' : 'wijst af') + ' correctie #' + m.startnummer, timestamp: new Date().toISOString() });
-  } else { meldingen[id].status = akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN'; draw(); }
+    await db.ref('wedstrijd/logboek/BESL_' + Date.now()).set({ baan: m.baan, actie: 'Tafel ' + (akkoord ? 'accepteert' : 'wijst af') + ' wijziging #' + m.startnummer, timestamp: new Date().toISOString() });
+  } else {
+    if (!akkoord && m.nieuweRegId && registraties[m.nieuweRegId]) registraties[m.nieuweRegId].status = 'AFGEWEZEN';
+    meldingen[id].status = akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN';
+    draw();
+  }
 }
 
 async function leesBericht(id) { if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' }); else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); } }
 
 async function toggleAanwezig(nr) {
-  var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; }); if (!d) return;
-  d.aanwezig = !d.aanwezig; localStorage.setItem('nnfc_deelnemers_2027', JSON.stringify(deelnemersLijst)); draw();
-  if (db) { await db.ref('wedstrijd/beheer_deelnemers/' + d.id).update({ aanwezig: d.aanwezig }); await stuurBaan(d.baan); }
+  var idx = deelnemersLijst.findIndex(function(x) { return x.startnummer == nr; });
+  if (idx === -1) return;
+  var d = deelnemersLijst[idx];
+  d.aanwezig = !d.aanwezig;
+  localStorage.setItem('nnfc_deelnemers_2027', JSON.stringify(deelnemersLijst));
+  draw();
+  if (db) {
+    await db.ref('wedstrijd/beheer_deelnemers').set(deelnemersLijst);
+    await stuurBaan(d.baan);
+  }
 }
+
 
 async function stuurBaan(baanNr) {
   if (!db) return;
