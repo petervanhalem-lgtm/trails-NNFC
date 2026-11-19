@@ -381,12 +381,34 @@ function draw() {
       '<label style="display:flex;align-items:center;gap:8px;margin:6px 0 14px"><input type="checkbox" id="exBm" style="width:auto;margin:0;min-height:auto"> Buiten mededinging (*)</label>' +
       '<button class="pri" style="width:100%" onclick="slaExtraOp()">Opslaan en direct naar klokker sturen</button></div>';
 
-  } else if (v === 'nood') {
+   } else if (v === 'nood') {
     var opties = deelnemersLijst.length
-  } else if (v === 'beker') {
-    var gr = getGroepen();
-    var openH = gr.slice(0, 1).pop().lijst.concat(gr.slice(1, 2).pop().lijst).filter(function(x) { return !x.bm; });
-    var jeugdH = gr.slice(2, 3).pop().lijst.filter(function(x) { return !x.bm; });
+      ? deelnemersLijst.map(function(d) { return '<option value="' + esc(d.startnummer) + '">Baan ' + esc(d.baan) + ' | #' + esc(d.startnummer) + ' ' + esc(d.roepnaam) + ' (' + esc(d.klasse) + ')</option>'; }).join('')
+      : '<option value="">Geen deelnemers beschikbaar</option>';
+    h += back() + '<div class="box n" style="max-width:600px"><h2 style="margin-top:0">Handmatige tijd / weigering invoeren</h2>' +
+      '<label>Deelnemer</label><select id="ndHond">' + opties + '</select>' +
+      '<label>Oefening</label><select id="ndOef" onchange="var t=document.getElementById(\'ndType\');if(this.value!==\'BREVET\'&&t.value===\'BREVET_OK\')t.value=\'TIJD\';document.getElementById(\'ndVak\').style.display=t.value===\'TIJD\'?\'block\':\'none\'"><option value="A">Oefening A (Object)</option><option value="B">Oefening B (Pop)</option><option value="C">Oefening C (Springen)</option><option value="BREVET">Brevetoefening E t/m J</option></select>' +
+      '<label>Resultaat</label><select id="ndType" onchange="if(this.value===\'BREVET_OK\'&&document.getElementById(\'ndOef\').value!==\'BREVET\'){alert(\'Brevet uitgevoerd geldt alleen voor Brevetoefening E t/m J.\');this.value=\'TIJD\';}document.getElementById(\'ndVak\').style.display=this.value===\'TIJD\'?\'block\':\'none\'"><option value="TIJD">Geklokte tijd</option><option value="WEIGERING">Weigering (600,00 sec)</option><option value="BREVET_OK">Brevet uitgevoerd (alleen E–J)</option></select>' +
+      '<div id="ndVak"><label>Tijd in cijfers (bijv. 945 = 9,45 sec)</label><input type="tel" id="ndCijf" placeholder="bijv. 1425"></div>' +
+      '<button class="pri" style="width:100%" onclick="slaNoodOp()">Resultaat direct toevoegen</button></div>';
+
+  } else if (v === 'meld') {
+    h += back();
+    if (!openM.length) h += '<div class="m">Geen open meldingen.</div>';
+    openM.forEach(function(m) {
+      if (m.soort === 'BERICHT') {
+        h += '<div class="box n"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div><div style="font-size:21px;margin:4px 0 10px">' + esc(m.tekst) + '</div><button onclick="leesBericht(\'' + esc(m.id) + '\')" style="width:100%">Gelezen</button></div>';
+      } else {
+        h += '<div class="box"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div>' +
+          '<div style="font-size:22px;font-weight:700;margin:2px 0 8px">Conflict: twee tijden voor ' + esc(m.roepnaam) + ' (nr ' + esc(m.startnummer) + ')</div>' +
+          '<div class="m">Eerst geregistreerd</div><div class="big">' + esc(m.oudeTijd) + '</div>' +
+          '<div class="m" style="margin-top:6px">Correctie van de klokker</div><div class="big">' + esc(m.nieuweTijd) + '</div>' +
+          '<div class="m" style="margin:6px 0 12px">Reden: ' + esc(m.reden) + '. Tot de tafel beslist telt ' + esc(m.oudeTijd) + '.</div>' +
+          '<div class="row"><button onclick="beslis(\'' + esc(m.id) + '\', false)">Houd ' + esc(m.oudeTijd) + '</button>' +
+          '<button class="pri" onclick="beslis(\'' + esc(m.id) + '\', true)">Neem ' + esc(m.nieuweTijd) + ' over</button></div></div>';
+      }
+    });
+
 
     var bouwSpetter = function(titel, lijst) {
       var s = '<div class="box n"><h2 style="margin-top:0">' + esc(titel) + '</h2>';
