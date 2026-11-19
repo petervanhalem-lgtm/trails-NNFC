@@ -42,6 +42,7 @@ button:disabled{opacity:.4;cursor:default}
 .pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
 .bad{border-color:var(--bad)!important;color:var(--bad)!important}
 .conf{background:var(--sf);border:3px solid var(--ac);border-radius:16px;padding:12px;margin-top:8px}
+.conf.warn2{border-color:var(--bad)}
 .conf p{margin:0 0 10px;font-size:21px}
 .list{display:grid;gap:8px}
 .r{display:grid;grid-template-columns:46px 1fr auto;gap:10px;align-items:center;background:var(--sf);border:2px solid var(--ln);border-radius:12px;padding:8px 10px;min-height:60px}
@@ -65,6 +66,7 @@ input,select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid
 <script>
 var params = new URLSearchParams(window.location.search);
 var BAAN_NR = String(params.get('baan') || '1').replace(/[^1-5]/g, '') || '1';
+var IS_ADMIN = params.get('admin') === '1';
 document.title = 'Baan ' + BAAN_NR + ' – NNFC Klokkersscherm';
 var LOGO = 'assets/nnfc-logo.png';
 
@@ -88,7 +90,7 @@ var S = null;
 try { S = JSON.parse(localStorage.getItem(KEY_STATE)); } catch (e) {}
 if (!S || !S.ox || !S.ox.BREVET) S = fresh();
 
-var inp = '', conf = null, corrId = null, msgOpen = false, sending = false;
+var inp = '', conf = null, confStep = 1, corrId = null, msgOpen = false, sending = false;
 
 function save() {
   try {
@@ -201,7 +203,7 @@ function pushStatus() {
   var rel = S.ex === 'BREVET' ? DOGS.filter(isBrevetHond) : DOGS;
   var cd = dog(o.q.slice(0, 1).pop());
   db.ref('wedstrijd/banen_status/baan_' + BAAN_NR).set({
-    laatstGezien: new Date().toISOString(),
+    serverTijd: firebase.database.ServerValue.TIMESTAMP,
     oefening: S.ex,
     klaar: Object.keys(o.res).length,
     totaal: rel.length,
@@ -228,10 +230,11 @@ function render() {
   var boxLen = 0;
   try { boxLen = (JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []).length; } catch (e) {}
 
+  var menuLink = IS_ADMIN ? '<a href="index.html" class="btn-link">← Menu</a>' : '';
   var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'">' +
     '<div><h1>Baan ' + esc(BAAN_NR) + (klassen ? ', ' + esc(klassen) : '') + '</h1>' +
     '<p class="sub">' + (DOGS.length ? ('Oefening ' + esc(S.ex) + ': ' + done + ' van ' + relDogs.length + ' gedaan') : 'Wacht op aanmelding bij tafel') + '</p></div></div>' +
-    '<div style="display:flex;gap:6px;align-items:center"><span id="syncBadge" class="sync ' + (boxLen ? 'pend' : '') + '">' + (boxLen ? 'Wachtrij: ' + boxLen : (db ? 'Live' : 'Lokaal')) + '</span><a href="index.html" class="btn-link">← Menu</a></div></div>';
+    '<div style="display:flex;gap:6px;align-items:center"><span id="syncBadge" class="sync ' + (boxLen ? 'pend' : '') + '">' + (boxLen ? 'Wachtrij: ' + boxLen : (db ? 'Live' : 'Lokaal')) + '</span>' + menuLink + '</div></div>';
 
   h += '<div class="seg">' + ['A', 'B', 'C', 'BREVET'].map(function(x) {
     var lbl = x === 'BREVET' ? 'Brevet' : ('Oef. ' + x);
@@ -258,7 +261,8 @@ function reg(o, cd, nd) {
   if (S.ex === 'BREVET') {
     h += '<div class="disp" style="text-align:left;padding:14px"><div style="font-weight:700;color:var(--ac)">Vervolgoefening zonder tijdmeting</div><div style="font-size:21px;font-weight:700;margin-top:4px">' + esc(getBrevetLabel(cd.opvolgendBrevet)) + '</div></div>';
     if (conf === 'ok') h += '<div class="conf"><p><b>Uitgevoerd</b> opslaan voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, opslaan</button><button data-a="no">Terug</button></div></div>';
-    else if (conf === 'w') h += '<div class="conf"><p><b>Weigering</b> registreren voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, weigering</button><button data-a="no">Terug</button></div></div>';
+    else if (conf === 'w' && confStep === 1) h += '<div class="conf"><p><b>Weigering</b> registreren voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="step2">Doorgaan</button><button data-a="no">Terug</button></div></div>';
+    else if (conf === 'w' && confStep === 2) h += '<div class="conf warn2"><p><b>Zeker weten?</b> Een weigering telt als 600,00 sec. Definitief opslaan voor ' + esc(cd.roep) + '?</p><div class="row"><button class="pri" data-a="yes">Ja, definitief</button><button data-a="no">Terug</button></div></div>';
     else h += '<div class="acts" style="margin-top:12px"><button class="pri" data-a="cok">Uitgevoerd</button><button class="bad" data-a="cw">Weigering</button></div>';
   } else {
     var p = parse(inp), ok = p && p.cs;
@@ -266,9 +270,17 @@ function reg(o, cd, nd) {
     h += '<div class="msg' + (p && p.err ? ' err' : '') + '">' + (p && p.err ? esc(p.err) : (inp ? 'Controleer de tijd en sla op.' : 'Voer alleen cijfers in, bijvoorbeeld 1234 voor 12,34.')) + '</div>';
     h += '<div class="pad">' + '123456789'.split('').map(function(k) { return '<button data-a="k" data-v="' + k + '">' + k + '</button>'; }).join('') + '<button data-a="clr">Wis</button><button data-a="k" data-v="0">0</button><button data-a="del" aria-label="Wissen">⌫</button></div>';
 
-    if (conf === 't') h += '<div class="conf"><p>Tijd <b>' + fmt(p.cs) + '</b> opslaan voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, opslaan</button><button data-a="no">Terug</button></div></div>';
-    else if (conf === 'w') h += '<div class="conf"><p>Weigering registreren voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, weigering</button><button data-a="no">Terug</button></div></div>';
-    else h += '<div class="acts"><button class="pri" data-a="ct"' + (ok ? '' : ' disabled') + '>Tijd opslaan</button><button class="bad" data-a="cw">Weigering</button></div>';
+    if (conf === 't' && confStep === 1) {
+      h += '<div class="conf"><p>Tijd <b>' + fmt(p.cs) + '</b> opslaan voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="' + (p.cs < 500 ? 'step2' : 'yes') + '">Ja, opslaan</button><button data-a="no">Terug</button></div></div>';
+    } else if (conf === 't' && confStep === 2) {
+      h += '<div class="conf warn2"><p><b>Let op:</b> <b>' + fmt(p.cs) + '</b> is een zeer snelle tijd (onder 5 sec). Weet je het zeker?</p><div class="row"><button class="pri" data-a="yes">Ja, klopt</button><button data-a="no">Terug</button></div></div>';
+    } else if (conf === 'w' && confStep === 1) {
+      h += '<div class="conf"><p><b>Weigering</b> registreren voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="step2">Doorgaan</button><button data-a="no">Terug</button></div></div>';
+    } else if (conf === 'w' && confStep === 2) {
+      h += '<div class="conf warn2"><p><b>Zeker weten?</b> Een weigering telt als 600,00 sec. Definitief opslaan voor ' + esc(cd.roep) + '?</p><div class="row"><button class="pri" data-a="yes">Ja, definitief</button><button data-a="no">Terug</button></div></div>';
+    } else {
+      h += '<div class="acts"><button class="pri" data-a="ct"' + (ok ? '' : ' disabled') + '>Tijd opslaan</button><button class="bad" data-a="cw">Weigering</button></div>';
+    }
   }
 
   h += '<button style="width:100%;margin-top:12px" data-a="msgopen">Bericht aan wedstrijdtafel sturen</button>';
@@ -279,7 +291,6 @@ function reg(o, cd, nd) {
   }
   return h;
 }
-
 function lijst(o, relDogs) {
   var h = '<div class="list">';
   relDogs.forEach(function(d) {
@@ -317,15 +328,16 @@ document.getElementById('app').addEventListener('click', function(e) {
   if (!b) return;
   var a = b.dataset.a, v = b.dataset.v, o = S.ox[S.ex];
 
-  if (a === 'ex') { S.ex = v; inp = ''; conf = null; corrId = null; pushStatus(); }
-  else if (a === 'tab') { S.tab = v; conf = null; corrId = null; }
+  if (a === 'ex') { S.ex = v; inp = ''; conf = null; confStep = 1; corrId = null; pushStatus(); }
+  else if (a === 'tab') { S.tab = v; conf = null; confStep = 1; corrId = null; }
   else if (a === 'k') { if (inp.length < 6) inp += v; }
   else if (a === 'del') inp = inp.slice(0, -1);
   else if (a === 'clr') inp = '';
-  else if (a === 'ct') { var p = parse(inp); if (p && p.cs) conf = 't'; }
-  else if (a === 'cok') conf = 'ok';
-  else if (a === 'cw') conf = 'w';
-  else if (a === 'no') conf = null;
+  else if (a === 'ct') { var p = parse(inp); if (p && p.cs) { conf = 't'; confStep = 1; } }
+  else if (a === 'cok') { conf = 'ok'; confStep = 1; }
+  else if (a === 'cw') { conf = 'w'; confStep = 1; }
+  else if (a === 'step2') { confStep = 2; }
+  else if (a === 'no') { conf = null; confStep = 1; }
   else if (a === 'yes') {
     var id = o.q.slice(0, 1).pop(), d = dog(id), p2 = parse(inp);
     var recType = 'WEIGERING', txtVal = 'WEIGERING', msVal = null;
@@ -337,7 +349,7 @@ document.getElementById('app').addEventListener('click', function(e) {
       recType = 'BREVET_OK'; txtVal = 'UITGEVOERD';
     } else if (conf === 'w') {
       o.res[id] = { t: 'weigering' };
-    } else { conf = null; render(); return; }
+    } else { conf = null; confStep = 1; render(); return; }
 
     o.q.shift();
     delete o.skip[id];
@@ -352,7 +364,7 @@ document.getElementById('app').addEventListener('click', function(e) {
       timestamp: new Date().toISOString()
     });
 
-    inp = ''; conf = null;
+    inp = ''; conf = null; confStep = 1;
   }
   else if (a === 'mv') {
     var mid = +v, i = o.q.indexOf(mid);
@@ -410,4 +422,3 @@ flushOutbox();
 </script>
 </body>
 </html>
-
