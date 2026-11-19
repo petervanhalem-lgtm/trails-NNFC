@@ -255,7 +255,9 @@ function draw() {
   var nuTijd = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
   var openM = openMeldingen();
   var openCorr = openM.filter(function(m) { return m.soort !== 'BERICHT'; });
-  var menuLink = IS_ADMIN ? '<a href="index.html" class="btn-link">← Menu</a>' : '';
+ var logoClicks = 0;
+var menuLink = IS_ADMIN ? '<a href="index.html" class="btn-link">← Menu</a>' : '';
+
 
   var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'"><div><h1>Wedstrijdtafel</h1><div class="sub">NNFC Trials ' + esc(actiefJaar) + ', ' + nuTijd + (db ? ' • Live' : ' • Lokaal') + '</div></div></div>' + menuLink + '</div>';
 
