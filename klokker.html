@@ -68,7 +68,7 @@ var params = new URLSearchParams(window.location.search);
 var BAAN_NR = String(params.get('baan') || '1').replace(/[^1-5]/g, '') || '1';
 var IS_ADMIN = params.get('admin') === '1';
 document.title = 'Baan ' + BAAN_NR + ' – NNFC Klokkersscherm';
-var LOGO = 'assets/nnfc-logo.png';
+var LOGO = 'nnfc-logo.png';
 
 function esc(str) {
   return String(str == null ? '' : str)
