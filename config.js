@@ -1,12 +1,12 @@
 const firebaseConfig = {
-  apiKey: "JOUW_API_KEY",
-  authDomain: "JOUW_://firebaseapp.com",
-  databaseURL: "https://JOUW_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "JOUW_PROJECT"
+  apiKey: "AIzaSyAEAitVKVQ5LkFHBeUh4WdHFSamYcBNEbI",
+  authDomain: "://firebaseapp.com",
+  databaseURL: "https://firebasedatabase.app",
+  projectId: "nnfc-trails"
 };
 
 (function() {
-  var pad = ['https:/', 'www.gstatic.com', 'firebasejs', '10.14.1', ''].join('/');
+  var pad = ['https:/', '://gstatic.com', 'firebasejs', '10.14.1', ''].join('/');
   var s1 = document.createElement('script');
   s1.src = pad + 'firebase-app-compat.js';
   s1.onerror = function() { alert('Fout: Firebase-script kon niet worden geladen. Controleer de internetverbinding.'); };
