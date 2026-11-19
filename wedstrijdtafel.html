@@ -68,6 +68,9 @@ function safeDraw() {
   if (v === 'extra' || v === 'nood') return;
   draw();
 }
+function back() {
+  return '<button onclick="go(\'home\')" style="margin-bottom:12px">← Terug naar overzicht</button>';
+}
 
 function initFirebase() {
   try {
@@ -75,7 +78,13 @@ function initFirebase() {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.database();
       db.ref('wedstrijd/actief_jaar').on('value', function(s) {
-        if (s.val()) { actiefJaar = String(s.val()); safeDraw(); }
+        if (s.val()) {
+          actiefJaar = String(s.val());
+          try {
+            kcmSelecties = Object.assign({}, JSON.parse(localStorage.getItem('nnfc_kcm_' + actiefJaar)) || {}, kcmSelecties);
+          } catch (e) {}
+          safeDraw();
+        }
       });
       db.ref('wedstrijd/registraties').on('value', function(s) { registraties = s.val() || {}; detectConflicts(); safeDraw(); });
       db.ref('wedstrijd/meldingen').on('value', function(s) { meldingen = s.val() || {}; safeDraw(); });
@@ -92,6 +101,24 @@ function initFirebase() {
 
 function go(x) { v = x; draw(); window.scrollTo(0, 0); }
 function formatSec(ms, bm) { var s = (ms / 1000).toFixed(2).replace('.', ','); return bm ? s + '*' : s; }
+
+async function setKcm(nr, val) {
+  var key = String(nr);
+  if (val === 'GEEN') {
+    delete kcmSelecties[key];
+  } else {
+    kcmSelecties[key] = val;
+  }
+  try {
+    localStorage.setItem('nnfc_kcm_' + actiefJaar, JSON.stringify(kcmSelecties));
+  } catch (e) {}
+  draw();
+  if (db) {
+    try {
+      await db.ref('wedstrijd/kcm_selecties/' + key).set(val === 'GEEN' ? null : val);
+    } catch (e) {}
+  }
+}
 
 function getGroepen() {
   var map = {};
@@ -255,9 +282,7 @@ function draw() {
   var nuTijd = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
   var openM = openMeldingen();
   var openCorr = openM.filter(function(m) { return m.soort !== 'BERICHT'; });
- var logoClicks = 0;
-var menuLink = IS_ADMIN ? '<a href="index.html" class="btn-link">← Menu</a>' : '';
-
+  var menuLink = IS_ADMIN ? '<a href="index.html" class="btn-link">← Menu</a>' : '';
 
   var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'"><div><h1>Wedstrijdtafel</h1><div class="sub">NNFC Trials ' + esc(actiefJaar) + ', ' + nuTijd + (db ? ' • Live' : ' • Lokaal') + '</div></div></div>' + menuLink + '</div>';
 
