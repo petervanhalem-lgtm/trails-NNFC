@@ -69,7 +69,7 @@ var KCM_PUNTEN = {"GEEN":0,"BOB":75,"CAC":70,"Res. CAC":65,"U1":55,"U2":50,"U3":
 var WEIGERING_MS = 600000;
 var nuJaar = new Date().getFullYear();
 var actiefJaar = (nuJaar >= 2026 && nuJaar <= 2040) ? String(nuJaar) : '2026';
-var registraties = {}, meldingen = {}, logboek = {}, banenStatus = {}, deelnemersLijst = [], kcmSelecties = {}, v = 'home', zoekAanm = '';
+var registraties = {}, meldingen = {}, logboek = {}, banenStatus = {}, deelnemersLijst = [], kcmSelecties = {}, v = 'home', zoekAanm = '', klokBaan = '1';
 
 function laadLokaleData() {
   try {
@@ -405,6 +405,7 @@ function draw() {
     nv('nood', 'Handmatige tijd') +
     nv('meld', 'Meldingen' + (openM.length ? ' (' + openM.length + ')' : '')) +
     nv('beker', 'Bekers & KCM') +
+    nv('klok', 'Klokkersbeeld') +
     nv('hist', 'Wijzigingen') +
     '</div>';
 
@@ -464,7 +465,12 @@ function draw() {
   } else if (v.charAt(0) === 'l') {
     var bNr = +v.slice(1);
     var recs = Object.values(registraties).filter(function(r) { return r && r.baan == bNr && r.status !== 'AFGEWEZEN'; });
-    h += back() + '<h2 style="margin-top:4px">Baan ' + bNr + '</h2>';
+    h += back() + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+      '<h2 style="margin:0">Baan ' + bNr + '</h2>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="pri" onclick="klokBaan=\'' + bNr + '\';go(\'klok\')">Klokkersbeeld Baan ' + bNr + '</button>' +
+        '<a href="klokker.html?baan=' + bNr + '" target="_blank" class="btn-link">Open klokker.html ↗</a>' +
+      '</div></div>';
     if (recs.length) {
       h += '<div class="list-box">' + recs.map(function(r) {
         return '<div class="t"><b>' + esc(r.startnummer) + '</b><div>' + esc(r.roepnaam) + ' <span class="m">(Oef. ' + esc(r.oefening) + ')</span></div><b>' + esc(r.tijdTekst) + '</b></div>';
@@ -527,15 +533,15 @@ function draw() {
     if (!openM.length) h += '<div class="m">Geen open meldingen.</div>';
     openM.forEach(function(m) {
       if (m.soort === 'BERICHT') {
-        h += '<div class="box n"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div><div style="font-size:19px;margin:4px 0 10px">' + esc(m.tekst) + '</div><button onclick="leesBericht(\'' + esc(m.id) + '\')" style="width:100%">Gelezen</button></div>';
+        h += '<div class="box n"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div><div style="font-size:19px;margin:4px 0 10px">' + esc(m.tekst) + '</div><button onclick="leesBericht('' + esc(m.id) + '')" style="width:100%">Gelezen</button></div>';
       } else {
         h += '<div class="box"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div>' +
           '<div style="font-size:20px;font-weight:700;margin:2px 0 8px">Conflict: twee tijden voor ' + esc(m.roepnaam) + ' (nr ' + esc(m.startnummer) + ')</div>' +
           '<div class="m">Eerst geregistreerd</div><div class="big">' + esc(m.oudeTijd) + '</div>' +
           '<div class="m" style="margin-top:6px">Correctie van de klokker</div><div class="big">' + esc(m.nieuweTijd) + '</div>' +
           '<div class="m" style="margin:6px 0 12px">Reden: ' + esc(m.reden) + '. Tot de tafel beslist telt ' + esc(m.oudeTijd) + '.</div>' +
-          '<div class="row"><button onclick="beslis(\'' + esc(m.id) + '\', false)">Houd ' + esc(m.oudeTijd) + '</button>' +
-          '<button class="pri" onclick="beslis(\'' + esc(m.id) + '\', true)">Neem ' + esc(m.nieuweTijd) + ' over</button></div></div>';
+          '<div class="row"><button onclick="beslis('' + esc(m.id) + '', false)">Houd ' + esc(m.oudeTijd) + '</button>' +
+          '<button class="pri" onclick="beslis('' + esc(m.id) + '', true)">Neem ' + esc(m.nieuweTijd) + ' over</button></div></div>';
       }
     });
 
@@ -565,6 +571,54 @@ function draw() {
     };
 
     h += back() + '<div class="g">' + bouwSpetter('Spettertrofee (Open + KCM)', openH) + bouwSpetter('Junior Spettertrofee (Jeugd + KCM)', jeugdH) + '</div>';
+
+  } else if (v === 'klok') {
+    var bSel = String(klokBaan || '1');
+    var stKlok = banenStatus['baan_' + bSel] || { oefening: 'A', klaar: 0, totaal: 0, nuHond: 'Wacht op start', serverTijd: null };
+    var aanwezigeBaan = deelnemersLijst.filter(function(d) { return String(d.baan) === bSel && d.aanwezig; });
+    var baanRecs = Object.values(registraties).filter(function(r) { return r && String(r.baan) === bSel && r.status !== 'AFGEWEZEN'; });
+
+    var baanKnoppen = ['1', '2', '3', '4', '5'].map(function(n) {
+      var cntAanw = deelnemersLijst.filter(function(d) { return String(d.baan) === n && d.aanwezig; }).length;
+      return '<button class="' + (bSel === n ? 'pri' : '') + '" onclick="klokBaan=\'' + n + '\';draw()">Baan ' + n + ' (' + cntAanw + ' aanwezig)</button>';
+    }).join('');
+
+    var klokLaatstGezien = 'Nog geen signaal van de baan';
+    if (stKlok.serverTijd) {
+      var dtK = new Date(stKlok.serverTijd);
+      klokLaatstGezien = 'Laatst gezien om ' + dtK.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    h += back() +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">' +
+        '<div><h2 style="margin:0">Klokkersbeeld & Startlijstcontrole</h2><div class="m">Bekijk exact welke aanwezige honden, oefening en tijden er voor de klokker op de baan staan.</div></div>' +
+        '<a href="klokker.html?baan=' + esc(bSel) + '" target="_blank" class="btn-link">Open klokker.html (Baan ' + esc(bSel) + ') ↗</a>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' + baanKnoppen + '</div>' +
+      '<div class="g" style="margin-bottom:12px">' +
+        '<div class="box n" style="margin-bottom:0"><div class="m">Actieve oefening & status</div><div class="big">Oefening ' + esc(stKlok.oefening || 'A') + '</div><div class="m" style="margin-top:4px">' + esc(klokLaatstGezien) + '</div></div>' +
+        '<div class="box n" style="margin-bottom:0"><div class="m">Aanwezige honden op startlijst</div><div class="big">' + aanwezigeBaan.length + '</div><div class="m" style="margin-top:4px">Alleen aangevinkte honden gaan naar de baan</div></div>' +
+        '<div class="box n" style="margin-bottom:0"><div class="m">Geregistreerde tijden op baan</div><div class="big">' + baanRecs.length + '</div><div class="m" style="margin-top:4px">Huidige hond: <b>' + esc(stKlok.nuHond || 'Wacht op start') + '</b></div></div>' +
+      '</div>' +
+      '<div class="box n"><h2 style="margin-top:0">Startlijst klokker — Baan ' + esc(bSel) + ' (Aanwezig)</h2>';
+
+    if (!aanwezigeBaan.length) {
+      h += '<div class="m">Geen aanwezige honden op Baan ' + esc(bSel) + '. Controleer <b>Aanmelding</b> of synchroniseer vanuit Beheer.</div>';
+    } else {
+      h += '<div class="list-box">' + aanwezigeBaan.map(function(d, idx) {
+        var hondTijden = baanRecs.filter(function(r) { return String(r.startnummer) === String(d.startnummer); });
+        var samenvatting = hondTijden.length
+          ? hondTijden.map(function(r) { return 'Oef ' + esc(r.oefening) + ': <b>' + esc(r.tijdTekst) + '</b>'; }).join(' • ')
+          : '<span class="m">Nog geen tijd geregistreerd</span>';
+        return '<div class="t"><b>' + (idx + 1) + '</b><div>' +
+          '#' + esc(d.startnummer) + ' ' + esc(d.roepnaam) +
+          (d.buitenMededinging ? ' <span class="chip">*</span>' : '') +
+          '<div class="m">' + esc(d.klasse) + ' • ' + esc(d.opvolgendBrevet) + '</div>' +
+          '<div style="font-size:14px;margin-top:2px">' + samenvatting + '</div></div>' +
+          '<span class="chip-ok">Aanwezig</span></div>';
+      }).join('') + '</div>';
+    }
+    h += '</div>';
 
   } else if (v === 'hist') {
     var logs = Object.values(logboek).filter(Boolean).sort(function(a, b) { return b.timestamp.localeCompare(a.timestamp); });
