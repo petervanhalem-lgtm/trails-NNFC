@@ -44,6 +44,8 @@ button,.btn-link{font:inherit;color:inherit;border:2px solid var(--ln);backgroun
 input,select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid var(--ln);border-radius:12px;padding:10px 12px;width:100%;margin-bottom:10px;min-height:46px}
 label{display:block;font-weight:600;font-size:16px;margin-bottom:4px;color:var(--mut)}
 .chk{width:28px;height:28px;accent-color:var(--ok);cursor:pointer;margin:0}
+.chk-wrap{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:15px;font-weight:700;padding:6px 10px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);color:var(--mut);margin:0}
+.chk-wrap.on{border-color:var(--ok);color:var(--ok)}
 </style>
 </head>
 <body>
@@ -62,7 +64,7 @@ try {
 } catch (e) {}
 
 function esc(str) {
-  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '\x27');
+  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 function safeDraw() {
   if (v === 'extra' || v === 'nood') return;
@@ -85,7 +87,6 @@ function initFirebase() {
           } catch (e) {}
           safeDraw();
         }
-
       });
       db.ref('wedstrijd/registraties').on('value', function(s) { registraties = s.val() || {}; detectConflicts(); safeDraw(); });
       db.ref('wedstrijd/meldingen').on('value', function(s) { meldingen = s.val() || {}; safeDraw(); });
@@ -283,7 +284,7 @@ function draw() {
   var nuTijd = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
   var openM = openMeldingen();
   var openCorr = openM.filter(function(m) { return m.soort !== 'BERICHT'; });
-var menuLink = '<div style="display:flex;gap:8px"><a href="index.html" class="btn-link">← Menu</a><a href="beheer.html" class="btn-link">Beheer →</a></div>';
+  var menuLink = '<div style="display:flex;gap:8px"><a href="index.html" class="btn-link">← Menu</a><a href="beheer.html" class="btn-link">Beheer →</a></div>';
 
   var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'"><div><h1>Wedstrijdtafel</h1><div class="sub">NNFC Trials ' + esc(actiefJaar) + ', ' + nuTijd + (db ? ' • Live' : ' • Lokaal') + '</div></div></div>' + menuLink + '</div>';
 
@@ -380,13 +381,13 @@ var menuLink = '<div style="display:flex;gap:8px"><a href="index.html" class="bt
 
   } else if (v === 'aanm') {
     h += back() + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">' +
-      '<div><h2 style="margin:0">Aanmelding Secretariaat (Art. 2.5)</h2><div class="m">Vink aanwezigen aan (ook laatkomers). Gaat direct naar de klokker.</div></div>' +
+      '<div><h2 style="margin:0">Aanmelding Secretariaat (Art. 2.5)</h2><div class="m">Vink <b>Aanwezig</b> aan zodra de hond is aangemeld (ook laatkomers). Alleen aangevinkte honden verschijnen op het klokkersscherm.</div></div>' +
       '<button class="pri" onclick="syncAlleBanen()">Synchroniseer alle banen</button></div>';
     if (deelnemersLijst.length) {
       deelnemersLijst.forEach(function(d) {
         h += '<div class="t"><b>B' + esc(d.baan) + '</b><div>#' + esc(d.startnummer) + ' ' + esc(d.roepnaam) + ' <span class="' + (d.betaald ? 'chip-ok' : 'chip-bad') + '">' + (d.betaald ? 'Betaald' : 'Nog betalen') + '</span>' +
           '<div class="m">' + esc(d.stamboom) + ' • ' + esc(d.eigenaar || '-') + ' (' + esc(d.klasse) + ')</div></div>' +
-          '<input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + esc(d.startnummer) + ')"></div>';
+          '<label class="chk-wrap' + (d.aanwezig ? ' on' : '') + '"><span>' + (d.aanwezig ? 'Aanwezig' : 'Niet aanwezig') + '</span><input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + esc(d.startnummer) + ')"></label></div>';
       });
     } else {
       h += '<div class="box n"><div class="m">Nog geen deelnemers ingeladen. Gebruik "+ Extra deelnemer" of laad vanuit Beheer.</div></div>';
