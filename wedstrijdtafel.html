@@ -143,7 +143,9 @@ function renderAanmLijst() {
     var kcmTag = (kcmVal && kcmVal !== 'GEEN') ? ' <span class="chip">KCM: ' + esc(kcmVal) + '</span>' : '';
     return '<div class="t"><b>B' + esc(d.baan) + '</b><div>#' + esc(d.startnummer) + ' ' + esc(d.roepnaam) + ' <span class="' + (d.betaald ? 'chip-ok' : 'chip-bad') + '">' + (d.betaald ? 'Betaald' : 'Nog betalen') + '</span>' + kcmTag +
       '<div class="m">' + esc(d.stamboom) + ' • ' + esc(d.eigenaar || '-') + (d.lidnr && d.lidnr !== 'ONBEKEND' ? ' (Lidnr: ' + esc(d.lidnr) + ')' : '') + ' • ' + esc(d.klasse) + '</div></div>' +
-      '<label class="chk-wrap' + (d.aanwezig ? ' on' : '') + '"><span>' + (d.aanwezig ? 'Aanwezig' : 'Niet aanwezig') + '</span><input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + esc(d.startnummer) + ')"></label></div>';
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+      '<label class="chk-wrap' + (d.aanwezig ? ' on' : '') + '"><span>' + (d.aanwezig ? 'Aanwezig' : 'Niet aanwezig') + '</span><input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + esc(d.startnummer) + ')"></label>' +
+      '<button style="min-height:36px;padding:4px 10px;font-size:14px;color:var(--bad);border-color:var(--bad)" onclick="verwijderDeelnemer(\'' + esc(d.startnummer) + '\')">Verwijder</button></div></div>';
   }).join('') + '</div>';
 }
 
@@ -170,15 +172,18 @@ function initFirebase() {
       });
       db.ref('wedstrijd/beheer_deelnemers').on('value', function(s) {
         var val = s.val();
-        if (val) {
+        if (val !== null && val !== undefined) {
           deelnemersLijst = Array.isArray(val) ? val.filter(Boolean) : Object.values(val).filter(Boolean);
           deelnemersLijst.forEach(function(d) {
             if (d && d.kcm && d.kcm !== 'GEEN' && !kcmSelecties[String(d.startnummer)]) {
               kcmSelecties[String(d.startnummer)] = d.kcm;
             }
           });
-          safeDraw();
+        } else {
+          deelnemersLijst = [];
         }
+        try { localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst)); } catch (e) {}
+        safeDraw();
       });
     }
   } catch (e) {}
@@ -365,6 +370,37 @@ function verwijderGekozenNoodTijd() {
 }
 
 async function leesBericht(id) { if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' }); else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); } }
+
+
+async function verwijderDeelnemer(nr) {
+  var d = deelnemersLijst.find(function(x) { return String(x.startnummer) === String(nr); });
+  if (!d) return;
+  if (!confirm('Deelnemer #' + d.startnummer + ' ' + d.roepnaam + ' verwijderen uit de aanmelding en deelnemerslijst?')) return;
+  var baanNr = d.baan;
+  deelnemersLijst = deelnemersLijst.filter(function(x) { return String(x.startnummer) !== String(nr); });
+  try { localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst)); } catch (e) {}
+  draw();
+  if (db) {
+    if (d.id) await db.ref('wedstrijd/beheer_deelnemers/' + d.id).remove();
+    var snap = await db.ref('wedstrijd/beheer_deelnemers').once('value');
+    var raw = snap.val();
+    if (raw && typeof raw === 'object') {
+      var entries = Object.entries(raw);
+      for (var i = 0; i < entries.length; i++) {
+        var k = entries[i][0], item = entries[i][1];
+        if (item && String(item.startnummer) === String(nr)) {
+          await db.ref('wedstrijd/beheer_deelnemers/' + k).remove();
+        }
+      }
+    }
+    await stuurBaan(baanNr);
+    await db.ref('wedstrijd/logboek/DELDEEL_' + Date.now()).set({
+      baan: baanNr || '-',
+      actie: 'Tafel verwijderde deelnemer #' + d.startnummer + ' ' + d.roepnaam,
+      timestamp: new Date().toISOString()
+    });
+  }
+}
 
 async function toggleAanwezig(nr) {
   var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; }); if (!d) return;
