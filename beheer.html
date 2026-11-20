@@ -44,6 +44,8 @@ th{color:var(--mut);font-weight:700}
 .banner-err{background:var(--bad);color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;margin-bottom:12px}
 .chip{display:inline-block;background:var(--soft);padding:2px 8px;border-radius:8px;font-size:14px;font-weight:700}
 .chk{width:24px;height:24px;accent-color:var(--ok);cursor:pointer;margin:0}
+.search-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.search-bar input{margin-bottom:0;border-color:var(--ac)}
 </style>
 </head>
 <body>
@@ -130,6 +132,11 @@ th{color:var(--mut);font-weight:700}
             </select>
             <button onclick="genereerNummers()">Genereer startnummers</button>
           </div>
+        </div>
+
+        <div class="search-bar">
+          <input type="search" id="zoekBeheer" oninput="render()" placeholder="Zoek op startnr, roepnaam, stamboomnaam, eigenaar, lidnr, klasse, brevet of betaald...">
+          <button type="button" class="sm" onclick="document.getElementById('zoekBeheer').value='';render()">Wis</button>
         </div>
 
         <div id="statBalk" class="sub" style="margin-bottom:10px"></div>
@@ -429,11 +436,28 @@ function exporteerBackup() {
   a.click();
 }
 
+function matchBeheerZoek(h, q) {
+  if (!q) return true;
+  var woorden = q.toLowerCase().trim().split(/\s+/);
+  var tekst = [
+    h.startnummer, '#' + h.startnummer,
+    h.roepnaam, h.stamboom, h.eigenaar, h.lidnr,
+    h.klasse, h.geslacht, h.huidigBrevet, h.opvolgendBrevet,
+    'baan ' + h.baan, 'b' + h.baan,
+    h.betaald ? 'betaald' : 'nog betalen',
+    h.buitenMededinging ? 'buiten mededinging' : ''
+  ].join(' ').toLowerCase();
+  return woorden.every(function(w) { return tekst.indexOf(w) !== -1; });
+}
+
 function render() {
   var flt = document.getElementById('fltBaan').value;
-  var sub = flt === 'ALLE' ? lijst : lijst.filter(function(x) { return x.baan === flt; });
+  var zoekQ = (document.getElementById('zoekBeheer') ? document.getElementById('zoekBeheer').value : '');
+  var sub = (flt === 'ALLE' ? lijst : lijst.filter(function(x) { return x.baan === flt; }))
+    .filter(function(x) { return matchBeheerZoek(x, zoekQ); });
   var betCount = lijst.filter(function(x) { return x.betaald; }).length;
-  document.getElementById('statBalk').innerHTML = 'Totaal: <b>' + lijst.length + ' honden</b> • Betaald: <b style="color:var(--ok)">' + betCount + '</b> • Nog betalen: <b style="color:var(--bad)">' + (lijst.length - betCount) + '</b>';
+  var filterInfo = zoekQ.trim() ? (' • Gevonden: <b>' + sub.length + '</b>') : '';
+  document.getElementById('statBalk').innerHTML = 'Totaal: <b>' + lijst.length + ' honden</b> • Betaald: <b style="color:var(--ok)">' + betCount + '</b> • Nog betalen: <b style="color:var(--bad)">' + (lijst.length - betCount) + '</b>' + filterInfo;
 
   var conf = [], nrsGezien = {}, dubbeleNrs = [];
   lijst.forEach(function(h) {
@@ -464,7 +488,7 @@ function render() {
 
   var tbody = document.getElementById('tblBody');
   if (!sub.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="sub">Nog geen deelnemers ingevoerd voor ' + esc(jaar) + '.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="sub">' + (zoekQ.trim() ? ('Geen deelnemers gevonden voor "' + esc(zoekQ) + '".') : ('Nog geen deelnemers ingevoerd voor ' + esc(jaar) + '.')) + '</td></tr>';
     return;
   }
 
@@ -496,7 +520,7 @@ async function stuurNaarTafel() {
 
     var updates = {};
     lijst.forEach(function(h) {
-      var match = tafelItems.find(function(t) { return t.startnummer == h.startnummer; });
+      var match = tafelItems.find(function(t) { return t.id === h.id || t.startnummer == h.startnummer; });
       var merged = Object.assign({}, h, { aanwezig: match ? Boolean(match.aanwezig) : Boolean(h.aanwezig) });
       updates[h.id] = merged;
     });
