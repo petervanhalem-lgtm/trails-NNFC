@@ -512,13 +512,13 @@ function renderSectie2() {
 
   '<div class="box">' +
     '<div class="box-head">' +
-      '<div><h2>3 Bijlagen Waterwerkcoördinator (' + esc(jaar) + ')</h2><div class="sub">Direct zichtbaar op Banen / Klokkers langs de waterkant</div></div>' +
+      '<div><h2>3 Bijlagen bij het Waterwerkreglement (' + esc(jaar) + ')</h2><div class="sub">Afspraken, aanwijzingen of oefeningen voor baancommissarissen & klokkers — direct te raadplegen op Banen / Klokkers</div></div>' +
       '<button type="button" class="ok sm" onclick="slaBijlagenOp()">Bijlagen opslaan</button>' +
     '</div>' +
     '<div class="grid3">' +
-      '<div class="kaart"><label for="bijlage1">Bijlage 1</label><textarea id="bijlage1" placeholder="Tekst bijlage 1...">' + esc(baanIndeling.bijlagen.b1 || '') + '</textarea></div>' +
-      '<div class="kaart"><label for="bijlage2">Bijlage 2</label><textarea id="bijlage2" placeholder="Tekst bijlage 2...">' + esc(baanIndeling.bijlagen.b2 || '') + '</textarea></div>' +
-      '<div class="kaart"><label for="bijlage3">Bijlage 3</label><textarea id="bijlage3" placeholder="Tekst bijlage 3...">' + esc(baanIndeling.bijlagen.b3 || '') + '</textarea></div>' +
+      '<div class="kaart"><label for="bijlage1">Bijlage 1 – Reglement & afspraken</label><div class="sub" style="margin-bottom:6px">Bijv. startvolgorde, afmelden of wachttijden</div><textarea id="bijlage1" placeholder="Bijv. Honden starten op startnummer; bij vertraging direct melden bij de wedstrijdtafel...">' + esc(baanIndeling.bijlagen.b1 || '') + '</textarea></div>' +
+      '<div class="kaart"><label for="bijlage2">Bijlage 2 – Oefeningen & uitvoering</label><div class="sub" style="margin-bottom:6px">Bijv. afstanden, lijngebruik of aandachtspunten per baan</div><textarea id="bijlage2" placeholder="Bijv. Let op lijnvoering bij het inzwemmen en rustig afwachten op de kant...">' + esc(baanIndeling.bijlagen.b2 || '') + '</textarea></div>' +
+      '<div class="kaart"><label for="bijlage3">Bijlage 3 – Tijdmeting & bijzonderheden</label><div class="sub" style="margin-bottom:6px">Bijv. klokregels, extra instructies of veiligheidsmeldingen</div><textarea id="bijlage3" placeholder="Bijv. Klok start bij signaal keurmeester; noteer bijzonderheden direct op de klokkaart...">' + esc(baanIndeling.bijlagen.b3 || '') + '</textarea></div>' +
     '</div>' +
   '</div>';
 }
