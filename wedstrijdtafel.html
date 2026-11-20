@@ -208,6 +208,7 @@ var nav = {
   subSubLabel: '',
   zoek: '',
   baanFilter: 'ALLE',
+  klasseFilter: 'ALLE',
   printOnderdeel: 'ALLES'
 };
 
@@ -297,6 +298,12 @@ function gaNaarWedstrijdtafel() {
   nav.subLabel = '';
   nav.subSub = null;
   nav.subSubLabel = '';
+  nav.klasseFilter = 'ALLE';
+  render();
+}
+
+function setKlasseFilter(kl) {
+  nav.klasseFilter = kl;
   render();
 }
 
@@ -667,25 +674,89 @@ function renderStap5() {
   var geslaagdeBrevetten = deelnemers.filter(function(h) { return (tafelData[h.id] || {}).brevetUitslag === 'Geslaagd'; });
   var eindLijst = deelnemers.slice().sort(function(a, b) { return totaalPunten(b) - totaalPunten(a); });
 
-  var toonUitslagen = !nav.sub || nav.sub === 'UITSLAGEN';
+  // Verzamel alle gebruikte klassen (standaard + wat in deelnemers staat)
+  var standaardKlassen = ['Jeugd', 'Open', 'Veteranen', 'Stamboomloos', 'Specials'];
+  var alleKlassen = standaardKlassen.slice();
+  deelnemers.forEach(function(h) {
+    var k = (h.klasse || '').trim();
+    if (k && alleKlassen.indexOf(k) === -1) alleKlassen.push(k);
+  });
+
+  var toonUitslagen = !nav.sub || nav.sub === 'UITSLAGEN' || nav.sub === 'PER_KLASSE';
   var toonBrevetten = !nav.sub || nav.sub === 'BREVETTEN_LIJST';
   var toonBekers = !nav.sub || nav.sub === 'BEKERS';
 
-  var uitslagRows = eindLijst.map(function(h, idx) {
-    var td = tafelData[h.id] || {};
-    return '<tr>' +
-      '<td><b>' + (idx + 1) + '.</b></td>' +
-      '<td><b>#' + esc(h.startnummer) + '</b></td>' +
-      '<td><b>' + esc(h.roepnaam) + '</b> <span class="hond-sub">(' + esc(h.stamboom) + ')</span>' + (h.buitenMededinging ? ' <span class="chip">* Buiten med.</span>' : '') + '</td>' +
-      '<td>' + esc(h.eigenaar) + '</td>' +
-      '<td>' + esc(h.klasse) + '</td>' +
-      '<td>' + (td.basisPunten || 0) + '</td>' +
-      '<td>' + (KCM_PUNTEN[h.kcm || 'GEEN'] || 0) + '</td>' +
-      '<td><b>' + totaalPunten(h) + '</b></td>' +
-      '<td>' + esc(td.brevetUitslag || '—') + '</td>' +
-      '<td><input type="text" value="' + esc(td.beker) + '" placeholder="Bijv. 1e prijs / Beker..." style="margin:0;min-height:32px" onchange="setBeker(\'' + esc(h.id) + '\',this.value)"></td>' +
-    '</tr>';
-  }).join('');
+  function bouwUitslagRijen(lijst) {
+    return lijst.map(function(h, idx) {
+      var td = tafelData[h.id] || {};
+      return '<tr>' +
+        '<td><b>' + (idx + 1) + '.</b></td>' +
+        '<td><b>#' + esc(h.startnummer) + '</b></td>' +
+        '<td><b>' + esc(h.roepnaam) + '</b> <span class="hond-sub">(' + esc(h.stamboom) + ')</span>' + (h.buitenMededinging ? ' <span class="chip">* Buiten med.</span>' : '') + '</td>' +
+        '<td>' + esc(h.eigenaar) + '</td>' +
+        '<td><span class="chip">' + esc(h.klasse || '—') + '</span></td>' +
+        '<td>' + (td.basisPunten || 0) + '</td>' +
+        '<td>' + (KCM_PUNTEN[h.kcm || 'GEEN'] || 0) + '</td>' +
+        '<td><b>' + totaalPunten(h) + '</b></td>' +
+        '<td>' + esc(td.brevetUitslag || '—') + '</td>' +
+        '<td><input type="text" value="' + esc(td.beker) + '" placeholder="Bijv. 1e prijs / Beker..." style="margin:0;min-height:32px" onchange="setBeker(\'' + esc(h.id) + '\',this.value)"></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  var klassePills = '<div class="tabs no-print" style="margin-bottom:12px">' +
+    '<button type="button" class="tab ' + (nav.klasseFilter === 'ALLE' && nav.sub !== 'PER_KLASSE' ? 'on' : '') + '" onclick="nav.sub=(nav.sub===\'PER_KLASSE\'?null:nav.sub);setKlasseFilter(\'ALLE\')">Alle klassen samen (' + eindLijst.length + ')</button>' +
+    '<button type="button" class="tab ' + (nav.sub === 'PER_KLASSE' ? 'on' : '') + '" onclick="nav.klasseFilter=\'ALLE\';openSub(\'PER_KLASSE\',\'Uitslagen per klasse\')">Gesplitst per klasse</button>' +
+    alleKlassen.map(function(kl) {
+      var cnt = eindLijst.filter(function(h) { return (h.klasse || '').toLowerCase() === kl.toLowerCase(); }).length;
+      var actief = (nav.sub !== 'PER_KLASSE' && nav.klasseFilter.toLowerCase() === kl.toLowerCase());
+      return '<button type="button" class="tab ' + (actief ? 'on' : '') + '" onclick="if(nav.sub===\'PER_KLASSE\')nav.sub=\'UITSLAGEN\';setKlasseFilter(\'' + esc(kl) + '\')">' + esc(kl) + ' (' + cnt + ')</button>';
+    }).join('') +
+  '</div>';
+
+  var uitslagenHtml = '';
+  if (toonUitslagen) {
+    if (nav.sub === 'PER_KLASSE') {
+      // Per klasse een eigen klassementstabel (1e, 2e, 3e per klasse)
+      var blokken = alleKlassen.map(function(kl) {
+        var klLijst = eindLijst.filter(function(h) { return (h.klasse || '').toLowerCase() === kl.toLowerCase(); });
+        if (!klLijst.length) return '';
+        return '<div class="box">' +
+          '<div class="box-head"><h2>Einduitslag Klasse: ' + esc(kl) + ' (' + klLijst.length + ')</h2></div>' +
+          '<div class="table-wrap"><table><thead><tr>' +
+            '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Basis</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
+          '</tr></thead><tbody>' + bouwUitslagRijen(klLijst) + '</tbody></table></div>' +
+        '</div>';
+      }).filter(Boolean).join('');
+
+      // Eventuele honden zonder ingevulde klasse
+      var zonderKlasse = eindLijst.filter(function(h) { return !(h.klasse || '').trim(); });
+      if (zonderKlasse.length) {
+        blokken += '<div class="box">' +
+          '<div class="box-head"><h2>Overig / Geen klasse (' + zonderKlasse.length + ')</h2></div>' +
+          '<div class="table-wrap"><table><thead><tr>' +
+            '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Basis</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
+          '</tr></thead><tbody>' + bouwUitslagRijen(zonderKlasse) + '</tbody></table></div>' +
+        '</div>';
+      }
+
+      uitslagenHtml = '<div class="box no-print" style="padding:12px 16px">' + klassePills + '</div>' +
+        (blokken || '<div class="box"><div class="sub">Nog geen uitslagen beschikbaar.</div></div>');
+    } else {
+      var gefilterdeEindLijst = nav.klasseFilter === 'ALLE'
+        ? eindLijst
+        : eindLijst.filter(function(h) { return (h.klasse || '').toLowerCase() === nav.klasseFilter.toLowerCase(); });
+
+      var titelSuffix = nav.klasseFilter === 'ALLE' ? 'Alle klassen' : 'Klasse ' + nav.klasseFilter;
+      uitslagenHtml = '<div class="box">' +
+        '<div class="box-head"><h2>Einduitslag & Puntentelling – ' + esc(titelSuffix) + ' (' + esc(jaar) + ')</h2></div>' +
+        klassePills +
+        '<div class="table-wrap"><table><thead><tr>' +
+          '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Basis</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
+        '</tr></thead><tbody>' + (bouwUitslagRijen(gefilterdeEindLijst) || '<tr><td colspan="10" class="sub" style="padding:14px">Nog geen uitslagen beschikbaar voor deze selectie.</td></tr>') + '</tbody></table></div>' +
+      '</div>';
+    }
+  }
 
   var brevetRows = geslaagdeBrevetten.map(function(h) {
     return '<tr>' +
@@ -706,17 +777,23 @@ function renderStap5() {
     return '<tr>' +
       '<td><b>#' + esc(h.startnummer) + '</b></td>' +
       '<td><b>' + esc(h.roepnaam) + '</b> (' + esc(h.eigenaar) + ')</td>' +
+      '<td><span class="chip">' + esc(h.klasse || '—') + '</span></td>' +
       '<td><b>' + esc(prijs) + '</b></td>' +
     '</tr>';
   }).join('');
 
-  return '<div class="print-kop"><h2>NNFC Waterwerk – Eindoverzicht ' + esc(jaar) + '</h2><div>Uitslagen, Geslaagde Brevetten & Bekers</div></div>' +
+  var printSubTitel = nav.sub === 'PER_KLASSE'
+    ? 'Einduitslagen per klasse'
+    : (nav.klasseFilter !== 'ALLE' ? 'Einduitslag Klasse ' + nav.klasseFilter : 'Uitslagen, Geslaagde Brevetten & Bekers');
+
+  return '<div class="print-kop"><h2>NNFC Waterwerk – Eindoverzicht ' + esc(jaar) + '</h2><div>' + esc(printSubTitel) + '</div></div>' +
     '<div class="box no-print">' +
       '<div class="box-head">' +
         '<div><h2>5. Uitslagen, Brevetten & Bekers</h2><div class="sub">Eindoverzicht voor de prijsuitreiking • Direct printen of opslaan als PDF</div></div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-          '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="gaNaarStap(5)">Alles op 1 blad</button>' +
+          '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="nav.klasseFilter=\'ALLE\';gaNaarStap(5)">Alles op 1 blad</button>' +
           '<button type="button" class="sm ' + (nav.sub === 'UITSLAGEN' ? 'pri' : '') + '" onclick="openSub(\'UITSLAGEN\',\'Alleen Uitslagen\')">Uitslagen</button>' +
+          '<button type="button" class="sm ' + (nav.sub === 'PER_KLASSE' ? 'pri' : '') + '" onclick="openSub(\'PER_KLASSE\',\'Uitslagen per klasse\')">Per klasse</button>' +
           '<button type="button" class="sm ' + (nav.sub === 'BREVETTEN_LIJST' ? 'pri' : '') + '" onclick="openSub(\'BREVETTEN_LIJST\',\'Geslaagde Brevetten\')">Brevetten (' + geslaagdeBrevetten.length + ')</button>' +
           '<button type="button" class="sm ' + (nav.sub === 'BEKERS' ? 'pri' : '') + '" onclick="openSub(\'BEKERS\',\'Bekers & Titels\')">Bekers (' + bekerLijst.length + ')</button>' +
           '<button type="button" class="ok" onclick="printOverzicht(\'ALLES\')">Print / Opslaan als PDF</button>' +
@@ -724,12 +801,7 @@ function renderStap5() {
       '</div>' +
     '</div>' +
 
-    (toonUitslagen ? '<div class="box">' +
-      '<div class="box-head"><h2>Einduitslag & Puntentelling (' + esc(jaar) + ')</h2></div>' +
-      '<div class="table-wrap"><table><thead><tr>' +
-        '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Basis</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
-      '</tr></thead><tbody>' + (uitslagRows || '<tr><td colspan="10" class="sub" style="padding:14px">Nog geen uitslagen beschikbaar.</td></tr>') + '</tbody></table></div>' +
-    '</div>' : '') +
+    uitslagenHtml +
 
     (toonBrevetten ? '<div class="box">' +
       '<div class="box-head"><h2>Geslaagde Brevetten (' + geslaagdeBrevetten.length + ')</h2></div>' +
@@ -741,8 +813,8 @@ function renderStap5() {
     (toonBekers ? '<div class="box">' +
       '<div class="box-head"><h2>Bekers & Titels (' + bekerLijst.length + ')</h2></div>' +
       '<div class="table-wrap"><table><thead><tr>' +
-        '<th style="width:90px">Startnr</th><th>Hond & Eigenaar</th><th>Beker / Titel</th>' +
-      '</tr></thead><tbody>' + (bekerRows || '<tr><td colspan="3" class="sub" style="padding:14px">Nog geen bekers of Beste Reu/Teef-titels toegekend.</td></tr>') + '</tbody></table></div>' +
+        '<th style="width:90px">Startnr</th><th>Hond & Eigenaar</th><th>Klasse</th><th>Beker / Titel</th>' +
+      '</tr></thead><tbody>' + (bekerRows || '<tr><td colspan="4" class="sub" style="padding:14px">Nog geen bekers of Beste Reu/Teef-titels toegekend.</td></tr>') + '</tbody></table></div>' +
     '</div>' : '');
 }
 
