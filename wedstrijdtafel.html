@@ -533,15 +533,15 @@ function draw() {
     if (!openM.length) h += '<div class="m">Geen open meldingen.</div>';
     openM.forEach(function(m) {
       if (m.soort === 'BERICHT') {
-        h += '<div class="box n"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div><div style="font-size:19px;margin:4px 0 10px">' + esc(m.tekst) + '</div><button onclick="leesBericht('' + esc(m.id) + '')" style="width:100%">Gelezen</button></div>';
+        h += '<div class="box n"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div><div style="font-size:19px;margin:4px 0 10px">' + esc(m.tekst) + '</div><button onclick="leesBericht(\'' + esc(m.id) + '\')" style="width:100%">Gelezen</button></div>';
       } else {
         h += '<div class="box"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div>' +
           '<div style="font-size:20px;font-weight:700;margin:2px 0 8px">Conflict: twee tijden voor ' + esc(m.roepnaam) + ' (nr ' + esc(m.startnummer) + ')</div>' +
           '<div class="m">Eerst geregistreerd</div><div class="big">' + esc(m.oudeTijd) + '</div>' +
           '<div class="m" style="margin-top:6px">Correctie van de klokker</div><div class="big">' + esc(m.nieuweTijd) + '</div>' +
           '<div class="m" style="margin:6px 0 12px">Reden: ' + esc(m.reden) + '. Tot de tafel beslist telt ' + esc(m.oudeTijd) + '.</div>' +
-          '<div class="row"><button onclick="beslis('' + esc(m.id) + '', false)">Houd ' + esc(m.oudeTijd) + '</button>' +
-          '<button class="pri" onclick="beslis('' + esc(m.id) + '', true)">Neem ' + esc(m.nieuweTijd) + ' over</button></div></div>';
+          '<div class="row"><button onclick="beslis(\'' + esc(m.id) + '\', false)">Houd ' + esc(m.oudeTijd) + '</button>' +
+          '<button class="pri" onclick="beslis(\'' + esc(m.id) + '\', true)">Neem ' + esc(m.nieuweTijd) + ' over</button></div></div>';
       }
     });
 
