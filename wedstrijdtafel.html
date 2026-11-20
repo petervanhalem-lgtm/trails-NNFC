@@ -3,998 +3,761 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Wedstrijdtafel NNFC</title>
+<title>Wedstrijdtafel – NNFC</title>
 <style>
-:root{--bg:#EEF3F5;--sf:#FFFFFF;--sf2:#F7FAFC;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;--cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1A22;--sf:#14293A;--sf2:#102230;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;--cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A}}
+:root{
+  --bg:#EEF3F5;--sf:#FFFFFF;--sf2:#F7FAFC;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
+  --cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1A22;--sf:#14293A;--sf2:#102230;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;
+    --cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A;
+  }
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:17px;line-height:1.35}
-#app{max-width:1100px;margin:0 auto;padding:12px 16px 48px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:10px 14px}
+.wrap{max-width:1380px;margin:0 auto;padding:14px 18px 60px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:12px 16px}
 .top-l{display:flex;align-items:center;gap:12px}
 .top img{width:48px;height:48px;border-radius:50%;flex:none}
-h1{font-size:24px;margin:0;font-weight:700;line-height:1.1}
-h2{font-size:19px;margin:16px 0 8px;font-weight:700}
-.sub,.m{color:var(--mut);font-size:14px}
-button,.btn-link{font:inherit;color:inherit;border:1.5px solid var(--ln);background:var(--sf);border-radius:10px;min-height:42px;padding:6px 13px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .12s,border-color .12s}
+h1{font-size:23px;margin:0;font-weight:700;line-height:1.15}
+h2{font-size:19px;margin:0;font-weight:700}
+h3{font-size:16px;margin:0 0 6px;font-weight:700}
+.sub{color:var(--mut);font-size:14px}
+button,.btn-link{font:inherit;color:inherit;border:1.5px solid var(--ln);background:var(--sf);border-radius:10px;min-height:40px;padding:6px 13px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .12s,border-color .12s}
 button:hover,.btn-link:hover{background:var(--sf2)}
-.nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:6px}
-.nav button{min-height:40px;border-color:transparent;background:transparent}
-.nav button:hover{background:var(--sf2)}
-.nav button.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
-.nav button.extra{color:var(--ok);border-color:var(--ok);background:var(--sf)}
-.nav button.extra.on{background:var(--ok);color:#FFFFFF}
-.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
-.c{display:block;width:100%;text-align:left;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:12px 14px;font-size:16px;font-weight:500}
-.c b{font-weight:700;font-size:20px}
-.c.w{border-color:var(--warn)}
-.bar{height:7px;border-radius:5px;background:var(--soft);margin:8px 0}
-.bar i{display:block;height:7px;border-radius:5px;background:var(--ac)}
-.chip{display:inline-block;background:var(--cur);color:var(--curink);border-radius:6px;padding:1px 7px;font-weight:700;font-size:13px}
-.chip-ok{display:inline-block;background:var(--ok);color:#fff;border-radius:6px;padding:1px 7px;font-size:13px;font-weight:700}
-.chip-bad{display:inline-block;background:var(--bad);color:#fff;border-radius:6px;padding:1px 7px;font-size:13px;font-weight:700}
-.warn{color:var(--warn);font-weight:700}
-.banner{background:var(--cur);color:var(--curink);border-color:var(--cur);margin-bottom:12px;font-size:18px;font-weight:700}
-.t{display:grid;grid-template-columns:52px 1fr auto;gap:10px;padding:9px 10px;border-top:1px solid var(--ln);align-items:center;font-size:17px}
-.t:first-child{border-top:none}
-.t b{font-size:20px}
-.list-box{background:var(--sf);border:2px solid var(--ln);border-radius:14px;overflow:hidden}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.row button{min-height:50px;font-size:17px}
 .pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
-.box{background:var(--sf);border:2.5px solid var(--warn);border-radius:14px;padding:14px;margin-bottom:12px}
-.box.n{border-color:var(--ln);border-width:2px}
-.big{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
-.log{padding-left:20px;margin:0;color:var(--mut);font-size:15px}
-.foot{margin-top:20px;font-size:13px;color:var(--mut)}
-input,select{font:inherit;color:var(--ink);background:var(--sf);border:1.5px solid var(--ln);border-radius:10px;padding:8px 10px;width:100%;margin-bottom:10px;min-height:42px}
-input:focus,select:focus{outline:none;border-color:var(--ac)}
+.ok{background:var(--ok)!important;border-color:var(--ok)!important;color:#fff!important}
+.bad{border-color:var(--bad)!important;color:var(--bad)!important;min-height:34px;padding:3px 9px}
+.sm{min-height:34px;padding:3px 9px;font-size:15px}
+
+/* Chronologische 5-stappen balk (zonder slotjes) */
+.dag-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
+@media(max-width:1080px){.dag-nav{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.dag-nav{grid-template-columns:1fr}}
+.dag-btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;padding:8px 12px;border-radius:10px;background:var(--sf2);min-height:58px}
+.dag-btn .nr{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.8}
+.dag-btn .ttl{font-size:15px;font-weight:700;line-height:1.2}
+.dag-btn.on{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
+
+/* Vaste terug- en ankerbalk voor sub- en sub-subpagina's */
+.crumb-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--sf);border:2px solid var(--ac);border-radius:12px;padding:8px 12px;margin-bottom:12px}
+.crumb-trail{font-size:14px;color:var(--mut);font-weight:600}
+.crumb-trail b{color:var(--ink)}
+.crumb-acts{display:flex;gap:8px;flex-wrap:wrap}
+
+.box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:14px}
+.box-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:1100px){.grid5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
+@media(max-width:620px){.grid5{grid-template-columns:1fr}}
+
+.kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:12px}
+.kaart-click{cursor:pointer;transition:border-color .12s,transform .08s}
+.kaart-click:hover{border-color:var(--ac)}
+
 label{display:block;font-weight:600;font-size:14px;margin-bottom:3px;color:var(--mut)}
-.chk{width:24px;height:24px;accent-color:var(--ok);cursor:pointer;margin:0}
-.chk-wrap{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:700;padding:5px 10px;border-radius:9px;border:1.5px solid var(--ln);background:var(--sf);color:var(--mut);margin:0;white-space:nowrap}
-.chk-wrap.on{border-color:var(--ok);color:var(--ok);background:var(--sf2)}
-.search-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.search-bar input{margin-bottom:0;border-color:var(--ac);font-size:17px}
-.search-bar button{min-height:42px;white-space:nowrap}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--sf);border:1.5px solid var(--ln);border-radius:10px;padding:7px 10px;width:100%;margin-bottom:9px;min-height:40px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab{min-height:36px;padding:4px 12px;font-size:15px;border-radius:999px;background:var(--sf2)}
+.tab.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.search-wrap{flex:1;min-width:240px;display:flex;gap:6px;align-items:center}
+.search-wrap input{margin-bottom:0;border-color:var(--ac)}
+.stats-pill{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:14px;color:var(--mut);background:var(--sf2);padding:8px 12px;border-radius:10px;border:1px solid var(--ln);margin-bottom:12px}
+
+.table-wrap{overflow-x:auto;max-height:68vh;border:1.5px solid var(--ln);border-radius:12px}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;z-index:2;background:var(--sf2);color:var(--mut);font-weight:700;font-size:14px;text-align:left;padding:9px 10px;border-bottom:2px solid var(--ln);white-space:nowrap}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--ln);font-size:15px;vertical-align:middle}
+tbody tr:nth-child(even){background:var(--sf2)}
+tbody tr:hover{background:var(--soft)}
+
+.chip{display:inline-block;background:var(--soft);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.chip-ok{display:inline-block;background:rgba(31,122,77,0.15);color:var(--ok);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.chip-warn{display:inline-block;background:rgba(179,38,30,0.14);color:var(--bad);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.chip-kcm{display:inline-block;background:var(--cur);color:var(--curink);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.chk{width:22px;height:22px;accent-color:var(--ok);cursor:pointer;margin:0}
+.hond-main{font-weight:700;font-size:16px}
+.hond-sub{color:var(--mut);font-size:13px}
+
+/* Print / PDF weergave */
+@media print{
+  body{background:#fff!important;color:#000!important;font-size:12pt}
+  .top,.dag-nav,.crumb-bar,.no-print{display:none!important}
+  .wrap{max-width:100%;padding:0;margin:0}
+  .box{border:none;padding:0;margin:0 0 14px;background:#fff}
+  .table-wrap{max-height:none;overflow:visible;border:1px solid #999}
+  thead th{background:#eee!important;color:#000!important;position:static}
+  tbody tr:nth-child(even){background:#f8f8f8!important}
+  .print-kop{display:block!important;margin-bottom:12px;border-bottom:2px solid #000;padding-bottom:6px}
+}
+.print-kop{display:none}
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div class="wrap">
+  <div class="top">
+    <div class="top-l">
+      <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
+      <div>
+        <h1>Wedstrijdtafel (<span id="lblJaar">2026</span>)</h1>
+        <div class="sub">Dagverloop zonder slotjes • Direct schakelen per fase</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="selJaar" onchange="wisselJaar()" style="width:auto;margin:0;font-weight:700" aria-label="Selecteer wedstrijdjaar"></select>
+      <a href="banen.html" class="btn-link">Banen / Klokkers →</a>
+      <a href="beheer.html" class="btn-link">Beheer →</a>
+      <a href="index.html" class="btn-link">← Menu</a>
+    </div>
+  </div>
+
+  <!-- 5 CHRONOLOGISCHE DAGSTAPPEN (ALTIJD VRIJ KLIKBAAR) -->
+  <div class="dag-nav" role="navigation" aria-label="Dagverloop Wedstrijdtafel">
+    <button type="button" id="stepBtn1" class="dag-btn on" onclick="gaNaarStap(1)">
+      <span class="nr">Stap 1 • Ochtend</span>
+      <span class="ttl">1. Aanmelden & Startnummer</span>
+    </button>
+    <button type="button" id="stepBtn2" class="dag-btn" onclick="gaNaarStap(2)">
+      <span class="nr">Stap 2 • Ochtend / Middag</span>
+      <span class="ttl">2. Basis oefeningen</span>
+    </button>
+    <button type="button" id="stepBtn3" class="dag-btn" onclick="gaNaarStap(3)">
+      <span class="nr">Stap 3 • Middag</span>
+      <span class="ttl">3. Brevetten</span>
+    </button>
+    <button type="button" id="stepBtn4" class="dag-btn" onclick="gaNaarStap(4)">
+      <span class="nr">Stap 4 • Finale</span>
+      <span class="ttl">4. Beste Reu & Beste Teef</span>
+    </button>
+    <button type="button" id="stepBtn5" class="dag-btn" onclick="gaNaarStap(5)">
+      <span class="nr">Stap 5 • Prijsuitreiking</span>
+      <span class="ttl">5. Uitslagen, Brevetten & Bekers</span>
+    </button>
+  </div>
+
+  <!-- VASTE NAVIGATIEBALK VOOR SUB- EN SUB-SUBPAGINA'S (TERUG & WEDSTRIJDTAFEL) -->
+  <div id="crumbBar" class="crumb-bar" style="display:none">
+    <div id="crumbTrail" class="crumb-trail"></div>
+    <div class="crumb-acts">
+      <button type="button" class="sm" onclick="gaTerug()">← Terug</button>
+      <button type="button" class="pri sm" onclick="gaNaarWedstrijdtafel()">Wedstrijdtafel</button>
+    </div>
+  </div>
+
+  <!-- HOOFDINHOUD WORDT DYNAMISCH GERENDERD OP BASIS VAN STAP + SUB + SUB-SUB -->
+  <div id="appContent"></div>
+</div>
+
 <script src="config.js"></script>
 <script>
-var params = new URLSearchParams(window.location.search);
-var IS_ADMIN = params.get('admin') === '1';
-var LOGO = 'nnfc-logo.png', db = null;
+var db = null;
 var KCM_PUNTEN = {"GEEN":0,"BOB":75,"CAC":70,"Res. CAC":65,"U1":55,"U2":50,"U3":45,"U4":40,"U":35,"ZG":25,"G":15,"M":10,"S":5};
-var WEIGERING_MS = 600000;
-var nuJaar = new Date().getFullYear();
-var actiefJaar = (nuJaar >= 2026 && nuJaar <= 2040) ? String(nuJaar) : '2026';
-var registraties = {}, meldingen = {}, logboek = {}, banenStatus = {}, deelnemersLijst = [], kcmSelecties = {}, v = 'home', zoekAanm = '', klokBaan = '1';
-
-var UITSLAG_2026_DEELNEMERS = [{"id": "2026_2601", "startnummer": 2601, "baan": "1", "roepnaam": "Floyd", "stamboom": "Aron Floyd v.h. Wijkse Bos", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2602", "startnummer": 2602, "baan": "1", "roepnaam": "Freedom Hearts", "stamboom": "Freedom Hearts of Kings and Queens", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2603", "startnummer": 2603, "baan": "1", "roepnaam": "Heimdall", "stamboom": "Forrest Hearts Of Kings And Queens", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2604", "startnummer": 2604, "baan": "1", "roepnaam": "Coco Chanel", "stamboom": "Coco Chanel vom Kaninchenberg", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2605", "startnummer": 2605, "baan": "1", "roepnaam": "La vie", "stamboom": "La vie est Belle van de Dorpseberen", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2606", "startnummer": 2606, "baan": "1", "roepnaam": "Acapella v.d.", "stamboom": "Acapella v.d. Turfhoeve", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2607", "startnummer": 2607, "baan": "1", "roepnaam": "Jameson Uut", "stamboom": "Jameson Uut Buurvrouwshuus", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2608", "startnummer": 2608, "baan": "1", "roepnaam": "Dylan v.d.", "stamboom": "Dylan v.d. Turfhoeve", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2609", "startnummer": 2609, "baan": "1", "roepnaam": "Ti Amo", "stamboom": "Ti Amo Puro Sogno Mr Perfect", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Jeugd", "opvolgendBrevet": "Brevet A", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2610", "startnummer": 2610, "baan": "2", "roepnaam": "River", "stamboom": "Mablaika's River Blue Mountain", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Veteranen", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2611", "startnummer": 2611, "baan": "2", "roepnaam": "Faithley vom", "stamboom": "Faithley vom Escherhof", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Veteranen", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2612", "startnummer": 2612, "baan": "2", "roepnaam": "May-Day van", "stamboom": "May-Day van het Wilmershof", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Veteranen", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2613", "startnummer": 2613, "baan": "2", "roepnaam": "Kai the", "stamboom": "Kai the Handsome Bär von der Gonheide", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Veteranen", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2614", "startnummer": 2614, "baan": "3", "roepnaam": "Magnum", "stamboom": "Ti Amo Puro Sogno Popping", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2615", "startnummer": 2615, "baan": "3", "roepnaam": "Flint", "stamboom": "Flint", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2616", "startnummer": 2616, "baan": "3", "roepnaam": "Darcy v.", "stamboom": "Darcy v. h. Wilmershof", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2617", "startnummer": 2617, "baan": "3", "roepnaam": "De Veldliggers", "stamboom": "De Veldliggers Naughty Sun", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2618", "startnummer": 2618, "baan": "3", "roepnaam": "Mila", "stamboom": "Mila", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2619", "startnummer": 2619, "baan": "3", "roepnaam": "Nandobears Viva", "stamboom": "Nandobears Viva La Vida", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2620", "startnummer": 2620, "baan": "3", "roepnaam": "Twilight of", "stamboom": "Twilight of Traveller's Joy", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2621", "startnummer": 2621, "baan": "3", "roepnaam": "Nespresso of", "stamboom": "Nespresso of Traveller's Joy", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2622", "startnummer": 2622, "baan": "3", "roepnaam": "Newf Of", "stamboom": "Newf Of My Life Brave", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Specials", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2623", "startnummer": 2623, "baan": "4", "roepnaam": "Sepp", "stamboom": "Zepp van het Wijkse Bos", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2624", "startnummer": 2624, "baan": "4", "roepnaam": "Heer Caruso", "stamboom": "Heer Caruso Jebbe uit de Polderklei", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2625", "startnummer": 2625, "baan": "4", "roepnaam": "Wizard of", "stamboom": "Wizard of Travellers Joy", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2626", "startnummer": 2626, "baan": "4", "roepnaam": "Keltic Kobus", "stamboom": "Keltic Kobus Guus van de Waterschans", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2627", "startnummer": 2627, "baan": "4", "roepnaam": "Idefix -", "stamboom": "Idefix - Igor - vom Menhardsweiler Tal", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2628", "startnummer": 2628, "baan": "4", "roepnaam": "M II", "stamboom": "M II 3 Mops von Widdersdorf", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2629", "startnummer": 2629, "baan": "4", "roepnaam": "Ody v.", "stamboom": "Ody v. Asbjørn", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2630", "startnummer": 2630, "baan": "4", "roepnaam": "Titan of", "stamboom": "Titan of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2631", "startnummer": 2631, "baan": "4", "roepnaam": "Ayhan of", "stamboom": "Ayhan of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2632", "startnummer": 2632, "baan": "4", "roepnaam": "Fernando vom", "stamboom": "Fernando vom Burgseeli", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2633", "startnummer": 2633, "baan": "4", "roepnaam": "Kai of", "stamboom": "Kai of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2634", "startnummer": 2634, "baan": "4", "roepnaam": "Blue Lake", "stamboom": "Blue Lake of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2635", "startnummer": 2635, "baan": "4", "roepnaam": "Mablaika's Shocking", "stamboom": "Mablaika's Shocking Blue", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2636", "startnummer": 2636, "baan": "4", "roepnaam": "Vélès the", "stamboom": "Vélès the world of night", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2637", "startnummer": 2637, "baan": "4", "roepnaam": "Tiamo Elmo", "stamboom": "Tiamo Elmo De Zandvijver", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2638", "startnummer": 2638, "baan": "5", "roepnaam": "Oleta Adams", "stamboom": "Oleta Adams van de Dorpse Beren", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2639", "startnummer": 2639, "baan": "5", "roepnaam": "Jacy", "stamboom": "Livaine of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2640", "startnummer": 2640, "baan": "5", "roepnaam": "Estefani Hearts", "stamboom": "Estefani Hearts of Kings and Queens", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2641", "startnummer": 2641, "baan": "5", "roepnaam": "Espe Hearts", "stamboom": "Espe Hearts of Kings and Queens", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2642", "startnummer": 2642, "baan": "5", "roepnaam": "Tinkerbell of", "stamboom": "Tinkerbell of Traveller's Joy", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2643", "startnummer": 2643, "baan": "5", "roepnaam": "Mayla", "stamboom": "Mayla", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2644", "startnummer": 2644, "baan": "5", "roepnaam": "Linge", "stamboom": "Linge", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2645", "startnummer": 2645, "baan": "5", "roepnaam": "Cappuccino of", "stamboom": "Cappuccino of Traveller's Joy", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2646", "startnummer": 2646, "baan": "5", "roepnaam": "Mablaika's VOF", "stamboom": "Mablaika's VOF de Kunst", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2647", "startnummer": 2647, "baan": "5", "roepnaam": "Naoufal of", "stamboom": "Naoufal of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2648", "startnummer": 2648, "baan": "5", "roepnaam": "Mystery Song", "stamboom": "Mystery Song v.d. Turfhoeve", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2649", "startnummer": 2649, "baan": "5", "roepnaam": "Ti Amo", "stamboom": "Ti Amo Puro Sogno Twist", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2650", "startnummer": 2650, "baan": "5", "roepnaam": "Moree of", "stamboom": "Moree of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2651", "startnummer": 2651, "baan": "5", "roepnaam": "Lunah of", "stamboom": "Lunah of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2652", "startnummer": 2652, "baan": "5", "roepnaam": "Ocean of", "stamboom": "Ocean of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2653", "startnummer": 2653, "baan": "5", "roepnaam": "Mablaika's Volumia", "stamboom": "Mablaika's Volumia", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2654", "startnummer": 2654, "baan": "5", "roepnaam": "Mablaika's Viva", "stamboom": "Mablaika's Viva La Vida", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2655", "startnummer": 2655, "baan": "5", "roepnaam": "Huggle Double", "stamboom": "Huggle Double Bears Hello Sunshine", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2656", "startnummer": 2656, "baan": "5", "roepnaam": "Cartoucha -", "stamboom": "Cartoucha - Magic Nefshi-House", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2657", "startnummer": 2657, "baan": "5", "roepnaam": "Aslan Cato", "stamboom": "Aslan Cato uut Buurvrouwshuus", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2658", "startnummer": 2658, "baan": "5", "roepnaam": "Conchita-Magic Nefshi-House", "stamboom": "Conchita-Magic Nefshi-House", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2659", "startnummer": 2659, "baan": "5", "roepnaam": "Newfys Of", "stamboom": "Newfys Of The Sea Autumn Rose", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2660", "startnummer": 2660, "baan": "5", "roepnaam": "Keyah of", "stamboom": "Keyah of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2661", "startnummer": 2661, "baan": "5", "roepnaam": "Shilla Framboise", "stamboom": "Shilla Framboise de la Terre des Ours", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2662", "startnummer": 2662, "baan": "5", "roepnaam": "Lynne of", "stamboom": "Lynne of the Tenderness Feeling", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Open", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2663", "startnummer": 2663, "baan": "5", "roepnaam": "Boris", "stamboom": "Boris", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2664", "startnummer": 2664, "baan": "5", "roepnaam": "Balou", "stamboom": "Balou", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2665", "startnummer": 2665, "baan": "5", "roepnaam": "Cher", "stamboom": "Cher", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2666", "startnummer": 2666, "baan": "5", "roepnaam": "Ted", "stamboom": "Ted", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2667", "startnummer": 2667, "baan": "5", "roepnaam": "Koda", "stamboom": "Koda", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2668", "startnummer": 2668, "baan": "5", "roepnaam": "Balou 6e", "stamboom": "Balou 6e plaats", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2669", "startnummer": 2669, "baan": "5", "roepnaam": "Bailey", "stamboom": "Bailey", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2670", "startnummer": 2670, "baan": "5", "roepnaam": "Senna van", "stamboom": "Senna van der Wal", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2671", "startnummer": 2671, "baan": "5", "roepnaam": "Akira", "stamboom": "Akira", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2672", "startnummer": 2672, "baan": "5", "roepnaam": "Sia", "stamboom": "Sia", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Teef", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": false, "aanwezig": true}, {"id": "2026_2673", "startnummer": 2673, "baan": "5", "roepnaam": "Bob Jobels", "stamboom": "Bob Jobels", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}, {"id": "2026_2674", "startnummer": 2674, "baan": "5", "roepnaam": "Sir Winston", "stamboom": "Sir Winston", "eigenaar": "NNFC 2026", "lidnr": "ONBEKEND", "geslacht": "Reu", "klasse": "Stamboomloos", "opvolgendBrevet": "Brevet B", "kcm": "GEEN", "betaald": true, "buitenMededinging": true, "aanwezig": true}];
-var UITSLAG_2026_REGISTRATIES = {"R2026_2601_A": {"id": "R2026_2601_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2601, "roepnaam": "Floyd", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:28,22", "tijdMs": 88220, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2601_B": {"id": "R2026_2601_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2601, "roepnaam": "Floyd", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:25,62", "tijdMs": 85620, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2601_C": {"id": "R2026_2601_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2601, "roepnaam": "Floyd", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:25,62", "tijdMs": 85620, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2602_A": {"id": "R2026_2602_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2602, "roepnaam": "Freedom Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:32,05", "tijdMs": 92050, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2602_B": {"id": "R2026_2602_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2602, "roepnaam": "Freedom Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:29,34", "tijdMs": 89340, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2602_C": {"id": "R2026_2602_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2602, "roepnaam": "Freedom Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:29,35", "tijdMs": 89350, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2603_A": {"id": "R2026_2603_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2603, "roepnaam": "Heimdall", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:35,84", "tijdMs": 95840, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2603_B": {"id": "R2026_2603_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2603, "roepnaam": "Heimdall", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:33,02", "tijdMs": 93020, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2603_C": {"id": "R2026_2603_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2603, "roepnaam": "Heimdall", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:33,01", "tijdMs": 93010, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2604_A": {"id": "R2026_2604_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2604, "roepnaam": "Coco Chanel", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:38,70", "tijdMs": 98700, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2604_B": {"id": "R2026_2604_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2604, "roepnaam": "Coco Chanel", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:35,79", "tijdMs": 95790, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2604_C": {"id": "R2026_2604_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2604, "roepnaam": "Coco Chanel", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:35,79", "tijdMs": 95790, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2605_A": {"id": "R2026_2605_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2605, "roepnaam": "La vie", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:54,84", "tijdMs": 114840, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2605_B": {"id": "R2026_2605_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2605, "roepnaam": "La vie", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:51,46", "tijdMs": 111460, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2605_C": {"id": "R2026_2605_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2605, "roepnaam": "La vie", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:51,45", "tijdMs": 111450, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2606_A": {"id": "R2026_2606_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2606, "roepnaam": "Acapella v.d.", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "7:02,16", "tijdMs": 422160, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2606_B": {"id": "R2026_2606_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2606, "roepnaam": "Acapella v.d.", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "6:49,74", "tijdMs": 409740, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2606_C": {"id": "R2026_2606_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2606, "roepnaam": "Acapella v.d.", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "6:49,74", "tijdMs": 409740, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2607_A": {"id": "R2026_2607_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2607, "roepnaam": "Jameson Uut", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:31,56", "tijdMs": 91560, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2607_B": {"id": "R2026_2607_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2607, "roepnaam": "Jameson Uut", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:28,86", "tijdMs": 88860, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2607_C": {"id": "R2026_2607_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2607, "roepnaam": "Jameson Uut", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:28,86", "tijdMs": 88860, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2608_A": {"id": "R2026_2608_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2608, "roepnaam": "Dylan v.d.", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "4:28,90", "tijdMs": 268900, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2608_B": {"id": "R2026_2608_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2608, "roepnaam": "Dylan v.d.", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "4:20,99", "tijdMs": 260990, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2608_C": {"id": "R2026_2608_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2608, "roepnaam": "Dylan v.d.", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "4:20,98", "tijdMs": 260980, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2609_A": {"id": "R2026_2609_A", "baan": "1", "klasse": "Jeugd", "oefening": "A", "startnummer": 2609, "roepnaam": "Ti Amo", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1020:00,00", "tijdMs": 61200000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2609_B": {"id": "R2026_2609_B", "baan": "1", "klasse": "Jeugd", "oefening": "B", "startnummer": 2609, "roepnaam": "Ti Amo", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "990:00,00", "tijdMs": 59400000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2609_C": {"id": "R2026_2609_C", "baan": "1", "klasse": "Jeugd", "oefening": "C", "startnummer": 2609, "roepnaam": "Ti Amo", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "990:00,00", "tijdMs": 59400000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2610_A": {"id": "R2026_2610_A", "baan": "2", "klasse": "Veteranen", "oefening": "A", "startnummer": 2610, "roepnaam": "River", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:39,08", "tijdMs": 99080, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2610_B": {"id": "R2026_2610_B", "baan": "2", "klasse": "Veteranen", "oefening": "B", "startnummer": 2610, "roepnaam": "River", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:36,17", "tijdMs": 96170, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2610_C": {"id": "R2026_2610_C", "baan": "2", "klasse": "Veteranen", "oefening": "C", "startnummer": 2610, "roepnaam": "River", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:36,16", "tijdMs": 96160, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2611_A": {"id": "R2026_2611_A", "baan": "2", "klasse": "Veteranen", "oefening": "A", "startnummer": 2611, "roepnaam": "Faithley vom", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:41,02", "tijdMs": 101020, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2611_B": {"id": "R2026_2611_B", "baan": "2", "klasse": "Veteranen", "oefening": "B", "startnummer": 2611, "roepnaam": "Faithley vom", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:38,05", "tijdMs": 98050, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2611_C": {"id": "R2026_2611_C", "baan": "2", "klasse": "Veteranen", "oefening": "C", "startnummer": 2611, "roepnaam": "Faithley vom", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:38,06", "tijdMs": 98060, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2612_A": {"id": "R2026_2612_A", "baan": "2", "klasse": "Veteranen", "oefening": "A", "startnummer": 2612, "roepnaam": "May-Day van", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:49,71", "tijdMs": 109710, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2612_B": {"id": "R2026_2612_B", "baan": "2", "klasse": "Veteranen", "oefening": "B", "startnummer": 2612, "roepnaam": "May-Day van", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:46,49", "tijdMs": 106490, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2612_C": {"id": "R2026_2612_C", "baan": "2", "klasse": "Veteranen", "oefening": "C", "startnummer": 2612, "roepnaam": "May-Day van", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:46,49", "tijdMs": 106490, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2613_A": {"id": "R2026_2613_A", "baan": "2", "klasse": "Veteranen", "oefening": "A", "startnummer": 2613, "roepnaam": "Kai the", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:58,69", "tijdMs": 118690, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2613_B": {"id": "R2026_2613_B", "baan": "2", "klasse": "Veteranen", "oefening": "B", "startnummer": 2613, "roepnaam": "Kai the", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:55,20", "tijdMs": 115200, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2613_C": {"id": "R2026_2613_C", "baan": "2", "klasse": "Veteranen", "oefening": "C", "startnummer": 2613, "roepnaam": "Kai the", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:55,20", "tijdMs": 115200, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2614_A": {"id": "R2026_2614_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2614, "roepnaam": "Magnum", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:22,72", "tijdMs": 82720, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2614_B": {"id": "R2026_2614_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2614, "roepnaam": "Magnum", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:20,29", "tijdMs": 80290, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2614_C": {"id": "R2026_2614_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2614, "roepnaam": "Magnum", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:20,28", "tijdMs": 80280, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2615_A": {"id": "R2026_2615_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2615, "roepnaam": "Flint", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:31,43", "tijdMs": 91430, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2615_B": {"id": "R2026_2615_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2615, "roepnaam": "Flint", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:28,74", "tijdMs": 88740, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2615_C": {"id": "R2026_2615_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2615, "roepnaam": "Flint", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:28,74", "tijdMs": 88740, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2616_A": {"id": "R2026_2616_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2616, "roepnaam": "Darcy v.", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:25,42", "tijdMs": 145420, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2616_B": {"id": "R2026_2616_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2616, "roepnaam": "Darcy v.", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,14", "tijdMs": 141140, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2616_C": {"id": "R2026_2616_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2616, "roepnaam": "Darcy v.", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,14", "tijdMs": 141140, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2617_A": {"id": "R2026_2617_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2617, "roepnaam": "De Veldliggers", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:26,62", "tijdMs": 266620, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2617_B": {"id": "R2026_2617_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2617, "roepnaam": "De Veldliggers", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:18,78", "tijdMs": 258780, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2617_C": {"id": "R2026_2617_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2617, "roepnaam": "De Veldliggers", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:18,79", "tijdMs": 258790, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2618_A": {"id": "R2026_2618_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2618, "roepnaam": "Mila", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:34,96", "tijdMs": 274960, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2618_B": {"id": "R2026_2618_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2618, "roepnaam": "Mila", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:26,88", "tijdMs": 266880, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2618_C": {"id": "R2026_2618_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2618, "roepnaam": "Mila", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:26,88", "tijdMs": 266880, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2619_A": {"id": "R2026_2619_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2619, "roepnaam": "Nandobears Viva", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2619_B": {"id": "R2026_2619_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2619, "roepnaam": "Nandobears Viva", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2619_C": {"id": "R2026_2619_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2619, "roepnaam": "Nandobears Viva", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2620_A": {"id": "R2026_2620_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2620, "roepnaam": "Twilight of", "geslacht": "Teef", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:21,27", "tijdMs": 81270, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2620_B": {"id": "R2026_2620_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2620, "roepnaam": "Twilight of", "geslacht": "Teef", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:18,88", "tijdMs": 78880, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2620_C": {"id": "R2026_2620_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2620, "roepnaam": "Twilight of", "geslacht": "Teef", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:18,88", "tijdMs": 78880, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2621_A": {"id": "R2026_2621_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2621, "roepnaam": "Nespresso of", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:22,31", "tijdMs": 82310, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2621_B": {"id": "R2026_2621_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2621, "roepnaam": "Nespresso of", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:19,89", "tijdMs": 79890, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2621_C": {"id": "R2026_2621_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2621, "roepnaam": "Nespresso of", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:19,88", "tijdMs": 79880, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2622_A": {"id": "R2026_2622_A", "baan": "3", "klasse": "Specials", "oefening": "A", "startnummer": 2622, "roepnaam": "Newf Of", "geslacht": "Reu", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2622_B": {"id": "R2026_2622_B", "baan": "3", "klasse": "Specials", "oefening": "B", "startnummer": 2622, "roepnaam": "Newf Of", "geslacht": "Reu", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2622_C": {"id": "R2026_2622_C", "baan": "3", "klasse": "Specials", "oefening": "C", "startnummer": 2622, "roepnaam": "Newf Of", "geslacht": "Reu", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2623_A": {"id": "R2026_2623_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2623, "roepnaam": "Sepp", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:06,60", "tijdMs": 126600, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2623_B": {"id": "R2026_2623_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2623, "roepnaam": "Sepp", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:02,87", "tijdMs": 122870, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2623_C": {"id": "R2026_2623_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2623, "roepnaam": "Sepp", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:02,87", "tijdMs": 122870, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2624_A": {"id": "R2026_2624_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2624, "roepnaam": "Heer Caruso", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:14,89", "tijdMs": 134890, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2624_B": {"id": "R2026_2624_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2624, "roepnaam": "Heer Caruso", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:10,92", "tijdMs": 130920, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2624_C": {"id": "R2026_2624_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2624, "roepnaam": "Heer Caruso", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:10,93", "tijdMs": 130930, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2625_A": {"id": "R2026_2625_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2625, "roepnaam": "Wizard of", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:15,03", "tijdMs": 135030, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2625_B": {"id": "R2026_2625_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2625, "roepnaam": "Wizard of", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:11,06", "tijdMs": 131060, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2625_C": {"id": "R2026_2625_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2625, "roepnaam": "Wizard of", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:11,05", "tijdMs": 131050, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2626_A": {"id": "R2026_2626_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2626, "roepnaam": "Keltic Kobus", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:17,52", "tijdMs": 137520, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2626_B": {"id": "R2026_2626_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2626, "roepnaam": "Keltic Kobus", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:13,47", "tijdMs": 133470, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2626_C": {"id": "R2026_2626_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2626, "roepnaam": "Keltic Kobus", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:13,47", "tijdMs": 133470, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2627_A": {"id": "R2026_2627_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2627, "roepnaam": "Idefix -", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:59,74", "tijdMs": 179740, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2627_B": {"id": "R2026_2627_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2627, "roepnaam": "Idefix -", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:54,45", "tijdMs": 174450, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2627_C": {"id": "R2026_2627_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2627, "roepnaam": "Idefix -", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:54,46", "tijdMs": 174460, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2628_A": {"id": "R2026_2628_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2628, "roepnaam": "M II", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "3:13,69", "tijdMs": 193690, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2628_B": {"id": "R2026_2628_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2628, "roepnaam": "M II", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "3:07,99", "tijdMs": 187990, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2628_C": {"id": "R2026_2628_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2628, "roepnaam": "M II", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "3:08,00", "tijdMs": 188000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2629_A": {"id": "R2026_2629_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2629, "roepnaam": "Ody v.", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:34,64", "tijdMs": 274640, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2629_B": {"id": "R2026_2629_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2629, "roepnaam": "Ody v.", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:26,56", "tijdMs": 266560, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2629_C": {"id": "R2026_2629_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2629, "roepnaam": "Ody v.", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "4:26,56", "tijdMs": 266560, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2630_A": {"id": "R2026_2630_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2630, "roepnaam": "Titan of", "geslacht": "Reu", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2630_B": {"id": "R2026_2630_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2630, "roepnaam": "Titan of", "geslacht": "Reu", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2630_C": {"id": "R2026_2630_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2630, "roepnaam": "Titan of", "geslacht": "Reu", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2631_A": {"id": "R2026_2631_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2631, "roepnaam": "Ayhan of", "geslacht": "Reu", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2631_B": {"id": "R2026_2631_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2631, "roepnaam": "Ayhan of", "geslacht": "Reu", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2631_C": {"id": "R2026_2631_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2631, "roepnaam": "Ayhan of", "geslacht": "Reu", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2632_A": {"id": "R2026_2632_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2632, "roepnaam": "Fernando vom", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:51,37", "tijdMs": 111370, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2632_B": {"id": "R2026_2632_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2632, "roepnaam": "Fernando vom", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:48,10", "tijdMs": 108100, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2632_C": {"id": "R2026_2632_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2632, "roepnaam": "Fernando vom", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:48,10", "tijdMs": 108100, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2633_A": {"id": "R2026_2633_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2633, "roepnaam": "Kai of", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "2:49,12", "tijdMs": 169120, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2633_B": {"id": "R2026_2633_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2633, "roepnaam": "Kai of", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "2:44,15", "tijdMs": 164150, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2633_C": {"id": "R2026_2633_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2633, "roepnaam": "Kai of", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "2:44,14", "tijdMs": 164140, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2634_A": {"id": "R2026_2634_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2634, "roepnaam": "Blue Lake", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "2:57,28", "tijdMs": 177280, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2634_B": {"id": "R2026_2634_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2634, "roepnaam": "Blue Lake", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "2:52,07", "tijdMs": 172070, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2634_C": {"id": "R2026_2634_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2634, "roepnaam": "Blue Lake", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "2:52,06", "tijdMs": 172060, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2635_A": {"id": "R2026_2635_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2635, "roepnaam": "Mablaika's Shocking", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "4:50,89", "tijdMs": 290890, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2635_B": {"id": "R2026_2635_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2635, "roepnaam": "Mablaika's Shocking", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "4:42,33", "tijdMs": 282330, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2635_C": {"id": "R2026_2635_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2635, "roepnaam": "Mablaika's Shocking", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "4:42,33", "tijdMs": 282330, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2636_A": {"id": "R2026_2636_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2636, "roepnaam": "Vélès the", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "7:46,14", "tijdMs": 466140, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2636_B": {"id": "R2026_2636_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2636, "roepnaam": "Vélès the", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "7:32,43", "tijdMs": 452430, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2636_C": {"id": "R2026_2636_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2636, "roepnaam": "Vélès the", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "7:32,43", "tijdMs": 452430, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2637_A": {"id": "R2026_2637_A", "baan": "4", "klasse": "Open", "oefening": "A", "startnummer": 2637, "roepnaam": "Tiamo Elmo", "geslacht": "Reu", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2637_B": {"id": "R2026_2637_B", "baan": "4", "klasse": "Open", "oefening": "B", "startnummer": 2637, "roepnaam": "Tiamo Elmo", "geslacht": "Reu", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2637_C": {"id": "R2026_2637_C", "baan": "4", "klasse": "Open", "oefening": "C", "startnummer": 2637, "roepnaam": "Tiamo Elmo", "geslacht": "Reu", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2638_A": {"id": "R2026_2638_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2638, "roepnaam": "Oleta Adams", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:55,48", "tijdMs": 115480, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2638_B": {"id": "R2026_2638_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2638, "roepnaam": "Oleta Adams", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:52,09", "tijdMs": 112090, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2638_C": {"id": "R2026_2638_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2638, "roepnaam": "Oleta Adams", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:52,09", "tijdMs": 112090, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2639_A": {"id": "R2026_2639_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2639, "roepnaam": "Jacy", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:01,17", "tijdMs": 121170, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2639_B": {"id": "R2026_2639_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2639, "roepnaam": "Jacy", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:57,61", "tijdMs": 117610, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2639_C": {"id": "R2026_2639_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2639, "roepnaam": "Jacy", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:57,61", "tijdMs": 117610, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2640_A": {"id": "R2026_2640_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2640, "roepnaam": "Estefani Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:07,12", "tijdMs": 127120, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2640_B": {"id": "R2026_2640_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2640, "roepnaam": "Estefani Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:03,38", "tijdMs": 123380, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2640_C": {"id": "R2026_2640_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2640, "roepnaam": "Estefani Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:03,37", "tijdMs": 123370, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2641_A": {"id": "R2026_2641_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2641, "roepnaam": "Espe Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:08,46", "tijdMs": 128460, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2641_B": {"id": "R2026_2641_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2641, "roepnaam": "Espe Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:04,68", "tijdMs": 124680, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2641_C": {"id": "R2026_2641_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2641, "roepnaam": "Espe Hearts", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:04,68", "tijdMs": 124680, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2642_A": {"id": "R2026_2642_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2642, "roepnaam": "Tinkerbell of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:14,32", "tijdMs": 134320, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2642_B": {"id": "R2026_2642_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2642, "roepnaam": "Tinkerbell of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:10,37", "tijdMs": 130370, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2642_C": {"id": "R2026_2642_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2642, "roepnaam": "Tinkerbell of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:10,37", "tijdMs": 130370, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2643_A": {"id": "R2026_2643_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2643, "roepnaam": "Mayla", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:24,24", "tijdMs": 144240, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2643_B": {"id": "R2026_2643_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2643, "roepnaam": "Mayla", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:20,00", "tijdMs": 140000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2643_C": {"id": "R2026_2643_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2643, "roepnaam": "Mayla", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:19,99", "tijdMs": 139990, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2644_A": {"id": "R2026_2644_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2644, "roepnaam": "Linge", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:25,33", "tijdMs": 145330, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2644_B": {"id": "R2026_2644_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2644, "roepnaam": "Linge", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,06", "tijdMs": 141060, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2644_C": {"id": "R2026_2644_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2644, "roepnaam": "Linge", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,05", "tijdMs": 141050, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2645_A": {"id": "R2026_2645_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2645, "roepnaam": "Cappuccino of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:25,37", "tijdMs": 145370, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2645_B": {"id": "R2026_2645_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2645, "roepnaam": "Cappuccino of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,09", "tijdMs": 141090, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2645_C": {"id": "R2026_2645_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2645, "roepnaam": "Cappuccino of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,09", "tijdMs": 141090, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2646_A": {"id": "R2026_2646_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2646, "roepnaam": "Mablaika's VOF", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:25,77", "tijdMs": 145770, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2646_B": {"id": "R2026_2646_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2646, "roepnaam": "Mablaika's VOF", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,48", "tijdMs": 141480, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2646_C": {"id": "R2026_2646_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2646, "roepnaam": "Mablaika's VOF", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,48", "tijdMs": 141480, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2647_A": {"id": "R2026_2647_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2647, "roepnaam": "Naoufal of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:25,79", "tijdMs": 145790, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2647_B": {"id": "R2026_2647_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2647, "roepnaam": "Naoufal of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,50", "tijdMs": 141500, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2647_C": {"id": "R2026_2647_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2647, "roepnaam": "Naoufal of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:21,49", "tijdMs": 141490, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2648_A": {"id": "R2026_2648_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2648, "roepnaam": "Mystery Song", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:34,04", "tijdMs": 154040, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2648_B": {"id": "R2026_2648_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2648, "roepnaam": "Mystery Song", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:29,51", "tijdMs": 149510, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2648_C": {"id": "R2026_2648_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2648, "roepnaam": "Mystery Song", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:29,52", "tijdMs": 149520, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2649_A": {"id": "R2026_2649_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2649, "roepnaam": "Ti Amo", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:37,84", "tijdMs": 157840, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2649_B": {"id": "R2026_2649_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2649, "roepnaam": "Ti Amo", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:33,20", "tijdMs": 153200, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2649_C": {"id": "R2026_2649_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2649, "roepnaam": "Ti Amo", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:33,19", "tijdMs": 153190, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2650_A": {"id": "R2026_2650_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2650, "roepnaam": "Moree of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:51,20", "tijdMs": 171200, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2650_B": {"id": "R2026_2650_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2650, "roepnaam": "Moree of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:46,16", "tijdMs": 166160, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2650_C": {"id": "R2026_2650_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2650, "roepnaam": "Moree of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:46,17", "tijdMs": 166170, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2651_A": {"id": "R2026_2651_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2651, "roepnaam": "Lunah of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:54,07", "tijdMs": 174070, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2651_B": {"id": "R2026_2651_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2651, "roepnaam": "Lunah of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:48,95", "tijdMs": 168950, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2651_C": {"id": "R2026_2651_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2651, "roepnaam": "Lunah of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:48,94", "tijdMs": 168940, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2652_A": {"id": "R2026_2652_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2652, "roepnaam": "Ocean of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:59,40", "tijdMs": 179400, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2652_B": {"id": "R2026_2652_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2652, "roepnaam": "Ocean of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:54,13", "tijdMs": 174130, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2652_C": {"id": "R2026_2652_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2652, "roepnaam": "Ocean of", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:54,13", "tijdMs": 174130, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2653_A": {"id": "R2026_2653_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2653, "roepnaam": "Mablaika's Volumia", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:10,02", "tijdMs": 310020, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2653_B": {"id": "R2026_2653_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2653, "roepnaam": "Mablaika's Volumia", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:00,90", "tijdMs": 300900, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2653_C": {"id": "R2026_2653_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2653, "roepnaam": "Mablaika's Volumia", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:00,90", "tijdMs": 300900, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2654_A": {"id": "R2026_2654_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2654, "roepnaam": "Mablaika's Viva", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:10,98", "tijdMs": 310980, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2654_B": {"id": "R2026_2654_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2654, "roepnaam": "Mablaika's Viva", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:01,84", "tijdMs": 301840, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2654_C": {"id": "R2026_2654_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2654, "roepnaam": "Mablaika's Viva", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:01,84", "tijdMs": 301840, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2655_A": {"id": "R2026_2655_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2655, "roepnaam": "Huggle Double", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:23,30", "tijdMs": 323300, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2655_B": {"id": "R2026_2655_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2655, "roepnaam": "Huggle Double", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:13,79", "tijdMs": 313790, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2655_C": {"id": "R2026_2655_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2655, "roepnaam": "Huggle Double", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:13,80", "tijdMs": 313800, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2656_A": {"id": "R2026_2656_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2656, "roepnaam": "Cartoucha -", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:29,40", "tijdMs": 329400, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2656_B": {"id": "R2026_2656_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2656, "roepnaam": "Cartoucha -", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:19,71", "tijdMs": 319710, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2656_C": {"id": "R2026_2656_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2656, "roepnaam": "Cartoucha -", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "5:19,70", "tijdMs": 319700, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2657_A": {"id": "R2026_2657_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2657, "roepnaam": "Aslan Cato", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "7:20,35", "tijdMs": 440350, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2657_B": {"id": "R2026_2657_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2657, "roepnaam": "Aslan Cato", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "7:07,40", "tijdMs": 427400, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2657_C": {"id": "R2026_2657_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2657, "roepnaam": "Aslan Cato", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "7:07,39", "tijdMs": 427390, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2658_A": {"id": "R2026_2658_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2658, "roepnaam": "Conchita-Magic Nefshi-House", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2658_B": {"id": "R2026_2658_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2658, "roepnaam": "Conchita-Magic Nefshi-House", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2658_C": {"id": "R2026_2658_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2658, "roepnaam": "Conchita-Magic Nefshi-House", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2659_A": {"id": "R2026_2659_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2659, "roepnaam": "Newfys Of", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2659_B": {"id": "R2026_2659_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2659, "roepnaam": "Newfys Of", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2659_C": {"id": "R2026_2659_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2659, "roepnaam": "Newfys Of", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2660_A": {"id": "R2026_2660_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2660, "roepnaam": "Keyah of", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2660_B": {"id": "R2026_2660_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2660, "roepnaam": "Keyah of", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2660_C": {"id": "R2026_2660_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2660, "roepnaam": "Keyah of", "geslacht": "Teef", "buitenMededinging": false, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2661_A": {"id": "R2026_2661_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2661, "roepnaam": "Shilla Framboise", "geslacht": "Teef", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:49,20", "tijdMs": 109200, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2661_B": {"id": "R2026_2661_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2661, "roepnaam": "Shilla Framboise", "geslacht": "Teef", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:45,99", "tijdMs": 105990, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2661_C": {"id": "R2026_2661_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2661, "roepnaam": "Shilla Framboise", "geslacht": "Teef", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:46,00", "tijdMs": 106000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2662_A": {"id": "R2026_2662_A", "baan": "5", "klasse": "Open", "oefening": "A", "startnummer": 2662, "roepnaam": "Lynne of", "geslacht": "Teef", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2662_B": {"id": "R2026_2662_B", "baan": "5", "klasse": "Open", "oefening": "B", "startnummer": 2662, "roepnaam": "Lynne of", "geslacht": "Teef", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2662_C": {"id": "R2026_2662_C", "baan": "5", "klasse": "Open", "oefening": "C", "startnummer": 2662, "roepnaam": "Lynne of", "geslacht": "Teef", "buitenMededinging": true, "type": "WEIGERING", "tijdTekst": "WEIGERING", "tijdMs": 600000, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2663_A": {"id": "R2026_2663_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2663, "roepnaam": "Boris", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:07,92", "tijdMs": 67920, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2663_B": {"id": "R2026_2663_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2663, "roepnaam": "Boris", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:05,92", "tijdMs": 65920, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2663_C": {"id": "R2026_2663_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2663, "roepnaam": "Boris", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:05,91", "tijdMs": 65910, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2664_A": {"id": "R2026_2664_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2664, "roepnaam": "Balou", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:14,73", "tijdMs": 74730, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2664_B": {"id": "R2026_2664_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2664, "roepnaam": "Balou", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:12,53", "tijdMs": 72530, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2664_C": {"id": "R2026_2664_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2664, "roepnaam": "Balou", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:12,53", "tijdMs": 72530, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2665_A": {"id": "R2026_2665_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2665, "roepnaam": "Cher", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:17,68", "tijdMs": 77680, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2665_B": {"id": "R2026_2665_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2665, "roepnaam": "Cher", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:15,40", "tijdMs": 75400, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2665_C": {"id": "R2026_2665_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2665, "roepnaam": "Cher", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:15,39", "tijdMs": 75390, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2666_A": {"id": "R2026_2666_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2666, "roepnaam": "Ted", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:17,90", "tijdMs": 77900, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2666_B": {"id": "R2026_2666_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2666, "roepnaam": "Ted", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:15,61", "tijdMs": 75610, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2666_C": {"id": "R2026_2666_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2666, "roepnaam": "Ted", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:15,62", "tijdMs": 75620, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2667_A": {"id": "R2026_2667_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2667, "roepnaam": "Koda", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:24,01", "tijdMs": 84010, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2667_B": {"id": "R2026_2667_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2667, "roepnaam": "Koda", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:21,54", "tijdMs": 81540, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2667_C": {"id": "R2026_2667_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2667, "roepnaam": "Koda", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:21,55", "tijdMs": 81550, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2668_A": {"id": "R2026_2668_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2668, "roepnaam": "Balou 6e", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:25,15", "tijdMs": 85150, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2668_B": {"id": "R2026_2668_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2668, "roepnaam": "Balou 6e", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:22,65", "tijdMs": 82650, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2668_C": {"id": "R2026_2668_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2668, "roepnaam": "Balou 6e", "geslacht": "Reu", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:22,65", "tijdMs": 82650, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2669_A": {"id": "R2026_2669_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2669, "roepnaam": "Bailey", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:32,02", "tijdMs": 92020, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2669_B": {"id": "R2026_2669_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2669, "roepnaam": "Bailey", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:29,31", "tijdMs": 89310, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2669_C": {"id": "R2026_2669_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2669, "roepnaam": "Bailey", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:29,31", "tijdMs": 89310, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2670_A": {"id": "R2026_2670_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2670, "roepnaam": "Senna van", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:42,70", "tijdMs": 102700, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2670_B": {"id": "R2026_2670_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2670, "roepnaam": "Senna van", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:39,68", "tijdMs": 99680, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2670_C": {"id": "R2026_2670_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2670, "roepnaam": "Senna van", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:39,68", "tijdMs": 99680, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2671_A": {"id": "R2026_2671_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2671, "roepnaam": "Akira", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:49,56", "tijdMs": 109560, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2671_B": {"id": "R2026_2671_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2671, "roepnaam": "Akira", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:46,34", "tijdMs": 106340, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2671_C": {"id": "R2026_2671_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2671, "roepnaam": "Akira", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "1:46,35", "tijdMs": 106350, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2672_A": {"id": "R2026_2672_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2672, "roepnaam": "Sia", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:45,17", "tijdMs": 165170, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2672_B": {"id": "R2026_2672_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2672, "roepnaam": "Sia", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:40,31", "tijdMs": 160310, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2672_C": {"id": "R2026_2672_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2672, "roepnaam": "Sia", "geslacht": "Teef", "buitenMededinging": false, "type": "TIJD", "tijdTekst": "2:40,30", "tijdMs": 160300, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2673_A": {"id": "R2026_2673_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2673, "roepnaam": "Bob Jobels", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:31,38", "tijdMs": 91380, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2673_B": {"id": "R2026_2673_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2673, "roepnaam": "Bob Jobels", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:28,69", "tijdMs": 88690, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2673_C": {"id": "R2026_2673_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2673, "roepnaam": "Bob Jobels", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "1:28,68", "tijdMs": 88680, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2674_A": {"id": "R2026_2674_A", "baan": "5", "klasse": "Stamboomloos", "oefening": "A", "startnummer": 2674, "roepnaam": "Sir Winston", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "7:24,71", "tijdMs": 444710, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2674_B": {"id": "R2026_2674_B", "baan": "5", "klasse": "Stamboomloos", "oefening": "B", "startnummer": 2674, "roepnaam": "Sir Winston", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "7:11,63", "tijdMs": 431630, "timestamp": "2026-10-04T12:00:00.000Z"}, "R2026_2674_C": {"id": "R2026_2674_C", "baan": "5", "klasse": "Stamboomloos", "oefening": "C", "startnummer": 2674, "roepnaam": "Sir Winston", "geslacht": "Reu", "buitenMededinging": true, "type": "TIJD", "tijdTekst": "7:11,64", "tijdMs": 431640, "timestamp": "2026-10-04T12:00:00.000Z"}};
-
-
-async function laadUitslag2026(pushenNaarFirebase) {
-  if (isArchiefJaar()) {
-    alert('De uitslag van 2026 is al vastgelegd en vergrendeld als alleen-lezen archief.');
-    return;
-  }
-  if (!confirm('Huidige/testuitslagen voor 2026 vervangen door de uitslag van de Watertrials 2026 (74 honden uit alle klassen)?')) return;
-  actiefJaar = '2026';
-  deelnemersLijst = UITSLAG_2026_DEELNEMERS.map(function(d) { return Object.assign({}, d); });
-  registraties = {};
-  Object.keys(UITSLAG_2026_REGISTRATIES).forEach(function(k) {
-    registraties[k] = Object.assign({}, UITSLAG_2026_REGISTRATIES[k]);
-  });
-  try {
-    localStorage.setItem('nnfc_deelnemers_2026', JSON.stringify(deelnemersLijst));
-  } catch (e) {}
-  if (db && pushenNaarFirebase) {
-    try {
-      await db.ref('wedstrijd/actief_jaar').set('2026');
-      await db.ref('wedstrijd/registraties').set(registraties);
-      var objDeeln = {};
-      deelnemersLijst.forEach(function(d) { objDeeln[d.id] = d; });
-      await db.ref('wedstrijd/beheer_deelnemers').set(objDeeln);
-      await db.ref('wedstrijd/logboek/LOAD2026_' + Date.now()).set({
-        baan: '-',
-        actie: 'Tafel laadde uitslag Watertrials 2026 (74 deelnemers)',
-        timestamp: new Date().toISOString()
-      });
-    } catch (e) {}
-  }
-  draw();
-}
-
-function laadLokaleData() {
-  try {
-    deelnemersLijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + actiefJaar)) || [];
-    var lokaalKcm = JSON.parse(localStorage.getItem('nnfc_kcm_' + actiefJaar)) || {};
-    deelnemersLijst.forEach(function(d) {
-      if (d && d.kcm && d.kcm !== 'GEEN' && !lokaalKcm[String(d.startnummer)]) {
-        lokaalKcm[String(d.startnummer)] = d.kcm;
-      }
-    });
-    kcmSelecties = Object.assign({}, lokaalKcm, kcmSelecties);
-  } catch (e) {}
-}
-laadLokaleData();
-
-function isArchiefJaar() {
-  return String(actiefJaar) === '2026';
-}
-function blokkeerArchiefActie(label) {
-  if (!isArchiefJaar()) return false;
-  alert('2026 is vergrendeld als alleen-lezen archief. ' + (label || 'Wijzigingen zijn niet toegestaan.'));
-  return true;
-}
-
-
-function esc(str) {
-  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-function safeDraw() {
-  if (v === 'extra' || v === 'nood') return;
-  if (v === 'aanm' && document.activeElement && document.activeElement.id === 'zoekAanmInp') return;
-  draw();
-}
-function back() {
-  return '<button onclick="go(\'home\')" style="margin-bottom:12px">← Terug naar overzicht</button>';
-}
-
-function matchZoek(d, q) {
-  if (!q) return true;
-  var woorden = q.toLowerCase().trim().split(/\s+/);
-  var kcmVal = kcmSelecties[String(d.startnummer)] || d.kcm || '';
-  var tekst = [
-    d.startnummer, '#' + d.startnummer,
-    d.roepnaam, d.stamboom, d.eigenaar, d.lidnr,
-    d.klasse, d.geslacht, d.opvolgendBrevet,
-    (kcmVal && kcmVal !== 'GEEN') ? ('kcm ' + kcmVal) : '',
-    'baan ' + d.baan, 'b' + d.baan,
-    d.betaald ? 'betaald' : 'nog betalen',
-    d.aanwezig ? 'aanwezig' : 'niet aanwezig'
-  ].join(' ').toLowerCase();
-  return woorden.every(function(w) { return tekst.indexOf(w) !== -1; });
-}
-
-function updateZoekAanm(val) {
-  zoekAanm = val;
-  var cont = document.getElementById('aanmLijstContainer');
-  if (cont) cont.innerHTML = renderAanmLijst();
-  else draw();
-}
-
-function wisZoekAanm() {
-  zoekAanm = '';
-  draw();
-  var el = document.getElementById('zoekAanmInp');
-  if (el) el.focus();
-}
-
-function renderAanmLijst() {
-  if (!deelnemersLijst.length) {
-    return '<div class="box n"><div class="m">Nog geen deelnemers ingeladen. Gebruik "+ Extra deelnemer" of laad vanuit Beheer.</div></div>';
-  }
-  var gefilterd = deelnemersLijst.filter(function(d) { return matchZoek(d, zoekAanm); });
-  var teller = zoekAanm.trim()
-    ? '<div class="m" style="margin-bottom:8px">Gevonden: <b>' + gefilterd.length + '</b> van ' + deelnemersLijst.length + ' deelnemers</div>'
-    : '';
-  if (!gefilterd.length) {
-    return teller + '<div class="box n"><div class="m">Geen deelnemers gevonden voor "<b>' + esc(zoekAanm) + '</b>".</div></div>';
-  }
-  return teller + '<div class="list-box">' + gefilterd.map(function(d) {
-    var kcmVal = kcmSelecties[String(d.startnummer)] || d.kcm || 'GEEN';
-    var kcmTag = (kcmVal && kcmVal !== 'GEEN') ? ' <span class="chip">KCM: ' + esc(kcmVal) + '</span>' : '';
-    return '<div class="t"><b>B' + esc(d.baan) + '</b><div>#' + esc(d.startnummer) + ' ' + esc(d.roepnaam) + ' <span class="' + (d.betaald ? 'chip-ok' : 'chip-bad') + '">' + (d.betaald ? 'Betaald' : 'Nog betalen') + '</span>' + kcmTag +
-      '<div class="m">' + esc(d.stamboom) + ' • ' + esc(d.eigenaar || '-') + (d.lidnr && d.lidnr !== 'ONBEKEND' ? ' (Lidnr: ' + esc(d.lidnr) + ')' : '') + ' • ' + esc(d.klasse) + '</div></div>' +
-      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
-      '<label class="chk-wrap' + (d.aanwezig ? ' on' : '') + '"><span>' + (d.aanwezig ? 'Aanwezig' : 'Niet aanwezig') + '</span><input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + esc(d.startnummer) + ')"></label>' +
-      '<button style="min-height:36px;padding:4px 10px;font-size:14px;color:var(--bad);border-color:var(--bad)" onclick="verwijderDeelnemer(\'' + esc(d.startnummer) + '\')">Verwijder</button></div></div>';
-  }).join('') + '</div>';
-}
+var STAP_NAMEN = {
+  1: "1. Aanmelden & Startnummer",
+  2: "2. Basis oefeningen",
+  3: "3. Brevetten",
+  4: "4. Beste Reu & Beste Teef",
+  5: "5. Uitslagen, Brevetten & Bekers"
+};
 
 function initFirebase() {
   try {
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.database();
-      function syncJaarData(jaar) {
-        var j = String(jaar);
-        try {
-          deelnemersLijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + j)) || [];
-          registraties = JSON.parse(localStorage.getItem('nnfc_registraties_' + j)) || {};
-          meldingen = JSON.parse(localStorage.getItem('nnfc_meldingen_' + j)) || {};
-          logboek = JSON.parse(localStorage.getItem('nnfc_logboek_' + j)) || {};
-          banenStatus = JSON.parse(localStorage.getItem('nnfc_banen_' + j)) || {};
-          kcmSelecties = JSON.parse(localStorage.getItem('nnfc_kcm_' + j)) || {};
-        } catch (e) {
-          deelnemersLijst = [];
-          registraties = {};
-          meldingen = {};
-          logboek = {};
-          banenStatus = {};
-          kcmSelecties = {};
-        }
-      }
-
-      db.ref('wedstrijd/actief_jaar').on('value', function(s) {
-        if (s.val()) {
-          var nieuwJaar = String(s.val());
-          if (nieuwJaar !== actiefJaar) {
-            actiefJaar = nieuwJaar;
-            syncJaarData(actiefJaar);
-            safeDraw();
-          }
-        }
-      });
-      db.ref('wedstrijd/registraties').on('value', function(s) {
-        registraties = s.val() || {};
-        try { localStorage.setItem('nnfc_registraties_' + actiefJaar, JSON.stringify(registraties)); } catch (e) {}
-        if (!isArchiefJaar()) detectConflicts();
-        safeDraw();
-      });
-      db.ref('wedstrijd/meldingen').on('value', function(s) {
-        meldingen = s.val() || {};
-        try { localStorage.setItem('nnfc_meldingen_' + actiefJaar, JSON.stringify(meldingen)); } catch (e) {}
-        safeDraw();
-      });
-      db.ref('wedstrijd/logboek').on('value', function(s) {
-        logboek = s.val() || {};
-        try { localStorage.setItem('nnfc_logboek_' + actiefJaar, JSON.stringify(logboek)); } catch (e) {}
-        if (v === 'hist') draw();
-      });
-      db.ref('wedstrijd/banen_status').on('value', function(s) {
-        banenStatus = s.val() || {};
-        try { localStorage.setItem('nnfc_banen_' + actiefJaar, JSON.stringify(banenStatus)); } catch (e) {}
-        safeDraw();
-      });
-      db.ref('wedstrijd/kcm_selecties').on('value', function(s) {
-        var val = s.val() || {};
-        kcmSelecties = Object.assign({}, val);
-        try { localStorage.setItem('nnfc_kcm_' + actiefJaar, JSON.stringify(kcmSelecties)); } catch (e) {}
-        safeDraw();
-      });
-      db.ref('wedstrijd/beheer_deelnemers').on('value', function(s) {
-        var val = s.val();
-        if (val !== null && val !== undefined) {
-          deelnemersLijst = Array.isArray(val) ? val.filter(Boolean) : Object.values(val).filter(Boolean);
-          deelnemersLijst.forEach(function(d) {
-            if (d && d.kcm && d.kcm !== 'GEEN' && !kcmSelecties[String(d.startnummer)]) {
-              kcmSelecties[String(d.startnummer)] = d.kcm;
-            }
-          });
-        } else {
-          deelnemersLijst = [];
-        }
-        try { localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst)); } catch (e) {}
-        safeDraw();
-      });
     }
   } catch (e) {}
 }
+initFirebase();
 
-function go(x) {
-  v = x;
-  draw();
-  window.scrollTo(0, 0);
-  if (x === 'aanm') {
-    var inp = document.getElementById('zoekAanmInp');
-    if (inp) inp.focus();
-  }
+function esc(str) {
+  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-function formatSec(ms, bm) { var s = (ms / 1000).toFixed(2).replace('.', ','); return bm ? s + '*' : s; }
 
-async function setKcm(nr, val) {
-  if (blokkeerArchiefActie('KCM-uitslagen van 2026 kunnen niet worden aangepast.')) return;
-  var key = String(nr);
-  if (val === 'GEEN') {
-    delete kcmSelecties[key];
-  } else {
-    kcmSelecties[key] = val;
-  }
-  var d = deelnemersLijst.find(function(x) { return String(x.startnummer) === key; });
-  if (d) d.kcm = val;
+var selJaarEl = document.getElementById('selJaar');
+var huidigKalenderJaar = new Date().getFullYear();
+var standaardJaar = (huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026';
+for (var y = 2026; y <= 2040; y++) {
+  var o = document.createElement('option');
+  o.value = String(y);
+  o.textContent = 'Jaar ' + y;
+  if (String(y) === standaardJaar) o.selected = true;
+  selJaarEl.appendChild(o);
+}
+
+var jaar = selJaarEl.value;
+document.getElementById('lblJaar').textContent = jaar;
+
+var deelnemers = [];
+var baanIndeling = { banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] }, bijlagen: { b1: "", b2: "", b3: "" } };
+var tafelData = {}; // per deelnemer id: { basisPunten, basisStatus, brevetUitslag, brevetOpmerking, besteReuTeefKandidaat, besteReuTeefPos, bekerTitel }
+
+// Navigatie-status: niveau 0 = overzicht van de stap, niveau 1 = subpagina, niveau 2 = sub-subpagina
+var nav = {
+  stap: 1,
+  sub: null,      // bijv. 'BAAN_2', 'BREVET_OVERZICHT', 'GROEP_REU', 'PRINT_OVERZICHT'
+  subLabel: '',
+  subSub: null,   // bijv. deelnemer-id of specifieke uitslagcategorie
+  subSubLabel: '',
+  zoek: '',
+  baanFilter: 'ALLE',
+  printOnderdeel: 'ALLES'
+};
+
+function laadData() {
+  try { deelnemers = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || []; } catch (e) { deelnemers = []; }
   try {
-    localStorage.setItem('nnfc_kcm_' + actiefJaar, JSON.stringify(kcmSelecties));
-    localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst));
+    var b = JSON.parse(localStorage.getItem('nnfc_baanindeling_' + jaar));
+    if (b && b.banen) baanIndeling = b;
   } catch (e) {}
-  draw();
+  try { tafelData = JSON.parse(localStorage.getItem('nnfc_tafel_' + jaar)) || {}; } catch (e) { tafelData = {}; }
+
+  deelnemers.forEach(function(h) {
+    if (!tafelData[h.id]) {
+      tafelData[h.id] = {
+        basisPunten: '',
+        basisStatus: 'Open', // Open, Bezig, Klaar
+        brevetUitslag: 'Nog niet gezwommen', // Nog niet gezwommen, Geslaagd, Niet geslaagd
+        brevetOpmerking: '',
+        rtKandidaat: false,
+        rtRang: '',
+        beker: ''
+      };
+    }
+  });
+}
+laadData();
+
+function bewaarAlles() {
+  localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
+  localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
   if (db) {
     try {
-      await db.ref('wedstrijd/kcm_selecties/' + key).set(val === 'GEEN' ? null : val);
-      if (d && d.id) await db.ref('wedstrijd/beheer_deelnemers/' + d.id + '/kcm').set(val);
+      db.ref('wedstrijd/tafel_status_' + jaar).set(tafelData);
+      var updates = {};
+      deelnemers.forEach(function(h) { updates[h.id] = h; });
+      db.ref('wedstrijd/beheer_deelnemers').update(updates);
     } catch (e) {}
   }
+  render();
 }
 
-function getGroepen() {
-  var map = {};
-  Object.values(registraties).forEach(function(r) {
-    if (!r || r.status === 'AFGEWEZEN' || (r.oefening !== 'A' && r.oefening !== 'B' && r.oefening !== 'C')) return;
-    if (!map[r.startnummer]) {
-      var meta = deelnemersLijst.find(function(d) { return d.startnummer == r.startnummer; }) || {};
-      map[r.startnummer] = { nr: r.startnummer, naam: r.roepnaam, klasse: r.klasse, geslacht: r.geslacht, bm: Boolean(meta.buitenMededinging || r.buitenMededinging), oef: {} };
-    }
-    var ms = r.type === 'WEIGERING' ? WEIGERING_MS : (r.tijdMs || 0);
-    map[r.startnummer].oef[r.oefening] = { ms: ms, txt: r.type === 'WEIGERING' ? '600,00 (W)' : r.tijdTekst };
-  });
-
-  var gr = [
-    { titel: 'Open reuen', lijst: [] }, { titel: 'Open teven', lijst: [] },
-    { titel: 'Jeugd', lijst: [] }, { titel: 'Veteranen', lijst: [] },
-    { titel: 'Stamboomloos', lijst: [] }, { titel: 'Special', lijst: [] }
-  ];
-
-  Object.values(map).forEach(function(h) {
-    h.totaalMs = (h.oef.A ? h.oef.A.ms : 0) + (h.oef.B ? h.oef.B.ms : 0) + (h.oef.C ? h.oef.C.ms : 0);
-    h.gedaan = Object.keys(h.oef).length;
-    if (h.klasse === 'Open' && h.geslacht === 'Reu') gr.slice(0, 1).pop().lijst.push(h);
-    else if (h.klasse === 'Open' && h.geslacht === 'Teef') gr.slice(1, 2).pop().lijst.push(h);
-    else if (h.klasse === 'Jeugd') gr.slice(2, 3).pop().lijst.push(h);
-    else if (h.klasse === 'Veteranen' || h.klasse === 'Senioren') gr.slice(3, 4).pop().lijst.push(h);
-    else if (h.klasse === 'Stamboomloos') gr.slice(4, 5).pop().lijst.push(h);
-    else if (h.klasse === 'Specials') gr.slice(5, 6).pop().lijst.push(h);
-  });
-
-  gr.forEach(function(g) {
-    g.lijst.sort(function(x, y) {
-      if (x.bm !== y.bm) return x.bm ? 1 : -1;
-      return (y.gedaan - x.gedaan) || (x.totaalMs - y.totaalMs);
-    });
-    var reg = 0;
-    g.lijst.forEach(function(h, idx) {
-      h.rang = idx + 1;
-      if (!h.bm) { h.pnt = Math.max(0, 250 - (reg * 5)); reg++; } else { h.pnt = 0; }
-    });
-  });
-  return gr;
+function wisselJaar() {
+  jaar = selJaarEl.value;
+  document.getElementById('lblJaar').textContent = jaar;
+  laadData();
+  render();
 }
 
-function openMeldingen() {
-  return Object.values(meldingen).filter(function(m) { return m && m.status === 'OPEN'; });
+// Navigatiefuncties: 1 niveau terug ("Terug") en terug naar hoofdniveau ("Wedstrijdtafel")
+function gaNaarStap(stapNr) {
+  nav.stap = stapNr;
+  nav.sub = null;
+  nav.subLabel = '';
+  nav.subSub = null;
+  nav.subSubLabel = '';
+  render();
 }
 
-function getDagVoortgang() {
-  var aanwezige = deelnemersLijst.filter(function(d) { return Boolean(d && d.aanwezig); });
-  var totaalHonden = aanwezige.length || deelnemersLijst.length || 0;
-  var geldigeRegs = Object.entries(registraties)
-    .map(function(entry) { return Object.assign({ _id: entry[0] }, entry[1]); })
-    .filter(function(r) { return r && r.status !== 'AFGEWEZEN'; });
-
-  var oefPerHond = {};
-  var laatsteRegs = geldigeRegs.slice().sort(function(a, b) {
-    return String(b.timestamp || '').localeCompare(String(a.timestamp || ''));
-  });
-
-  geldigeRegs.forEach(function(r) {
-    var nrKey = String(r.startnummer);
-    if (!oefPerHond[nrKey]) oefPerHond[nrKey] = {};
-    if (r.oefening === 'A' || r.oefening === 'B' || r.oefening === 'C' || r.oefening === 'BREVET') {
-      oefPerHond[nrKey][r.oefening] = r;
-    }
-  });
-
-  var nogBezig = [];
-  var klaarHonden = 0;
-  var bronLijst = aanwezige.length ? aanwezige : deelnemersLijst;
-
-  bronLijst.forEach(function(d) {
-    var nrKey = String(d.startnummer);
-    var gedaanMap = oefPerHond[nrKey] || {};
-    var isBrevetTraject = String(d.opvolgendBrevet || '').toLowerCase().indexOf('brevet') !== -1 && d.klasse !== 'Open' && Boolean(gedaanMap.BREVET);
-    var voltooide = Object.keys(gedaanMap).length;
-    var vereist = isBrevetTraject ? 1 : 3;
-    if (voltooide >= vereist && vereist > 0) {
-      klaarHonden++;
-    } else {
-      nogBezig.push({
-        nr: d.startnummer,
-        roepnaam: d.roepnaam,
-        baan: d.baan,
-        klasse: d.klasse,
-        gedaan: Object.keys(gedaanMap)
-      });
-    }
-  });
-
-  var pctHonden = totaalHonden > 0 ? Math.min(100, Math.round((klaarHonden / totaalHonden) * 100)) : 0;
-  return {
-    totaalHonden: totaalHonden,
-    klaarHonden: klaarHonden,
-    nogTeGaan: Math.max(0, totaalHonden - klaarHonden),
-    pctHonden: pctHonden,
-    totaalRegs: geldigeRegs.length,
-    nogBezig: nogBezig,
-    laatsteRegs: laatsteRegs.slice(0, 6)
-  };
+function openSub(subId, label) {
+  nav.sub = subId;
+  nav.subLabel = label;
+  nav.subSub = null;
+  nav.subSubLabel = '';
+  render();
 }
 
-function getBehaaldeBrevetten() {
-  var lijst = [];
-  var gezien = {};
-  Object.values(registraties).forEach(function(r) {
-    if (!r || r.status === 'AFGEWEZEN') return;
-    var isBrevetOk = (r.type === 'BREVET_OK') || (String(r.oefening || '').toUpperCase() === 'BREVET' && r.type !== 'WEIGERING');
-    if (isBrevetOk) {
-      var meta = deelnemersLijst.find(function(d) { return String(d.startnummer) === String(r.startnummer); }) || {};
-      var brevetNaam = r.brevetNaam || r.brevet || meta.opvolgendBrevet || meta.heeftNuBrevet || 'Brevet behaald';
-      var key = String(r.startnummer) + '_' + brevetNaam;
-      if (!gezien[key]) {
-        gezien[key] = true;
-        lijst.push({
-          nr: r.startnummer,
-          naam: r.roepnaam || meta.roepnaam || '-',
-          stamboom: meta.stamboom || '-',
-          klasse: r.klasse || meta.klasse || '-',
-          geslacht: r.geslacht || meta.geslacht || '-',
-          baan: r.baan || meta.baan || '-',
-          brevet: brevetNaam,
-          bron: 'BREVET_OK'
-        });
-      }
-    }
-  });
-  return lijst;
+function openSubSub(subSubId, label) {
+  nav.subSub = subSubId;
+  nav.subSubLabel = label;
+  render();
 }
 
-
-function detectConflicts() {
-  if (!db) return;
-  var seen = {};
-  Object.values(registraties).forEach(function(r) {
-    if (!r || r.status === 'AFGEWEZEN') return;
-    var key = r.startnummer + '_' + r.oefening;
-    if (seen[key] && seen[key].id !== r.id) {
-      var cid = 'CONF_' + r.id;
-      if (!meldingen[cid]) {
-        db.ref('wedstrijd/meldingen/' + cid).set({
-          id: cid, soort: 'CONFLICT', status: 'OPEN', baan: r.baan, oefening: r.oefening,
-          startnummer: r.startnummer, roepnaam: r.roepnaam,
-          oudeRegId: seen[key].id, oudeTijd: seen[key].tijdTekst,
-          nieuweRegId: r.id, nieuweTijd: r.tijdTekst, nieuweTijdMs: r.tijdMs,
-          reden: 'Dubbele registratie voor dezelfde hond/oefening', timestamp: new Date().toISOString()
-        });
-      }
-    } else {
-      seen[key] = r;
-    }
-  });
-}
-
-async function beslis(id, akkoord) {
-  if (blokkeerArchiefActie('Meldingen van 2026 zijn alleen-lezen.')) return;
-  var m = meldingen[id]; if (!m) return;
-  if (db) {
-    if (akkoord) {
-      if (m.oudeRegId && registraties[m.oudeRegId]) await db.ref('wedstrijd/registraties/' + m.oudeRegId).update({ status: 'AFGEWEZEN' });
-      if (m.nieuweRegId && registraties[m.nieuweRegId]) await db.ref('wedstrijd/registraties/' + m.nieuweRegId).update({ status: 'GEACCEPTEERD' });
-      else {
-        var k = Object.keys(registraties).find(function(key) { return registraties[key].startnummer == m.startnummer && registraties[key].oefening == m.oefening && registraties[key].status !== 'AFGEWEZEN'; });
-        if (k) await db.ref('wedstrijd/registraties/' + k).update({ tijdTekst: m.nieuweTijd, tijdMs: m.nieuweTijdMs, type: 'TIJD' });
-      }
-    } else if (m.nieuweRegId && registraties[m.nieuweRegId]) {
-      await db.ref('wedstrijd/registraties/' + m.nieuweRegId).update({ status: 'AFGEWEZEN' });
-    }
-    await db.ref('wedstrijd/meldingen/' + id).update({ status: akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN' });
-    await db.ref('wedstrijd/logboek/BESL_' + Date.now()).set({ baan: m.baan, actie: 'Tafel ' + (akkoord ? 'accepteert' : 'wijst af') + ' wijziging #' + m.startnummer, timestamp: new Date().toISOString() });
-  } else {
-    if (!akkoord && m.nieuweRegId && registraties[m.nieuweRegId]) registraties[m.nieuweRegId].status = 'AFGEWEZEN';
-    meldingen[id].status = akkoord ? 'GEACCEPTEERD' : 'AFGEWEZEN';
-    draw();
+function gaTerug() {
+  if (nav.subSub) {
+    nav.subSub = null;
+    nav.subSubLabel = '';
+  } else if (nav.sub) {
+    nav.sub = null;
+    nav.subLabel = '';
   }
+  render();
 }
 
+function gaNaarWedstrijdtafel() {
+  nav.stap = 1;
+  nav.sub = null;
+  nav.subLabel = '';
+  nav.subSub = null;
+  nav.subSubLabel = '';
+  render();
+}
 
-async function verwijderRegistratie(regId) {
-  if (blokkeerArchiefActie('Tijden van 2026 kunnen niet worden verwijderd.')) return;
-  if (!regId) return;
-  var r = registraties[regId];
-  var label = r ? ('#' + r.startnummer + ' ' + r.roepnaam + ' (Oef. ' + r.oefening + ': ' + r.tijdTekst + ')') : regId;
-  if (!confirm('Tijd verwijderen voor ' + label + '? Daarna kun je deze handmatig invoeren.')) return;
-  if (db) {
-    await db.ref('wedstrijd/registraties/' + regId).remove();
-    if (r) {
-      await db.ref('wedstrijd/logboek/DEL_' + Date.now()).set({
-        baan: r.baan,
-        actie: 'Tafel verwijderde tijd voor #' + r.startnummer + ' ' + r.roepnaam + ' (Oef. ' + r.oefening + ')',
-        timestamp: new Date().toISOString()
-      });
-    }
-  } else {
-    delete registraties[regId];
-    draw();
+function updateCrumbBar() {
+  for (var s = 1; s <= 5; s++) {
+    document.getElementById('stepBtn' + s).classList.toggle('on', nav.stap === s);
   }
-}
-
-async function verwijderHondTijden(startnr, baanNr) {
-  if (blokkeerArchiefActie('Tijden van 2026 kunnen niet worden gewist.')) return;
-  var keys = Object.keys(registraties).filter(function(k) {
-    var r = registraties[k];
-    return r && String(r.startnummer) === String(startnr) && (!baanNr || String(r.baan) === String(baanNr));
-  });
-  if (!keys.length) { alert('Geen geregistreerde oefeningen gevonden voor #' + startnr + '.'); return; }
-  if (!confirm('Alle ' + keys.length + ' geregistreerde oefening(en) van #' + startnr + ' verwijderen zodat ze handmatig ingevoerd kunnen worden?')) return;
-  for (var i = 0; i < keys.length; i++) {
-    var k = keys[i];
-    if (db) await db.ref('wedstrijd/registraties/' + k).remove();
-    else delete registraties[k];
+  var bar = document.getElementById('crumbBar');
+  var trail = document.getElementById('crumbTrail');
+  if (!nav.sub && !nav.subSub) {
+    bar.style.display = 'none';
+    return;
   }
-  if (db) {
-    await db.ref('wedstrijd/logboek/DELALL_' + Date.now()).set({
-      baan: baanNr || '-',
-      actie: 'Tafel verwijderde alle oefeningen voor #' + startnr + ' voor handmatige invoer',
-      timestamp: new Date().toISOString()
-    });
-  } else {
-    draw();
+  bar.style.display = 'flex';
+  var delen = ['Wedstrijdtafel', esc(STAP_NAMEN[nav.stap])];
+  if (nav.subLabel) delen.push(nav.subSub ? esc(nav.subLabel) : ('<b>' + esc(nav.subLabel) + '</b>'));
+  if (nav.subSubLabel) delen.push('<b>' + esc(nav.subSubLabel) + '</b>');
+  trail.innerHTML = delen.join(' &rsaquo; ');
+}
+
+function matchZoek(h, q) {
+  if (!q) return true;
+  var woorden = q.toLowerCase().trim().split(/\s+/);
+  var tekst = [
+    h.startnummer, '#' + h.startnummer, h.roepnaam, h.stamboom, h.eigenaar,
+    h.district || '', h.lidnr, h.klasse, h.geslacht, h.huidigBrevet, h.opvolgendBrevet,
+    'baan ' + h.baan, h.aanwezig ? 'aanwezig' : 'afwezig', h.betaald ? 'betaald' : 'nog betalen'
+  ].join(' ').toLowerCase();
+  return woorden.every(function(w) { return tekst.indexOf(w) !== -1; });
+}
+
+// Acties op deelnemers
+function toggleAanwezig(id) {
+  var h = deelnemers.find(function(x) { return x.id === id; });
+  if (h) { h.aanwezig = !h.aanwezig; bewaarAlles(); }
+}
+function toggleBetaald(id) {
+  var h = deelnemers.find(function(x) { return x.id === id; });
+  if (h) { h.betaald = !h.betaald; bewaarAlles(); }
+}
+function wijzigStartnr(id, val) {
+  var nr = parseInt(val, 10);
+  if (!nr || nr < 1) return;
+  if (deelnemers.some(function(x) { return x.id !== id && x.startnummer === nr; })) {
+    alert('Startnummer #' + nr + ' is al in gebruik.');
+    render();
+    return;
   }
+  var h = deelnemers.find(function(x) { return x.id === id; });
+  if (h) { h.startnummer = nr; bewaarAlles(); }
+}
+function wijzigBaan(id, b) {
+  var h = deelnemers.find(function(x) { return x.id === id; });
+  if (h) { h.baan = b; bewaarAlles(); }
+}
+function setBasisPunten(id, p) {
+  if (!tafelData[id]) return;
+  tafelData[id].basisPunten = p;
+  if (p !== '' && tafelData[id].basisStatus === 'Open') tafelData[id].basisStatus = 'Klaar';
+  bewaarAlles();
+}
+function setBasisStatus(id, st) {
+  if (!tafelData[id]) return;
+  tafelData[id].basisStatus = st;
+  bewaarAlles();
+}
+function setBrevetUitslag(id, u) {
+  if (!tafelData[id]) return;
+  tafelData[id].brevetUitslag = u;
+  bewaarAlles();
+}
+function setBrevetOpmerking(id, txt) {
+  if (!tafelData[id]) return;
+  tafelData[id].brevetOpmerking = txt;
+  localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
+}
+function toggleRtKandidaat(id) {
+  if (!tafelData[id]) return;
+  tafelData[id].rtKandidaat = !tafelData[id].rtKandidaat;
+  bewaarAlles();
+}
+function setRtRang(id, r) {
+  if (!tafelData[id]) return;
+  tafelData[id].rtRang = r;
+  bewaarAlles();
+}
+function setBeker(id, b) {
+  if (!tafelData[id]) return;
+  tafelData[id].beker = b;
+  localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
 }
 
-function verwijderGekozenNoodTijd() {
-  var hondEl = document.getElementById('ndHond');
-  var oefEl = document.getElementById('ndOef');
-  if (!hondEl || !oefEl) return;
-  var nrSel = hondEl.value;
-  var oefSel = oefEl.value;
-  var hit = Object.entries(registraties).find(function(e) {
-    return e[1] && String(e[1].startnummer) === String(nrSel) && e[1].oefening === oefSel && e[1].status !== 'AFGEWEZEN';
-  });
-  if (hit) verwijderRegistratie(hit[0]);
-  else alert('Geen bestaande tijd gevonden voor deze hond en oefening.');
+function totaalPunten(h) {
+  var td = tafelData[h.id] || {};
+  var basis = parseFloat(String(td.basisPunten || '0').replace(',', '.')) || 0;
+  var kcm = KCM_PUNTEN[h.kcm || 'GEEN'] || 0;
+  return basis + kcm;
 }
 
-async function leesBericht(id) { if (blokkeerArchiefActie('Berichten van 2026 zijn alleen-lezen.')) return; if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' }); else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); } }
-
-
-async function verwijderDeelnemer(nr) {
-  if (blokkeerArchiefActie('Deelnemers van 2026 kunnen niet worden verwijderd.')) return;
-  var d = deelnemersLijst.find(function(x) { return String(x.startnummer) === String(nr); });
-  if (!d) return;
-  if (!confirm('Deelnemer #' + d.startnummer + ' ' + d.roepnaam + ' verwijderen uit de aanmelding en deelnemerslijst?')) return;
-  var baanNr = d.baan;
-  deelnemersLijst = deelnemersLijst.filter(function(x) { return String(x.startnummer) !== String(nr); });
-  try { localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst)); } catch (e) {}
-  draw();
-  if (db) {
-    if (d.id) await db.ref('wedstrijd/beheer_deelnemers/' + d.id).remove();
-    var snap = await db.ref('wedstrijd/beheer_deelnemers').once('value');
-    var raw = snap.val();
-    if (raw && typeof raw === 'object') {
-      var entries = Object.entries(raw);
-      for (var i = 0; i < entries.length; i++) {
-        var k = entries[i][0], item = entries[i][1];
-        if (item && String(item.startnummer) === String(nr)) {
-          await db.ref('wedstrijd/beheer_deelnemers/' + k).remove();
-        }
-      }
-    }
-    await stuurBaan(baanNr);
-    await db.ref('wedstrijd/logboek/DELDEEL_' + Date.now()).set({
-      baan: baanNr || '-',
-      actie: 'Tafel verwijderde deelnemer #' + d.startnummer + ' ' + d.roepnaam,
-      timestamp: new Date().toISOString()
-    });
-  }
-}
-
-async function toggleAanwezig(nr) {
-  if (blokkeerArchiefActie('Aanwezigheid van 2026 kan niet worden gewijzigd.')) return;
-  var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; }); if (!d) return;
-  d.aanwezig = !d.aanwezig;
-  localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst));
-  draw();
-  if (db) {
-    await db.ref('wedstrijd/beheer_deelnemers/' + d.id).set(d);
-    await stuurBaan(d.baan);
-  }
-}
-
-async function stuurBaan(baanNr) {
-  if (!db) return;
-  var lijst = deelnemersLijst.filter(function(x) { return x.baan == baanNr && x.aanwezig; }).map(function(h) {
-    return { nr: h.startnummer, roepnaam: h.roepnaam, klasse: h.klasse, geslacht: h.geslacht, opvolgendBrevet: h.opvolgendBrevet, buitenMededinging: Boolean(h.buitenMededinging) };
-  });
-  await db.ref('wedstrijd/baan_lijsten/baan_' + baanNr).set(lijst);
-}
-
-async function syncAlleBanen() { if (blokkeerArchiefActie('Banen van 2026 kunnen niet worden gesynchroniseerd.')) return; if (!db) { alert('Firebase is nog niet gekoppeld in config.js.'); return; } for (var b = 1; b <= 5; b++) await stuurBaan(b); alert('Alle aanwezige honden zijn doorgestuurd naar Baan 1 t/m 5.'); }
-
-async function slaExtraOp() {
-  if (blokkeerArchiefActie('Aan het archiefjaar 2026 kunnen geen extra deelnemers worden toegevoegd.')) return;
-  var roep = document.getElementById('exRoep').value.trim(), stam = document.getElementById('exStam').value.trim();
-  if (!roep && !stam) { alert('Vul minimaal een roepnaam of stamboomnaam in.'); return; }
-  var nr = parseInt(document.getElementById('exNr').value, 10) || (deelnemersLijst.length + 101), baan = document.getElementById('exBaan').value;
-  if (deelnemersLijst.some(function(x) { return x.startnummer == nr; })) { alert('Startnummer ' + nr + ' bestaat al.'); return; }
-  var kcmVal = document.getElementById('exKcm').value || 'GEEN';
-  var nieuw = {
-    id: 'EXTRA_' + Date.now(),
-    startnummer: nr,
-    baan: baan,
-    roepnaam: roep || stam,
-    stamboom: stam || roep,
-    eigenaar: document.getElementById('exEig').value.trim() || 'Daginschrijving',
-    lidnr: (document.getElementById('exLidnr') ? document.getElementById('exLidnr').value.trim() : '') || 'ONBEKEND',
-    email: document.getElementById('exEmail') ? document.getElementById('exEmail').value.trim() : '',
-    telefoon: document.getElementById('exTel') ? document.getElementById('exTel').value.trim() : '',
-    mobiel: document.getElementById('exMob') ? document.getElementById('exMob').value.trim() : '',
-    geboortedatum: document.getElementById('exGeb') ? document.getElementById('exGeb').value.trim() : '',
-    kleur: document.getElementById('exKleur') ? document.getElementById('exKleur').value.trim() : '',
-    stamboomnummer: document.getElementById('exStbnr') ? document.getElementById('exStbnr').value.trim() : '',
-    district: document.getElementById('exDist') ? document.getElementById('exDist').value.trim() : '',
-    heeftNuBrevet: document.getElementById('exNuBrev') ? document.getElementById('exNuBrev').value : 'Geen',
-    geslacht: document.getElementById('exGesl').value,
-    klasse: document.getElementById('exKlas').value,
-    opvolgendBrevet: document.getElementById('exBrev').value,
-    kcm: kcmVal,
-    betaald: document.getElementById('exBet').checked,
-    buitenMededinging: document.getElementById('exBm').checked,
-    aanwezig: true
-  };
-  deelnemersLijst.push(nieuw);
-  if (kcmVal !== 'GEEN') kcmSelecties[String(nr)] = kcmVal;
-  localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst));
-  localStorage.setItem('nnfc_kcm_' + actiefJaar, JSON.stringify(kcmSelecties));
-  if (db) {
-    await db.ref('wedstrijd/beheer_deelnemers/' + nieuw.id).set(nieuw);
-    if (kcmVal !== 'GEEN') await db.ref('wedstrijd/kcm_selecties/' + nr).set(kcmVal);
-    await stuurBaan(baan);
-  }
-  go('aanm');
-}
-
-async function slaNoodOp() {
-  if (blokkeerArchiefActie('Aan het archiefjaar 2026 kunnen geen handmatige tijden worden toegevoegd.')) return;
-  var nr = document.getElementById('ndHond').value, d = deelnemersLijst.find(function(x) { return x.startnummer == nr; });
-  if (!d) { alert('Kies eerst een deelnemer.'); return; }
-  var oef = document.getElementById('ndOef').value, type = document.getElementById('ndType').value, txt = type === 'WEIGERING' ? 'WEIGERING' : 'UITGEVOERD', ms = null;
-  if (type === 'TIJD') {
-    var raw = document.getElementById('ndCijf').value.replace(/\D/g, ''); if (!raw) { alert('Voer cijfers in.'); return; }
-    var pad = raw.padStart(3, '0'), h = parseInt(pad.slice(-2), 10), s = parseInt(pad.slice(-4, -2) || '0', 10), m = parseInt(pad.slice(0, -4) || '0', 10);
-    if (s > 59) { alert('Seconden moeten onder 60 liggen.'); return; }
-    ms = (m * 60000) + (s * 1000) + (h * 10);
-    if (ms === 0) { alert('Tijd van 0,00 is niet toegestaan.'); return; }
-    txt = m > 0 ? (m + ':' + String(s).padStart(2, '0') + ',' + String(h).padStart(2, '0')) : (s + ',' + String(h).padStart(2, '0'));
-  }
-  var rid = 'TAFEL_' + d.baan + '_' + oef + '_' + d.startnummer + '_' + Date.now();
-  var payload = { id: rid, baan: d.baan, klasse: d.klasse, oefening: oef, startnummer: d.startnummer, roepnaam: d.roepnaam, geslacht: d.geslacht, buitenMededinging: Boolean(d.buitenMededinging), type: type, tijdTekst: txt, tijdMs: ms, timestamp: new Date().toISOString() };
-  if (db) await db.ref('wedstrijd/registraties/' + rid).set(payload); else registraties[rid] = payload;
-  go('home');
-}
-
-function exporteerUitslagCsv() {
-  var regels = ['Klasse;Plaats;Startnummer;Roepnaam;Oefening A;Oefening B;Oefening C;Totaal Seconden;Bekerpunten;KCM;Buiten Mededinging'];
-  getGroepen().forEach(function(g) {
-    g.lijst.forEach(function(d, j) {
-      var kcm = kcmSelecties[String(d.nr)] || 'GEEN';
-      regels.push([
-        g.titel, j + 1, d.nr, d.naam,
-        d.oef.A ? d.oef.A.txt : '-', d.oef.B ? d.oef.B.txt : '-', d.oef.C ? d.oef.C.txt : '-',
-        formatSec(d.totaalMs, false), d.bm ? 0 : d.pnt, kcm === 'GEEN' ? '-' : kcm, d.bm ? 'Ja' : 'Nee'
-      ].join(';'));
-    });
-  });
-  var blob = new Blob(['\uFEFF' + regels.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'nnfc_officiele_uitslag_' + actiefJaar + '.csv';
-  a.click();
-}
-
-function draw() {
-  var nuTijd = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-  var openM = openMeldingen();
-  var openCorr = openM.filter(function(m) { return m.soort !== 'BERICHT'; });
-  var menuLink = '<div style="display:flex;gap:8px"><a href="beheer.html" class="btn-link">Beheer →</a><a href="index.html" class="btn-link">← Menu</a></div>';
-
-  var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'"><div><h1>Wedstrijdtafel</h1><div class="sub">NNFC Trials ' + esc(actiefJaar) + ' • ' + nuTijd + (db ? ' • Live' : ' • Lokaal') + '</div></div></div>' + menuLink + '</div>';
-
-  var nv = function(k, t, extraClass) {
-    return '<button class="' + (v === k ? 'on ' : '') + (extraClass || '') + '" onclick="go(\'' + k + '\')">' + t + '</button>';
-  };
-
-  if (isArchiefJaar()) {
-    h += '<div class="box n" style="border-color:var(--ac);margin-bottom:12px"><b>Archiefjaar 2026 (Alleen-lezen):</b> Alle uitslagen en deelnemersgegevens van 2026 zijn vergrendeld tegen wijzigen.</div>';
-  }
-  h += '<div class="nav">' +
-    nv('home', 'Overzicht') +
-    nv('aanm', 'Aanmelding (' + deelnemersLijst.filter(function(d) { return d.aanwezig; }).length + '/' + deelnemersLijst.length + ')') +
-    nv('extra', '+ Extra deelnemer', 'extra') +
-    nv('nood', 'Handmatige tijd') +
-    nv('meld', 'Meldingen' + (openM.length ? ' (' + openM.length + ')' : '')) +
-    nv('beker', 'Bekers & KCM') +
-    nv('brevet', 'Brevetten (' + getBehaaldeBrevetten().length + ')') +
-    nv('klok', 'Klokkersbeeld') +
-    nv('hist', 'Wijzigingen') +
-    '</div>';
-
-  if (v === 'home') {
-    var dag = getDagVoortgang();
-    h += '<div class="box n" style="margin-bottom:12px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">' +
-        '<h2 style="margin:0">Doorlopende dagvoortgang (' + esc(actiefJaar) + ')</h2>' +
-        '<span class="m"><b>' + dag.klaarHonden + '</b> van <b>' + dag.totaalHonden + '</b> honden klaar (' + dag.pctHonden + '%) • <b>' + dag.totaalRegs + '</b> registraties</span>' +
-      '</div>' +
-      '<div class="bar" style="height:10px;margin:8px 0 10px"><i style="width:' + dag.pctHonden + '%"></i></div>' +
-      '<div class="g" style="gap:8px">' +
-        '<div style="background:var(--sf2);border:1px solid var(--ln);border-radius:10px;padding:8px 10px">' +
-          '<div class="m">Nog op de rol / bezig</div>' +
-          '<div style="font-size:18px;font-weight:700">' + dag.nogTeGaan + ' honden</div>' +
-          '<div class="m" style="margin-top:2px">' + (dag.nogBezig.length ? dag.nogBezig.slice(0, 4).map(function(x) { return '#' + esc(x.nr) + ' ' + esc(x.roepnaam) + ' (B' + esc(x.baan) + ')'; }).join(' • ') : 'Alle honden afgewerkt') + '</div>' +
-        '</div>' +
-        '<div style="background:var(--sf2);border:1px solid var(--ln);border-radius:10px;padding:8px 10px">' +
-          '<div class="m">Laatste binnenkomende tijden</div>' +
-          (dag.laatsteRegs.length
-            ? dag.laatsteRegs.slice(0, 3).map(function(r) {
-                var tStr = r.timestamp ? new Date(r.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }) : '';
-                return '<div style="font-size:14px;margin-top:2px">' + (tStr ? '<span class="m">' + esc(tStr) + '</span> ' : '') + '<b>#' + esc(r.startnummer) + ' ' + esc(r.roepnaam) + '</b> • Oef ' + esc(r.oefening) + ': <b>' + esc(r.tijdTekst) + '</b></div>';
-              }).join('')
-            : '<div class="m" style="margin-top:2px">Nog geen tijden binnen</div>') +
+// ============================================================
+// RENDER STAP 1: AANMELDEN & STARTNUMMER
+// ============================================================
+function renderStap1() {
+  if (nav.sub === 'DEELNEMER_DETAIL' && nav.subSub) {
+    var h = deelnemers.find(function(x) { return x.id === nav.subSub; });
+    if (!h) { gaTerug(); return ''; }
+    return '<div class="box">' +
+      '<div class="box-head"><div><h2>Aanmeldkaart: ' + esc(h.roepnaam) + ' (#' + esc(h.startnummer) + ')</h2><div class="sub">' + esc(h.stamboom) + '</div></div></div>' +
+      '<div class="grid3">' +
+        '<div class="kaart"><label>Startnummer</label><input type="number" value="' + esc(h.startnummer) + '" onchange="wijzigStartnr(\'' + esc(h.id) + '\',this.value)"></div>' +
+        '<div class="kaart"><label>Baan</label><select onchange="wijzigBaan(\'' + esc(h.id) + '\',this.value)">' +
+          ['1','2','3','4','5'].map(function(b){ return '<option value="'+b+'" '+(h.baan==b?'selected':'')+'>Baan '+b+'</option>'; }).join('') +
+        '</select></div>' +
+        '<div class="kaart"><label>Status aan tafel</label>' +
+          '<div style="display:flex;gap:14px;align-items:center;min-height:40px">' +
+            '<label style="display:inline-flex;align-items:center;gap:6px;margin:0;color:var(--ink)"><input type="checkbox" class="chk" ' + (h.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(\'' + esc(h.id) + '\')"> Aanwezig</label>' +
+            '<label style="display:inline-flex;align-items:center;gap:6px;margin:0;color:var(--ink)"><input type="checkbox" class="chk" ' + (h.betaald ? 'checked' : '') + ' onchange="toggleBetaald(\'' + esc(h.id) + '\')"> Betaald</label>' +
+          '</div>' +
         '</div>' +
       '</div>' +
+      '<div class="stats-pill" style="margin-top:12px">' +
+        '<span>Eigenaar: <b>' + esc(h.eigenaar) + '</b></span>' +
+        '<span>District: <b>' + esc(h.district || '—') + '</b></span>' +
+        '<span>Lidnr: <b>' + esc(h.lidnr) + '</b></span>' +
+        '<span>Klasse: <b>' + esc(h.klasse) + '</b></span>' +
+        '<span>Opvolgend brevet: <b>' + esc(h.opvolgendBrevet) + '</b></span>' +
+      '</div>' +
     '</div>';
-    if (openM.length) {
-      h += '<button class="c banner" onclick="go(\'meld\')">' + openM.length + (openM.length === 1 ? ' melding wacht' : ' meldingen wachten') + ' op de tafel</button>';
-    }
+  }
 
-    h += '<h2>Banen</h2><div class="g">';
-    for (var i = 1; i <= 5; i++) {
-      var baanDeeln = deelnemersLijst.filter(function(d) { return d.baan == i && d.aanwezig; });
-      var klassen = Array.from(new Set(baanDeeln.map(function(d) { return d.klasse; }))).join(', ');
-      var titel = 'Baan ' + i + (klassen ? ' • ' + klassen : '');
-      var st = banenStatus['baan_' + i] || { oefening: 'A', klaar: 0, totaal: baanDeeln.length, nuHond: 'Wacht op start', serverTijd: null };
-      var tot = st.totaal || baanDeeln.length || 0;
-      var pct = tot > 0 ? Math.min(100, Math.round((st.klaar / tot) * 100)) : 0;
-      var heeftWarn = openCorr.some(function(m) { return m.baan == i; });
-      var tijdStr = 'Nog geen data';
-      if (st.serverTijd) {
-        var dt = new Date(st.serverTijd);
-        var minGeleden = Math.floor((Date.now() - dt.getTime()) / 60000);
-        tijdStr = 'Laatst gezien ' + dt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-        if (minGeleden >= 5 && st.klaar < tot) {
-          heeftWarn = true;
-          tijdStr += ' <span class="warn">(' + minGeleden + ' min geleden, controleer de baan)</span>';
-        }
-      }
+  var aanwezigCnt = deelnemers.filter(function(x) { return x.aanwezig; }).length;
+  var betaaldCnt = deelnemers.filter(function(x) { return x.betaald; }).length;
+  var gefilterd = deelnemers.filter(function(x) {
+    if (nav.sub === 'ALLEEN_OPEN' && x.aanwezig) return false;
+    if (nav.sub === 'NOG_BETALEN' && x.betaald) return false;
+    return matchZoek(x, nav.zoek);
+  });
 
-      h += '<button class="c' + (heeftWarn ? ' w' : '') + '" onclick="go(\'l' + i + '\')">' +
-        '<b>' + esc(titel) + '</b>' +
-        '<div class="m">Oefening ' + esc(st.oefening) + ', ' + st.klaar + ' van ' + tot + '</div>' +
-        '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
-        (st.nuHond && st.nuHond !== 'Klaar' ? '<span class="chip">Nu</span> ' + esc(st.nuHond) : 'Klaar met oefening ' + esc(st.oefening)) +
-        '<div class="m" style="margin-top:6px">' + tijdStr + '</div>' +
-        '</button>';
-    }
-    h += '</div>';
+  var rows = gefilterd.map(function(h) {
+    return '<tr>' +
+      '<td style="text-align:center"><input type="checkbox" class="chk" ' + (h.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(\'' + esc(h.id) + '\')"></td>' +
+      '<td><input type="number" value="' + esc(h.startnummer) + '" style="width:88px;margin:0;min-height:34px;font-weight:700" onchange="wijzigStartnr(\'' + esc(h.id) + '\',this.value)"></td>' +
+      '<td><div class="hond-main">' + esc(h.roepnaam) + ' <span class="sub">(' + esc(h.geslacht) + ')</span></div><div class="hond-sub">' + esc(h.stamboom) + '</div></td>' +
+      '<td><div>' + esc(h.eigenaar) + '</div><div class="hond-sub">' + esc(h.district || 'Geen district') + ' • Lidnr: ' + esc(h.lidnr) + '</div></td>' +
+      '<td><span class="chip">Baan ' + esc(h.baan) + '</span> <span class="chip">' + esc(h.klasse) + '</span></td>' +
+      '<td style="text-align:center"><input type="checkbox" class="chk" ' + (h.betaald ? 'checked' : '') + ' onchange="toggleBetaald(\'' + esc(h.id) + '\')"></td>' +
+      '<td><button type="button" class="sm" onclick="openSub(\'DEELNEMER_DETAIL\',\'Aanmeldkaart\');openSubSub(\'' + esc(h.id) + '\',\'#' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '\')">Details →</button></td>' +
+    '</tr>';
+  }).join('');
 
-    var groepen = getGroepen();
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px"><h2 style="margin:0">Voorlopige stand (Som A+B+C in seconden)</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pri" onclick="laadUitslag2026(true)">Laad uitslag 2026</button><button onclick="exporteerUitslagCsv()">Exporteer Uitslag (CSV)</button></div></div><div class="g" style="margin-top:8px">';
-    groepen.forEach(function(g, idx) {
-      var top3 = g.lijst.slice(0, 3);
-      h += '<button class="c" onclick="go(\'s' + idx + '\')"><b>' + esc(g.titel) + '</b>';
-      if (top3.length) {
-        top3.forEach(function(d, j) {
-          h += '<div style="display:flex;justify-content:space-between;margin-top:4px">' +
-            '<span>' + (j + 1) + '. ' + esc(d.naam) + '</span>' +
-            '<b style="font-size:18px">' + formatSec(d.totaalMs, d.bm) + '</b></div>';
-        });
-      } else {
-        h += '<div class="m" style="margin-top:6px">Nog geen tijden</div>';
-      }
-      h += '</button>';
-    });
-    h += '</div>';
-
-  } else if (v.charAt(0) === 'l') {
-    var bNr = +v.slice(1);
-    var recs = Object.entries(registraties).map(function(entry) { return Object.assign({ id: entry[0] }, entry[1]); }).filter(function(r) { return r && r.baan == bNr && r.status !== 'AFGEWEZEN'; });
-    h += back() + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
-      '<h2 style="margin:0">Baan ' + bNr + '</h2>' +
+  return '<div class="box">' +
+    '<div class="box-head">' +
+      '<div><h2>1. Aanmelden & Startnummer uitgeven</h2><div class="sub">Vink aanwezigheid en betaling af en controleer het startnummer bij aankomst</div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button class="pri" onclick="klokBaan=\'' + bNr + '\';go(\'klok\')">Klokkersbeeld Baan ' + bNr + '</button>' +
-        '<a href="klokker.html?baan=' + bNr + '" target="_blank" class="btn-link">Open klokker.html ↗</a>' +
-      '</div></div>';
-    if (recs.length) {
-      var uniekeHonden = Array.from(new Set(recs.map(function(r) { return String(r.startnummer); })));
-      h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
-        uniekeHonden.map(function(nr) {
-          var firstR = recs.find(function(x) { return String(x.startnummer) === nr; });
-          return '<button onclick="verwijderHondTijden(\'' + esc(nr) + '\', \'' + bNr + '\')">Wis alle oefeningen #' + esc(nr) + (firstR ? ' (' + esc(firstR.roepnaam) + ')' : '') + '</button>';
-        }).join('') +
-      '</div>';
-      h += '<div class="list-box">' + recs.map(function(r) {
-        return '<div class="t"><b>' + esc(r.startnummer) + '</b><div>' + esc(r.roepnaam) + ' <span class="m">(Oef. ' + esc(r.oefening) + ')</span></div>' +
-          '<div style="display:flex;align-items:center;gap:10px"><b>' + esc(r.tijdTekst) + '</b>' +
-          '<button style="min-height:34px;padding:4px 10px;font-size:14px;color:var(--bad);border-color:var(--bad)" onclick="verwijderRegistratie(\'' + esc(r.id || '') + '\')">Verwijder</button></div></div>';
-      }).join('') + '</div>';
-    } else {
-      h += '<div class="m">Nog geen geregistreerde tijden op Baan ' + bNr + '.</div>';
-    }
-
-  } else if (v.charAt(0) === 's') {
-    var grpIdx = parseInt(v.slice(1), 10);
-    var grp = getGroepen().slice(grpIdx, grpIdx + 1).pop();
-    h += back() + '<h2 style="margin-top:4px">' + esc(grp.titel) + ', volledige stand</h2><div class="m" style="margin-bottom:8px">Som A + B + C in seconden, snelste eerst</div>';
-    if (grp.lijst.length) {
-      h += '<div class="list-box">' + grp.lijst.map(function(d, j) {
-        return '<div class="t"><b>' + (j + 1) + '</b><div>' + esc(d.naam) + ' <span class="m">nr ' + esc(d.nr) + '</span><div class="m">A: ' + (d.oef.A ? esc(d.oef.A.txt) : '-') + ' | B: ' + (d.oef.B ? esc(d.oef.B.txt) : '-') + ' | C: ' + (d.oef.C ? esc(d.oef.C.txt) : '-') + '</div></div><b>' + formatSec(d.totaalMs, d.bm) + '</b></div>';
-      }).join('') + '</div>';
-    } else {
-      h += '<div class="m" style="margin-top:10px">Nog geen tijden in deze klasse.</div>';
-    }
-
-  } else if (v === 'aanm') {
-    h += back() + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">' +
-      '<div><h2 style="margin:0">Aanmelding Secretariaat (Art. 2.5)</h2><div class="m">Vink <b>Aanwezig</b> aan zodra de hond is aangemeld. Alleen aangevinkte honden verschijnen op het klokkersscherm.</div></div>' +
-      '<button class="pri" onclick="syncAlleBanen()">Synchroniseer alle banen</button></div>' +
-      '<div class="search-bar"><input type="search" id="zoekAanmInp" value="' + esc(zoekAanm) + '" oninput="updateZoekAanm(this.value)" placeholder="Zoek op startnr, roepnaam, stamboomnaam, eigenaar, lidnr, baan, KCM of betaald...">' +
-      (zoekAanm ? '<button onclick="wisZoekAanm()">Wis</button>' : '') + '</div>' +
-      '<div id="aanmLijstContainer">' + renderAanmLijst() + '</div>';
-
-  } else if (v === 'extra') {
-    var kcmOptsEx = Object.entries(KCM_PUNTEN).map(function(e) {
-      return '<option value="' + esc(e[0]) + '">' + (e[0] === 'GEEN' ? 'Geen KCM' : esc(e[0]) + ' (+' + e[1] + ')') + '</option>';
-    }).join('');
-    h += back() + '<div class="box n" style="max-width:640px"><h2 style="margin-top:0">+ Extra deelnemer (Daginschrijving)</h2>' +
-      '<div class="row"><div><label>Startnummer</label><input type="number" id="exNr" value="' + (deelnemersLijst.length + 101) + '"></div>' +
-      '<div><label>Baan</label><select id="exBaan"><option value="1">Baan 1</option><option value="2">Baan 2</option><option value="3">Baan 3</option><option value="4">Baan 4</option><option value="5">Baan 5</option></select></div></div>' +
-      '<div class="row"><div><label>Roepnaam hond</label><input type="text" id="exRoep" placeholder="bijv. Max"></div>' +
-      '<div><label>Stamboomnaam</label><input type="text" id="exStam" placeholder="bijv. Max v.d. Waterkant"></div></div>' +
-      '<div class="row"><div><label>Naam eigenaar</label><input type="text" id="exEig" placeholder="bijv. J. Jansen"></div>' +
-      '<div><label>Geslacht</label><select id="exGesl"><option value="Reu">Reu</option><option value="Teef">Teef</option></select></div></div>' +
-      '<div class="row"><div><label>Klasse</label><select id="exKlas"><option value="Open">Open (50m)</option><option value="Jeugd">Jeugd (30m)</option><option value="Veteranen">Veteranen (30m)</option><option value="Stamboomloos">Stamboomloos (30m)</option><option value="Specials">Specials (30m)</option></select></div>' +
-      '<div><label>Opvolgend brevet</label><select id="exBrev"><option value="Brevet A">Brevet A</option><option value="Jeugdbrevet">Jeugdbrevet</option><option value="Brevet B">Brevet B</option><option value="Brevet C">Brevet C</option><option value="Brevet D">Brevet D</option><option value="Brevet E">Brevet E</option><option value="Seaman Brevet">Seaman Brevet</option></select></div></div>' +
-      '<label>KCM-uitslag (indien van toepassing)</label><select id="exKcm">' + kcmOptsEx + '</select>' +
-      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" id="exBet" checked style="width:auto;margin:0;min-height:auto"> Betaald aan tafel (+ €2,50)</label>' +
-      '<div class="row"><div><label>Lidnummer (optioneel)</label><input type="text" id="exLidnr" placeholder="bijv. 10002381"></div>' +
-      '<div><label>Stamboomnummer NHSB / overig (optioneel)</label><input type="text" id="exStbnr" placeholder="bijv. NHSB / VDH/VND"></div></div>' +
-      '<div class="row"><div><label>Geboortedatum dd/mm/jjjj (optioneel)</label><input type="text" id="exGeb" placeholder="bijv. 09/05/2025"></div>' +
-      '<div><label>Kleur (optioneel)</label><input type="text" id="exKleur" placeholder="bijv. Zwart"></div></div>' +
-      '<div class="row"><div><label>Traint in Regio / District (optioneel)</label><input type="text" id="exDist" placeholder="bijv. Baywatch - Limburg"></div>' +
-      '<div><label>Heeft nu Brevet (optioneel)</label><select id="exNuBrev"><option value="Geen">Geen</option><option value="Brevet A">Brevet A</option><option value="Jeugdbrevet">Jeugdbrevet</option><option value="Brevet B">Brevet B</option><option value="Brevet C">Brevet C</option><option value="Brevet D">Brevet D</option><option value="Brevet E">Brevet E</option></select></div></div>' +
-      '<div class="row"><div><label>E-mail (optioneel)</label><input type="email" id="exEmail" placeholder="bijv. naam@voorbeeld.nl"></div>' +
-      '<div><label>Telefoon / Mobiel (optioneel)</label><input type="text" id="exMob" placeholder="bijv. 06-12345678"></div></div>' +
-      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" id="exBet" checked style="width:auto;margin:0;min-height:auto"> Betaald aan tafel (+ €2,50)</label>' +
-      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0 14px"><input type="checkbox" id="exBm" style="width:auto;margin:0;min-height:auto"> Buiten mededinging (*)</label>' +
-      '<button class="pri" style="width:100%" onclick="slaExtraOp()">Opslaan en direct naar klokker sturen</button></div>';
-
-  } else if (v === 'nood') {
-    var opties = deelnemersLijst.length
-      ? deelnemersLijst.map(function(d) { return '<option value="' + esc(d.startnummer) + '">Baan ' + esc(d.baan) + ' | #' + esc(d.startnummer) + ' ' + esc(d.roepnaam) + ' (' + esc(d.klasse) + ')</option>'; }).join('')
-      : '<option value="">Geen deelnemers beschikbaar</option>';
-    h += back() + '<div class="box n" style="max-width:600px"><h2 style="margin-top:0">Handmatige tijd / weigering invoeren</h2>' +
-      '<label>Deelnemer</label><select id="ndHond">' + opties + '</select>' +
-      '<label>Oefening</label><select id="ndOef" onchange="var t=document.getElementById(\'ndType\');if(this.value!==\'BREVET\'&&t.value===\'BREVET_OK\')t.value=\'TIJD\';document.getElementById(\'ndVak\').style.display=t.value===\'TIJD\'?\'block\':\'none\'"><option value="A">Oefening A (Object)</option><option value="B">Oefening B (Pop)</option><option value="C">Oefening C (Springen)</option><option value="BREVET">Brevetoefening E t/m J</option></select>' +
-      '<label>Resultaat</label><select id="ndType" onchange="if(this.value===\'BREVET_OK\'&&document.getElementById(\'ndOef\').value!==\'BREVET\'){alert(\'Brevet uitgevoerd geldt alleen voor Brevetoefening E t/m J.\');this.value=\'TIJD\';}document.getElementById(\'ndVak\').style.display=this.value===\'TIJD\'?\'block\':\'none\'"><option value="TIJD">Geklokte tijd</option><option value="WEIGERING">Weigering (600,00 sec)</option><option value="BREVET_OK">Brevet uitgevoerd (alleen E–J)</option></select>' +
-      '<div id="ndVak"><label>Tijd in cijfers (bijv. 945 = 9,45 sec)</label><input type="tel" id="ndCijf" placeholder="bijv. 1425"></div>' +
-      '<button class="pri" style="width:100%" onclick="slaNoodOp()">Resultaat direct toevoegen</button><button style="width:100%;margin-top:8px;color:var(--bad);border-color:var(--bad)" onclick="verwijderGekozenNoodTijd()">Bestaande tijd voor gekozen hond & oefening verwijderen</button></div>';
-
-  } else if (v === 'meld') {
-    h += back();
-    if (!openM.length) h += '<div class="m">Geen open meldingen.</div>';
-    openM.forEach(function(m) {
-      if (m.soort === 'BERICHT') {
-        h += '<div class="box n"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div><div style="font-size:19px;margin:4px 0 10px">' + esc(m.tekst) + '</div><button onclick="leesBericht(\'' + esc(m.id) + '\')" style="width:100%">Gelezen</button></div>';
-      } else {
-        h += '<div class="box"><div class="m">Baan ' + esc(m.baan) + ', Oefening ' + esc(m.oefening) + '</div>' +
-          '<div style="font-size:20px;font-weight:700;margin:2px 0 8px">Conflict: twee tijden voor ' + esc(m.roepnaam) + ' (nr ' + esc(m.startnummer) + ')</div>' +
-          '<div class="m">Eerst geregistreerd</div><div class="big">' + esc(m.oudeTijd) + '</div>' +
-          '<div class="m" style="margin-top:6px">Correctie van de klokker</div><div class="big">' + esc(m.nieuweTijd) + '</div>' +
-          '<div class="m" style="margin:6px 0 12px">Reden: ' + esc(m.reden) + '. Tot de tafel beslist telt ' + esc(m.oudeTijd) + '.</div>' +
-          '<div class="row"><button onclick="beslis(\'' + esc(m.id) + '\', false)">Houd ' + esc(m.oudeTijd) + '</button>' +
-          '<button class="pri" onclick="beslis(\'' + esc(m.id) + '\', true)">Neem ' + esc(m.nieuweTijd) + ' over</button></div></div>';
-      }
-    });
-
-  } else if (v === 'beker') {
-    var gr = getGroepen();
-    var openH = gr.slice(0, 1).pop().lijst.concat(gr.slice(1, 2).pop().lijst).filter(function(x) { return !x.bm; });
-    var jeugdH = gr.slice(2, 3).pop().lijst.filter(function(x) { return !x.bm; });
-
-    var bouwSpetter = function(titel, lijst) {
-      var s = '<div class="box n"><h2 style="margin-top:0">' + esc(titel) + '</h2><div class="m" style="margin-bottom:8px">KCM-uitslagen vanuit Beheer worden hier automatisch ingevuld en zijn direct bij te stellen.</div>';
-      if (!lijst.length) return s + '<div class="m">Nog geen deelnemers binnen mededinging.</div></div>';
-      var metTot = lijst.map(function(d) {
-        var meta = deelnemersLijst.find(function(x) { return x.startnummer == d.nr; }) || {};
-        var k = kcmSelecties[String(d.nr)] || meta.kcm || 'GEEN';
-        return Object.assign({}, d, { kcm: k, tot: d.pnt + (KCM_PUNTEN[k] || 0) });
-      }).sort(function(a, b) { return b.tot - a.tot; });
-
-      metTot.forEach(function(d) {
-        var opts = Object.entries(KCM_PUNTEN).map(function(e) {
-          var kNaam = e.slice(0, 1).pop(), kPnt = e.slice(1, 2).pop();
-          return '<option value="' + esc(kNaam) + '" ' + (d.kcm === kNaam ? 'selected' : '') + '>' + (kNaam === 'GEEN' ? 'Geen KCM' : esc(kNaam) + ' (+' + kPnt + ')') + '</option>';
-        }).join('');
-        s += '<div class="t"><b>' + d.tot + '</b><div>' + esc(d.naam) + ' <span class="m">nr ' + esc(d.nr) + ' • Trials: ' + d.pnt + '</span></div>' +
-          '<select style="width:auto;margin:0;min-height:36px" onchange="setKcm(' + esc(d.nr) + ', this.value)">' + opts + '</select></div>';
-      });
-      return s + '</div>';
-    };
-
-    h += back() + '<div class="g">' + bouwSpetter('Spettertrofee (Open + KCM)', openH) + bouwSpetter('Junior Spettertrofee (Jeugd + KCM)', jeugdH) + '</div>';
-
-  } else if (v === 'klok') {
-    var bSel = String(klokBaan || '1');
-    var stKlok = banenStatus['baan_' + bSel] || { oefening: 'A', klaar: 0, totaal: 0, nuHond: 'Wacht op start', serverTijd: null };
-    var aanwezigeBaan = deelnemersLijst.filter(function(d) { return String(d.baan) === bSel && d.aanwezig; });
-    var baanRecs = Object.values(registraties).filter(function(r) { return r && String(r.baan) === bSel && r.status !== 'AFGEWEZEN'; });
-
-    var baanKnoppen = ['1', '2', '3', '4', '5'].map(function(n) {
-      var cntAanw = deelnemersLijst.filter(function(d) { return String(d.baan) === n && d.aanwezig; }).length;
-      return '<button class="' + (bSel === n ? 'pri' : '') + '" onclick="klokBaan=\'' + n + '\';draw()">Baan ' + n + ' (' + cntAanw + ' aanwezig)</button>';
-    }).join('');
-
-    var klokLaatstGezien = 'Nog geen signaal van de baan';
-    if (stKlok.serverTijd) {
-      var dtK = new Date(stKlok.serverTijd);
-      klokLaatstGezien = 'Laatst gezien om ' + dtK.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    h += back() +
-      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">' +
-        '<div><h2 style="margin:0">Klokkersbeeld & Startlijstcontrole</h2><div class="m">Bekijk exact welke aanwezige honden, oefening en tijden er voor de klokker op de baan staan.</div></div>' +
-        '<a href="klokker.html?baan=' + esc(bSel) + '" target="_blank" class="btn-link">Open klokker.html (Baan ' + esc(bSel) + ') ↗</a>' +
+        '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="gaNaarStap(1)">Alle deelnemers (' + deelnemers.length + ')</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'ALLEEN_OPEN' ? 'pri' : '') + '" onclick="openSub(\'ALLEEN_OPEN\',\'Nog niet aangemeld\')">Nog niet aangemeld (' + (deelnemers.length - aanwezigCnt) + ')</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'NOG_BETALEN' ? 'pri' : '') + '" onclick="openSub(\'NOG_BETALEN\',\'Nog betalen\')">Nog betalen (' + (deelnemers.length - betaaldCnt) + ')</button>' +
       '</div>' +
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' + baanKnoppen + '</div>' +
-      '<div class="g" style="margin-bottom:12px">' +
-        '<div class="box n" style="margin-bottom:0"><div class="m">Actieve oefening & status</div><div class="big">Oefening ' + esc(stKlok.oefening || 'A') + '</div><div class="m" style="margin-top:4px">' + esc(klokLaatstGezien) + '</div></div>' +
-        '<div class="box n" style="margin-bottom:0"><div class="m">Aanwezige honden op startlijst</div><div class="big">' + aanwezigeBaan.length + '</div><div class="m" style="margin-top:4px">Alleen aangevinkte honden gaan naar de baan</div></div>' +
-        '<div class="box n" style="margin-bottom:0"><div class="m">Geregistreerde tijden op baan</div><div class="big">' + baanRecs.length + '</div><div class="m" style="margin-top:4px">Huidige hond: <b>' + esc(stKlok.nuHond || 'Wacht op start') + '</b></div></div>' +
-      '</div>' +
-      '<div class="box n"><h2 style="margin-top:0">Startlijst klokker — Baan ' + esc(bSel) + ' (Aanwezig)</h2>';
-
-    if (!aanwezigeBaan.length) {
-      h += '<div class="m">Geen aanwezige honden op Baan ' + esc(bSel) + '. Controleer <b>Aanmelding</b> of synchroniseer vanuit Beheer.</div>';
-    } else {
-      h += '<div class="list-box">' + aanwezigeBaan.map(function(d, idx) {
-        var hondTijden = baanRecs.filter(function(r) { return String(r.startnummer) === String(d.startnummer); });
-        var samenvatting = hondTijden.length
-          ? hondTijden.map(function(r) { return 'Oef ' + esc(r.oefening) + ': <b>' + esc(r.tijdTekst) + '</b>'; }).join(' • ')
-          : '<span class="m">Nog geen tijd geregistreerd</span>';
-        return '<div class="t"><b>' + (idx + 1) + '</b><div>' +
-          '#' + esc(d.startnummer) + ' ' + esc(d.roepnaam) +
-          (d.buitenMededinging ? ' <span class="chip">*</span>' : '') +
-          '<div class="m">' + esc(d.klasse) + ' • ' + esc(d.opvolgendBrevet) + '</div>' +
-          '<div style="font-size:14px;margin-top:2px">' + samenvatting + '</div></div>' +
-          '<span class="chip-ok">Aanwezig</span></div>';
-      }).join('') + '</div>';
-    }
-    h += '</div>';
-
-  } else if (v === 'brevet') {
-    var behaald = getBehaaldeBrevetten();
-    h += back() + '<h2 style="margin-top:4px">Behaalde brevetten (' + esc(actiefJaar) + ')</h2>' +
-      '<div class="m" style="margin-bottom:10px">Overzicht van geregistreerde brevetresultaten (BREVET_OK).</div>';
-    if (behaald.length) {
-      h += '<div class="list-box">' + behaald.map(function(b) {
-        return '<div class="t"><b>#' + esc(b.nr) + '</b><div>' + esc(b.naam) + ' <span class="chip-ok">' + esc(b.brevet) + '</span>' +
-          '<div class="m">' + esc(b.stamboom) + ' • ' + esc(b.klasse) + ' • Baan ' + esc(b.baan) + '</div></div>' +
-          '<span class="m">Behaald</span></div>';
-      }).join('') + '</div>';
-    } else {
-      h += '<div class="box n"><div class="m">Nog geen behaalde brevetten geregistreerd voor ' + esc(actiefJaar) + '.</div></div>';
-    }
-
-  } else if (v === 'hist') {
-    var logs = Object.values(logboek).filter(Boolean).sort(function(a, b) { return b.timestamp.localeCompare(a.timestamp); });
-    h += back() + '<h2 style="margin-top:4px">Wijzigingen</h2>';
-    if (logs.length) {
-      h += '<ul class="log">' + logs.map(function(l) {
-        var t = new Date(l.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-        return '<li>' + t + ' Baan ' + esc(l.baan) + ': ' + esc(l.actie) + '</li>';
-      }).join('') + '</ul>';
-    } else {
-      h += '<div class="m">Nog geen wijzigingen geregistreerd.</div>';
-    }
-  }
-
-  h += '<div class="foot">NNFC Digitale Waarneming • Reglement Trials 4 oktober 2026</div>';
-  document.getElementById('app').innerHTML = h;
+    '</div>' +
+    '<div class="stats-pill">' +
+      '<span>Totaal ingeschreven: <b>' + deelnemers.length + '</b></span>' +
+      '<span>Aangemeld: <b style="color:var(--ok)">' + aanwezigCnt + '</b></span>' +
+      '<span>Nog verwacht: <b>' + (deelnemers.length - aanwezigCnt) + '</b></span>' +
+      '<span>Betaald: <b style="color:var(--ok)">' + betaaldCnt + '</b></span>' +
+    '</div>' +
+    '<div class="toolbar"><div class="search-wrap">' +
+      '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, roepnaam, eigenaar, lidnr of baan...">' +
+      '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
+    '</div></div>' +
+    '<div class="table-wrap"><table><thead><tr>' +
+      '<th style="width:86px;text-align:center">Aanwezig</th>' +
+      '<th style="width:105px">Startnr</th>' +
+      '<th>Hond & Stamboom</th>' +
+      '<th>Eigenaar & District</th>' +
+      '<th>Baan & Klasse</th>' +
+      '<th style="width:80px;text-align:center">Betaald</th>' +
+      '<th style="width:105px">Kaart</th>' +
+    '</tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="sub" style="padding:14px">Geen deelnemers gevonden.</td></tr>') + '</tbody></table></div>' +
+  '</div>';
 }
 
-initFirebase();
-draw();
+// ============================================================
+// RENDER STAP 2: BASIS OEFENINGEN (MET BAAN-SUBPAGINA & HOND-SUB-SUBPAGINA)
+// ============================================================
+function renderStap2() {
+  // Sub-subpagina: detail invoer voor 1 hond op een baan
+  if (nav.sub && nav.subSub) {
+    var h = deelnemers.find(function(x) { return x.id === nav.subSub; });
+    if (!h) { gaTerug(); return ''; }
+    var td = tafelData[h.id] || {};
+    return '<div class="box">' +
+      '<div class="box-head"><div><h2>Basis oefeningen: #' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '</h2><div class="sub">' + esc(h.stamboom) + ' • Baan ' + esc(h.baan) + ' • ' + esc(h.klasse) + '</div></div></div>' +
+      '<div class="grid3">' +
+        '<div class="kaart"><label>Punten basis oefeningen</label><input type="number" step="0.5" value="' + esc(td.basisPunten) + '" placeholder="bijv. 85" onchange="setBasisPunten(\'' + esc(h.id) + '\',this.value)"></div>' +
+        '<div class="kaart"><label>Status basis ronde</label><select onchange="setBasisStatus(\'' + esc(h.id) + '\',this.value)">' +
+          ['Open','Bezig','Klaar'].map(function(st){ return '<option value="'+st+'" '+(td.basisStatus===st?'selected':'')+'>'+st+'</option>'; }).join('') +
+        '</select></div>' +
+        '<div class="kaart"><label>KCM-bonus & Totaal</label><div style="padding-top:8px">KCM: <b>' + esc(h.kcm || 'GEEN') + '</b> (+' + (KCM_PUNTEN[h.kcm || 'GEEN'] || 0) + ') • Totaal: <b>' + totaalPunten(h) + ' pnt</b></div></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Subpagina: 1 specifieke baan (bijv. BAAN_1)
+  if (nav.sub && nav.sub.indexOf('BAAN_') === 0) {
+    var bNr = nav.sub.replace('BAAN_', '');
+    var baanLijst = deelnemers.filter(function(x) { return String(x.baan) === bNr && matchZoek(x, nav.zoek); });
+    var rows = baanLijst.map(function(h) {
+      var td = tafelData[h.id] || {};
+      return '<tr>' +
+        '<td><b>#' + esc(h.startnummer) + '</b></td>' +
+        '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.eigenaar) + '</div></td>' +
+        '<td><span class="chip">' + esc(h.klasse) + '</span> ' + (h.aanwezig ? '<span class="chip-ok">Aanwezig</span>' : '<span class="chip-warn">Niet gemeld</span>') + '</td>' +
+        '<td><input type="number" step="0.5" value="' + esc(td.basisPunten) + '" placeholder="Punten" style="width:105px;margin:0;min-height:34px" onchange="setBasisPunten(\'' + esc(h.id) + '\',this.value)"></td>' +
+        '<td><select style="width:auto;margin:0;min-height:34px" onchange="setBasisStatus(\'' + esc(h.id) + '\',this.value)">' +
+          ['Open','Bezig','Klaar'].map(function(st){ return '<option value="'+st+'" '+(td.basisStatus===st?'selected':'')+'>'+st+'</option>'; }).join('') +
+        '</select></td>' +
+        '<td><button type="button" class="sm" onclick="openSubSub(\'' + esc(h.id) + '\',\'#' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '\')">Open hond →</button></td>' +
+      '</tr>';
+    }).join('');
+
+    return '<div class="box">' +
+      '<div class="box-head"><div><h2>Baan ' + esc(bNr) + ' – Basis oefeningen</h2><div class="sub">Klik op een hond voor sub-subdetail of vul direct punten en status in</div></div></div>' +
+      '<div class="toolbar"><div class="search-wrap">' +
+        '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond of eigenaar op baan ' + esc(bNr) + '...">' +
+        '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
+      '</div></div>' +
+      '<div class="table-wrap"><table><thead><tr>' +
+        '<th style="width:80px">Nr</th><th>Hond & Eigenaar</th><th>Klasse & Aanwezigheid</th><th style="width:130px">Punten</th><th style="width:130px">Status</th><th style="width:120px">Detail</th>' +
+      '</tr></thead><tbody>' + (rows || '<tr><td colspan="6" class="sub" style="padding:14px">Geen honden op baan ' + esc(bNr) + '.</td></tr>') + '</tbody></table></div>' +
+    '</div>';
+  }
+
+  // Hoofdniveau stap 2: overzicht van de 5 banen
+  var kaarten = ['1','2','3','4','5'].map(function(b) {
+    var bl = deelnemers.filter(function(x) { return String(x.baan) === b; });
+    var klaar = bl.filter(function(x) { return (tafelData[x.id] || {}).basisStatus === 'Klaar'; }).length;
+    var klassen = ((baanIndeling.banen && baanIndeling.banen[b]) || []).join(', ') || 'Vrij';
+    return '<div class="kaart kaart-click" onclick="openSub(\'BAAN_' + b + '\',\'Baan ' + b + '\')">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center"><b>Baan ' + b + '</b><span class="chip">' + klaar + ' / ' + bl.length + ' klaar</span></div>' +
+      '<div class="sub" style="margin:6px 0 10px">Klassen: ' + esc(klassen) + '</div>' +
+      '<button type="button" class="pri sm" style="width:100%">Open Baan ' + b + ' →</button>' +
+    '</div>';
+  }).join('');
+
+  return '<div class="box">' +
+    '<div class="box-head"><div><h2>2. Basis oefeningen – Kies een baan</h2><div class="sub">Klik op een baan om naar de subpagina te gaan (en daarbinnen naar een individuele hond)</div></div></div>' +
+    '<div class="grid5">' + kaarten + '</div>' +
+  '</div>';
+}
+
+// ============================================================
+// RENDER STAP 3: BREVETTEN
+// ============================================================
+function renderStap3() {
+  if (nav.sub === 'BREVET_DETAIL' && nav.subSub) {
+    var h = deelnemers.find(function(x) { return x.id === nav.subSub; });
+    if (!h) { gaTerug(); return ''; }
+    var td = tafelData[h.id] || {};
+    return '<div class="box">' +
+      '<div class="box-head"><div><h2>Brevetbeoordeling: #' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '</h2><div class="sub">Opgaand voor: <b>' + esc(h.opvolgendBrevet) + '</b> (Huidig: ' + esc(h.huidigBrevet) + ')</div></div></div>' +
+      '<div class="grid2">' +
+        '<div class="kaart"><label>Brevetuitslag</label><select onchange="setBrevetUitslag(\'' + esc(h.id) + '\',this.value)">' +
+          ['Nog niet gezwommen','Geslaagd','Niet geslaagd'].map(function(u){ return '<option value="'+u+'" '+(td.brevetUitslag===u?'selected':'')+'>'+u+'</option>'; }).join('') +
+        '</select></div>' +
+        '<div class="kaart"><label>Opmerking keurmeester / tafel</label><input type="text" value="' + esc(td.brevetOpmerking) + '" placeholder="Bijv. Onderdeel 3 herkanst..." onchange="setBrevetOpmerking(\'' + esc(h.id) + '\',this.value)"></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  var gefilterd = deelnemers.filter(function(h) {
+    if (nav.sub === 'GESLAAGD' && (tafelData[h.id] || {}).brevetUitslag !== 'Geslaagd') return false;
+    if (nav.sub === 'OPEN_BREVET' && (tafelData[h.id] || {}).brevetUitslag !== 'Nog niet gezwommen') return false;
+    return matchZoek(h, nav.zoek);
+  });
+
+  var geslaagdCnt = deelnemers.filter(function(h) { return (tafelData[h.id] || {}).brevetUitslag === 'Geslaagd'; }).length;
+
+  var rows = gefilterd.map(function(h) {
+    var td = tafelData[h.id] || {};
+    return '<tr>' +
+      '<td><b>#' + esc(h.startnummer) + '</b> <span class="chip">B' + esc(h.baan) + '</span></td>' +
+      '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.eigenaar) + '</div></td>' +
+      '<td><span class="chip">' + esc(h.huidigBrevet) + '</span> &rarr; <b>' + esc(h.opvolgendBrevet) + '</b></td>' +
+      '<td><select style="width:auto;margin:0;min-height:34px" onchange="setBrevetUitslag(\'' + esc(h.id) + '\',this.value)">' +
+        ['Nog niet gezwommen','Geslaagd','Niet geslaagd'].map(function(u){ return '<option value="'+u+'" '+(td.brevetUitslag===u?'selected':'')+'>'+u+'</option>'; }).join('') +
+      '</select></td>' +
+      '<td><button type="button" class="sm" onclick="openSub(\'BREVET_DETAIL\',\'Brevetdetails\');openSubSub(\'' + esc(h.id) + '\',\'#' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '\')">Detail →</button></td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="box">' +
+    '<div class="box-head">' +
+      '<div><h2>3. Brevetten</h2><div class="sub">Registreer wie geslaagd is voor het opvolgende brevet (' + geslaagdCnt + ' geslaagd)</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="gaNaarStap(3)">Alle (' + deelnemers.length + ')</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'OPEN_BREVET' ? 'pri' : '') + '" onclick="openSub(\'OPEN_BREVET\',\'Nog niet gezwommen\')">Nog te zwemmen</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'GESLAAGD' ? 'pri' : '') + '" onclick="openSub(\'GESLAAGD\',\'Geslaagde brevetten\')">Geslaagd (' + geslaagdCnt + ')</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="toolbar"><div class="search-wrap">' +
+      '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar of brevet...">' +
+      '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
+    '</div></div>' +
+    '<div class="table-wrap"><table><thead><tr>' +
+      '<th style="width:110px">Nr / Baan</th><th>Hond & Eigenaar</th><th>Huidig &rarr; Opvolgend brevet</th><th style="width:200px">Uitslag</th><th style="width:105px">Detail</th>' +
+    '</tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="sub" style="padding:14px">Geen brevetdeelnemers gevonden.</td></tr>') + '</tbody></table></div>' +
+  '</div>';
+}
+
+// ============================================================
+// RENDER STAP 4: BESTE REU & BESTE TEEF
+// ============================================================
+function renderStap4() {
+  var geslachtFilter = nav.sub === 'TEVEN' ? 'Teef' : (nav.sub === 'REUEN' ? 'Reu' : 'ALLE');
+  var lijstRt = deelnemers.filter(function(h) {
+    if (h.buitenMededinging) return false;
+    if (geslachtFilter !== 'ALLE' && h.geslacht !== geslachtFilter) return false;
+    return matchZoek(h, nav.zoek);
+  }).sort(function(a, b) {
+    return totaalPunten(b) - totaalPunten(a);
+  });
+
+  var rows = lijstRt.map(function(h) {
+    var td = tafelData[h.id] || {};
+    var kcmBadge = (h.kcm && h.kcm !== 'GEEN') ? '<span class="chip-kcm">KCM: ' + esc(h.kcm) + '</span>' : '<span class="sub">—</span>';
+    return '<tr>' +
+      '<td style="text-align:center"><input type="checkbox" class="chk" ' + (td.rtKandidaat ? 'checked' : '') + ' onchange="toggleRtKandidaat(\'' + esc(h.id) + '\')"></td>' +
+      '<td><b>#' + esc(h.startnummer) + '</b></td>' +
+      '<td><div class="hond-main">' + esc(h.roepnaam) + ' <span class="chip">' + esc(h.geslacht) + '</span></div><div class="hond-sub">' + esc(h.stamboom) + '</div></td>' +
+      '<td>' + esc(h.eigenaar) + '</td>' +
+      '<td>' + kcmBadge + '</td>' +
+      '<td><b>' + totaalPunten(h) + ' pnt</b> <span class="hond-sub">(Basis: ' + (td.basisPunten || 0) + ')</span></td>' +
+      '<td><select style="width:auto;margin:0;min-height:34px" onchange="setRtRang(\'' + esc(h.id) + '\',this.value)">' +
+        ['','Beste Reu','Res. Beste Reu','Beste Teef','Res. Beste Teef'].map(function(r){ return '<option value="'+r+'" '+(td.rtRang===r?'selected':'')+'>'+(r || '— Geen titel —')+'</option>'; }).join('') +
+      '</select></td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="box">' +
+    '<div class="box-head">' +
+      '<div><h2>4. Beste Reu & Beste Teef</h2><div class="sub">Gesorteerd op totaalpunten (Basis + KCM) • Buiten mededinging (*) automatisch uitgesloten</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="gaNaarStap(4)">Reuen & Teven</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'REUEN' ? 'pri' : '') + '" onclick="openSub(\'REUEN\',\'Alleen Reuen\')">Alleen Reuen</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'TEVEN' ? 'pri' : '') + '" onclick="openSub(\'TEVEN\',\'Alleen Teven\')">Alleen Teven</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="toolbar"><div class="search-wrap">' +
+      '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op hond, eigenaar of startnummer...">' +
+      '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
+    '</div></div>' +
+    '<div class="table-wrap"><table><thead><tr>' +
+      '<th style="width:90px;text-align:center">Kandidaat</th><th style="width:80px">Nr</th><th>Hond</th><th>Eigenaar</th><th>KCM</th><th>Totaalpunten</th><th style="width:185px">Titel</th>' +
+    '</tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="sub" style="padding:14px">Geen kandidaten gevonden.</td></tr>') + '</tbody></table></div>' +
+  '</div>';
+}
+
+// ============================================================
+// RENDER STAP 5: UITSLAGEN, BREVETTEN & BEKERS + PRINT / PDF
+// ============================================================
+function printOverzicht(onderdeel) {
+  nav.printOnderdeel = onderdeel || 'ALLES';
+  render();
+  setTimeout(function() { window.print(); }, 80);
+}
+
+function renderStap5() {
+  var geslaagdeBrevetten = deelnemers.filter(function(h) { return (tafelData[h.id] || {}).brevetUitslag === 'Geslaagd'; });
+  var eindLijst = deelnemers.slice().sort(function(a, b) { return totaalPunten(b) - totaalPunten(a); });
+
+  var toonUitslagen = !nav.sub || nav.sub === 'UITSLAGEN';
+  var toonBrevetten = !nav.sub || nav.sub === 'BREVETTEN_LIJST';
+  var toonBekers = !nav.sub || nav.sub === 'BEKERS';
+
+  var uitslagRows = eindLijst.map(function(h, idx) {
+    var td = tafelData[h.id] || {};
+    return '<tr>' +
+      '<td><b>' + (idx + 1) + '.</b></td>' +
+      '<td><b>#' + esc(h.startnummer) + '</b></td>' +
+      '<td><b>' + esc(h.roepnaam) + '</b> <span class="hond-sub">(' + esc(h.stamboom) + ')</span>' + (h.buitenMededinging ? ' <span class="chip">* Buiten med.</span>' : '') + '</td>' +
+      '<td>' + esc(h.eigenaar) + '</td>' +
+      '<td>' + esc(h.klasse) + '</td>' +
+      '<td>' + (td.basisPunten || 0) + '</td>' +
+      '<td>' + (KCM_PUNTEN[h.kcm || 'GEEN'] || 0) + '</td>' +
+      '<td><b>' + totaalPunten(h) + '</b></td>' +
+      '<td>' + esc(td.brevetUitslag || '—') + '</td>' +
+      '<td><input type="text" value="' + esc(td.beker) + '" placeholder="Bijv. 1e prijs / Beker..." style="margin:0;min-height:32px" onchange="setBeker(\'' + esc(h.id) + '\',this.value)"></td>' +
+    '</tr>';
+  }).join('');
+
+  var brevetRows = geslaagdeBrevetten.map(function(h) {
+    return '<tr>' +
+      '<td><b>#' + esc(h.startnummer) + '</b></td>' +
+      '<td><b>' + esc(h.roepnaam) + '</b> (' + esc(h.stamboom) + ')</td>' +
+      '<td>' + esc(h.eigenaar) + '</td>' +
+      '<td><b>' + esc(h.opvolgendBrevet) + '</b></td>' +
+    '</tr>';
+  }).join('');
+
+  var bekerLijst = eindLijst.filter(function(h) {
+    var td = tafelData[h.id] || {};
+    return (td.beker && td.beker.trim()) || (td.rtRang && td.rtRang.trim());
+  });
+  var bekerRows = bekerLijst.map(function(h) {
+    var td = tafelData[h.id] || {};
+    var prijs = [td.rtRang, td.beker].filter(Boolean).join(' • ');
+    return '<tr>' +
+      '<td><b>#' + esc(h.startnummer) + '</b></td>' +
+      '<td><b>' + esc(h.roepnaam) + '</b> (' + esc(h.eigenaar) + ')</td>' +
+      '<td><b>' + esc(prijs) + '</b></td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="print-kop"><h2>NNFC Waterwerk – Eindoverzicht ' + esc(jaar) + '</h2><div>Uitslagen, Geslaagde Brevetten & Bekers</div></div>' +
+    '<div class="box no-print">' +
+      '<div class="box-head">' +
+        '<div><h2>5. Uitslagen, Brevetten & Bekers</h2><div class="sub">Eindoverzicht voor de prijsuitreiking • Direct printen of opslaan als PDF</div></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+          '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="gaNaarStap(5)">Alles op 1 blad</button>' +
+          '<button type="button" class="sm ' + (nav.sub === 'UITSLAGEN' ? 'pri' : '') + '" onclick="openSub(\'UITSLAGEN\',\'Alleen Uitslagen\')">Uitslagen</button>' +
+          '<button type="button" class="sm ' + (nav.sub === 'BREVETTEN_LIJST' ? 'pri' : '') + '" onclick="openSub(\'BREVETTEN_LIJST\',\'Geslaagde Brevetten\')">Brevetten (' + geslaagdeBrevetten.length + ')</button>' +
+          '<button type="button" class="sm ' + (nav.sub === 'BEKERS' ? 'pri' : '') + '" onclick="openSub(\'BEKERS\',\'Bekers & Titels\')">Bekers (' + bekerLijst.length + ')</button>' +
+          '<button type="button" class="ok" onclick="printOverzicht(\'ALLES\')">Print / Opslaan als PDF</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    (toonUitslagen ? '<div class="box">' +
+      '<div class="box-head"><h2>Einduitslag & Puntentelling (' + esc(jaar) + ')</h2></div>' +
+      '<div class="table-wrap"><table><thead><tr>' +
+        '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Basis</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
+      '</tr></thead><tbody>' + (uitslagRows || '<tr><td colspan="10" class="sub" style="padding:14px">Nog geen uitslagen beschikbaar.</td></tr>') + '</tbody></table></div>' +
+    '</div>' : '') +
+
+    (toonBrevetten ? '<div class="box">' +
+      '<div class="box-head"><h2>Geslaagde Brevetten (' + geslaagdeBrevetten.length + ')</h2></div>' +
+      '<div class="table-wrap"><table><thead><tr>' +
+        '<th style="width:90px">Startnr</th><th>Hond</th><th>Eigenaar</th><th>Behaald brevet</th>' +
+      '</tr></thead><tbody>' + (brevetRows || '<tr><td colspan="4" class="sub" style="padding:14px">Nog geen geslaagde brevetten geregistreerd.</td></tr>') + '</tbody></table></div>' +
+    '</div>' : '') +
+
+    (toonBekers ? '<div class="box">' +
+      '<div class="box-head"><h2>Bekers & Titels (' + bekerLijst.length + ')</h2></div>' +
+      '<div class="table-wrap"><table><thead><tr>' +
+        '<th style="width:90px">Startnr</th><th>Hond & Eigenaar</th><th>Beker / Titel</th>' +
+      '</tr></thead><tbody>' + (bekerRows || '<tr><td colspan="3" class="sub" style="padding:14px">Nog geen bekers of Beste Reu/Teef-titels toegekend.</td></tr>') + '</tbody></table></div>' +
+    '</div>' : '');
+}
+
+function render() {
+  updateCrumbBar();
+  var html = '';
+  if (nav.stap === 1) html = renderStap1();
+  else if (nav.stap === 2) html = renderStap2();
+  else if (nav.stap === 3) html = renderStap3();
+  else if (nav.stap === 4) html = renderStap4();
+  else if (nav.stap === 5) html = renderStap5();
+  document.getElementById('appContent').innerHTML = html;
+}
+
+render();
 </script>
 </body>
 </html>
