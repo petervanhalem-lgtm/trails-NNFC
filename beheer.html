@@ -100,7 +100,7 @@ body.compact .act-grp button{min-height:28px;padding:2px 7px;font-size:13px}
           <span class="chip">UTF-8 & Windows</span>
         </div>
         <div class="sub" style="margin-bottom:12px">
-          Importeer inschrijvingen direct vanuit Excel (.csv met <code>;</code> of <code>,</code>). Herkent automatisch Lidnr, Eigenaar, Stamboomnaam, Roepnaam, Geslacht, Klasse, Huidig brevet, Betaald en optioneel <b>KCM</b>.
+          Importeer inschrijvingen direct vanuit Excel (.csv met <code>;</code> of <code>,</code>). Herkent automatisch Lidnr, Eigenaar, District, Stamboomnaam, Roepnaam, Geslacht, Klasse, Huidig brevet, Betaald en optioneel <b>KCM</b>.
         </div>
         <input type="file" id="csvFile" accept=".csv,.txt">
       </div>
@@ -112,9 +112,10 @@ body.compact .act-grp button{min-height:28px;padding:2px 7px;font-size:13px}
         <h2>2. Handmatig deelnemer toevoegen</h2>
         <span class="sub">Inclusief KCM-uitslag (art. 2.17)</span>
       </div>
-      <div class="row3">
+      <div class="row4">
         <div><label>Lidnummer</label><input type="text" id="inLid" placeholder="bijv. 10009999"></div>
         <div><label>Naam eigenaar</label><input type="text" id="inEig" placeholder="bijv. J. Jansen"></div>
+        <div><label>District</label><select id="inDist"></select></div>
         <div><label>Startnummer</label><input type="number" id="inNr" placeholder="bijv. 101"></div>
       </div>
 
@@ -168,7 +169,7 @@ body.compact .act-grp button{min-height:28px;padding:2px 7px;font-size:13px}
 
     <div class="toolbar">
       <div class="search-wrap">
-        <input type="search" id="zoekBeheer" oninput="render()" placeholder="Zoek op startnr, roepnaam, stamboomnaam, eigenaar, lidnr, klasse, brevet, KCM of betaald...">
+        <input type="search" id="zoekBeheer" oninput="render()" placeholder="Zoek op startnr, roepnaam, stamboomnaam, eigenaar, district, lidnr, klasse, brevet, KCM of betaald...">
         <button type="button" class="sm" onclick="document.getElementById('zoekBeheer').value='';render()">Wis</button>
       </div>
     </div>
@@ -183,7 +184,7 @@ body.compact .act-grp button{min-height:28px;padding:2px 7px;font-size:13px}
             <th style="width:110px">Baan</th>
             <th style="width:74px">Nr</th>
             <th>Hond & Stamboom</th>
-            <th>Eigenaar & Lidnr</th>
+            <th>Eigenaar, District & Lidnr</th>
             <th>Klasse & Opv. brevet</th>
             <th style="width:130px">KCM-uitslag</th>
             <th style="width:74px;text-align:center">Betaald</th>
@@ -200,6 +201,7 @@ body.compact .act-grp button{min-height:28px;padding:2px 7px;font-size:13px}
 <script src="referentie2026.js"></script>
 <script>
 var db = null;
+var DISTRICT_OPTIES = ["", "Noord", "Betuwe", "Limburg", "Rotterdam", "Den Haag", "Bollenstreek"];
 var KCM_PUNTEN = {"GEEN":0,"BOB":75,"CAC":70,"Res. CAC":65,"U1":55,"U2":50,"U3":45,"U4":40,"U":35,"ZG":25,"G":15,"M":10,"S":5};
 var KCM_OPTIES = Object.keys(KCM_PUNTEN);
 
@@ -228,6 +230,15 @@ for (var y = 2026; y <= 2040; y++) {
   if (String(y) === standaardJaar) o.selected = true;
   selJaarEl.appendChild(o);
 }
+
+// Vul District dropdown in handmatig formulier
+var inDistEl = document.getElementById('inDist');
+DISTRICT_OPTIES.forEach(function(d) {
+  var o = document.createElement('option');
+  o.value = d;
+  o.textContent = d || '— Kies district —';
+  inDistEl.appendChild(o);
+});
 
 // Vul KCM dropdown in handmatig formulier
 var inKcmEl = document.getElementById('inKcm');
@@ -264,12 +275,28 @@ var actiefBaanFilter = 'ALLE';
 var lijst = [];
 var kcmMap = {};
 
+function herkenDistrict(raw) {
+  var s = String(raw || '').trim();
+  if (!s || s === '-') return '';
+  var low = s.toLowerCase();
+  var direct = DISTRICT_OPTIES.find(function(d) { return d && d.toLowerCase() === low; });
+  if (direct) return direct;
+  if (low.indexOf('noord') !== -1) return 'Noord';
+  if (low.indexOf('betuwe') !== -1 || low.indexOf('brabant') !== -1) return 'Betuwe';
+  if (low.indexOf('limburg') !== -1 || low.indexOf('baywatch') !== -1) return 'Limburg';
+  if (low.indexOf('rotterdam') !== -1) return 'Rotterdam';
+  if (low.indexOf('den haag') !== -1 || low.indexOf('s-gravenhage') !== -1 || low.indexOf('gravenhage') !== -1) return 'Den Haag';
+  if (low.indexOf('bollenstreek') !== -1) return 'Bollenstreek';
+  return s;
+}
+
 function laadJaarData() {
   try { lijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || []; } catch (e) { lijst = []; }
   try { kcmMap = JSON.parse(localStorage.getItem('nnfc_kcm_' + jaar)) || {}; } catch (e) { kcmMap = {}; }
   lijst.forEach(function(h) {
     if (!h.kcm && kcmMap[String(h.startnummer)]) h.kcm = kcmMap[String(h.startnummer)];
     if (!h.kcm) h.kcm = 'GEEN';
+    h.district = herkenDistrict(h.district);
   });
 }
 laadJaarData();
@@ -380,9 +407,10 @@ function importeerCsv() {
     };
 
     var iLid = vindExact(['lidnr', 'lidnummer']);
+    var iDist = vindExact(['district', 'regio', 'kringgroep', 'waterwerkgroep']);
     var iStam = vindExact(['stamboom', 'volledige naam']);
     var iRoep = vindExact(['roepnaam']);
-    var iEig = vindExact(['eigenaar', 'inzender', 'naam'], ['stamboom', 'roep', 'hond']);
+    var iEig = vindExact(['eigenaar', 'inzender', 'naam'], ['stamboom', 'roep', 'hond', 'district']);
     var iGesl = vindExact(['geslacht', 'reu/teef']);
     var iKlas = vindExact(['klasse']);
     var iBrev = vindExact(['brevet', 'heeft nu']);
@@ -422,6 +450,7 @@ function importeerCsv() {
       var brev = herkenBrevet(brevRaw);
       if (!brev) { fouten.push('Regel ' + (i + 2) + ' (' + (roep || stam) + '): brevet "' + brevRaw + '" niet herkend.'); continue; }
 
+      var distRaw = iDist >= 0 ? (kol[iDist] || '') : '';
       var betRaw = iBet >= 0 ? (kol[iBet] || '') : '';
       var kcmRaw = iKcm >= 0 ? (kol[iKcm] || '') : '';
       var nr = lijst.length ? Math.max.apply(null, lijst.map(function(x) { return x.startnummer; })) + 1 : 101;
@@ -432,6 +461,7 @@ function importeerCsv() {
         jaar: jaar,
         lidnr: (iLid >= 0 && kol[iLid]) ? kol[iLid] : 'ONBEKEND',
         eigenaar: (iEig >= 0 && kol[iEig]) ? kol[iEig] : 'Onbekend',
+        district: herkenDistrict(distRaw),
         startnummer: nr,
         roepnaam: roep || stam.split(' ').shift(),
         stamboom: stam || roep,
@@ -469,6 +499,7 @@ function voegToe() {
   var klas = document.getElementById('inKlas').value;
   var brev = document.getElementById('inBrev').value;
   var kcmVal = document.getElementById('inKcm').value || 'GEEN';
+  var distVal = document.getElementById('inDist').value || '';
   var nr = parseInt(document.getElementById('inNr').value, 10) || (lijst.length + 101);
 
   if (lijst.some(function(x) { return x.startnummer === nr; })) {
@@ -481,6 +512,7 @@ function voegToe() {
     jaar: jaar,
     lidnr: document.getElementById('inLid').value.trim() || 'ONBEKEND',
     eigenaar: document.getElementById('inEig').value.trim() || 'Onbekend',
+    district: distVal,
     startnummer: nr,
     roepnaam: roep || stam,
     stamboom: stam || roep,
@@ -497,6 +529,7 @@ function voegToe() {
 
   document.getElementById('inRoep').value = '';
   document.getElementById('inStam').value = '';
+  document.getElementById('inDist').value = '';
   document.getElementById('inKcm').value = 'GEEN';
   document.getElementById('inBet').checked = false;
   document.getElementById('inBm').checked = false;
@@ -546,7 +579,7 @@ function matchBeheerZoek(h, q) {
   var kcmStr = (h.kcm && h.kcm !== 'GEEN') ? ('kcm ' + h.kcm) : '';
   var tekst = [
     h.startnummer, '#' + h.startnummer,
-    h.roepnaam, h.stamboom, h.eigenaar, h.lidnr,
+    h.roepnaam, h.stamboom, h.eigenaar, h.district || '', h.lidnr,
     h.klasse, h.geslacht, h.huidigBrevet, h.opvolgendBrevet,
     kcmStr,
     'baan ' + h.baan, 'b' + h.baan,
@@ -620,12 +653,13 @@ function render() {
       return '<option value="' + esc(k) + '" ' + (kcmVal === k ? 'selected' : '') + '>' + (k === 'GEEN' ? '—' : esc(k) + ' (+' + KCM_PUNTEN[k] + ')') + '</option>';
     }).join('');
     var kcmBadge = (kcmVal !== 'GEEN') ? ' <span class="chip-kcm">KCM: ' + esc(kcmVal) + '</span>' : '';
+    var eigSub = [h.district ? ('District: ' + esc(h.district)) : '', 'Lidnr: ' + esc(h.lidnr)].filter(Boolean).join(' • ');
 
     return '<tr class="' + (isC ? 'conflict' : '') + '">' +
       '<td><select style="width:auto;margin:0;min-height:34px;padding:3px 8px" onchange="setBaan(\'' + esc(h.id) + '\',this.value)">' + opts + '</select></td>' +
       '<td><b>#' + esc(h.startnummer) + '</b></td>' +
       '<td><div class="hond-main">' + esc(h.roepnaam) + ' <span class="sub">(' + esc(h.geslacht) + ')</span>' + (h.buitenMededinging ? ' <span class="chip">* Buiten med.</span>' : '') + kcmBadge + '</div><div class="hond-sub">' + esc(h.stamboom) + '</div></td>' +
-      '<td><div>' + esc(h.eigenaar) + '</div><div class="hond-sub">Lidnr: ' + esc(h.lidnr) + '</div></td>' +
+      '<td><div>' + esc(h.eigenaar) + '</div><div class="hond-sub">' + eigSub + '</div></td>' +
       '<td><span class="chip">' + esc(h.klasse) + '</span> <span class="hond-sub">' + esc(h.opvolgendBrevet) + '</span></td>' +
       '<td><select style="width:auto;margin:0;min-height:34px;padding:3px 8px" onchange="setKcmItem(\'' + esc(h.id) + '\',this.value)">' + kcmOpts + '</select></td>' +
       '<td style="text-align:center"><input type="checkbox" class="chk" ' + (h.betaald ? 'checked' : '') + ' onchange="toggleBet(\'' + esc(h.id) + '\')"></td>' +
@@ -650,6 +684,7 @@ async function stuurNaarTafel() {
     lijst.forEach(function(h) {
       var match = tafelItems.find(function(t) { return t.id === h.id || t.startnummer == h.startnummer; });
       var merged = Object.assign({}, h, {
+        district: h.district || '',
         kcm: h.kcm || 'GEEN',
         aanwezig: match ? Boolean(match.aanwezig) : Boolean(h.aanwezig)
       });
