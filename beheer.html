@@ -33,8 +33,9 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .sm{min-height:36px;padding:4px 10px;font-size:15px}
 
 /* Beheer hoofdnavigatie (3 secties) */
-.beheer-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
-@media(max-width:720px){.beheer-nav{grid-template-columns:1fr}}
+.beheer-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
+@media(max-width:1020px){.beheer-nav{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.beheer-nav{grid-template-columns:1fr}}
 .beheer-btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;padding:8px 12px;border-radius:10px;background:var(--sf2);min-height:58px}
 .beheer-btn .nr{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.8}
 .beheer-btn .ttl{font-size:15px;font-weight:700;line-height:1.2}
@@ -105,18 +106,22 @@ tbody tr:hover{background:var(--soft)}
     </div>
   </div>
 
-  <!-- 3 BEHEERSECTIES -->
+  <!-- 4 BEHEERSECTIES (MET IMPORT ALS DEEL 1) -->
   <div class="beheer-nav" role="navigation" aria-label="Beheer secties">
     <button type="button" id="bhBtn1" class="beheer-btn on" onclick="gaNaarSectie(1)">
-      <span class="nr">Deel 1</span>
-      <span class="ttl">Inschrijvingen toevoegen</span>
+      <span class="nr">Deel 1 • Basis</span>
+      <span class="ttl">Importeren (Excel / CSV)</span>
     </button>
     <button type="button" id="bhBtn2" class="beheer-btn" onclick="gaNaarSectie(2)">
       <span class="nr">Deel 2</span>
-      <span class="ttl">Baanindeling & 3 Bijlagen</span>
+      <span class="ttl">Nieuwe inschrijving</span>
     </button>
     <button type="button" id="bhBtn3" class="beheer-btn" onclick="gaNaarSectie(3)">
       <span class="nr">Deel 3</span>
+      <span class="ttl">Baanindeling & 3 Bijlagen</span>
+    </button>
+    <button type="button" id="bhBtn4" class="beheer-btn" onclick="gaNaarSectie(4)">
+      <span class="nr">Deel 4</span>
       <span class="ttl">Deelnemerslijst & Banen</span>
     </button>
   </div>
@@ -135,6 +140,7 @@ tbody tr:hover{background:var(--soft)}
 
 <div id="toast" class="toast">Opgeslagen</div>
 
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="config.js"></script>
 <script>
 var db = null;
@@ -143,9 +149,10 @@ var BREVET_OPTIES = ["Geen", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"];
 var KCM_OPTIES = ["GEEN", "BOB", "CAC", "Res. CAC", "U1", "U2", "U3", "U4", "U", "ZG", "G", "M", "S"];
 
 var SECTIE_NAMEN = {
-  1: "Inschrijvingen toevoegen",
-  2: "Baanindeling & 3 Bijlagen",
-  3: "Deelnemerslijst & Banen"
+  1: "Importeren (Excel / CSV)",
+  2: "Nieuwe inschrijving",
+  3: "Baanindeling & 3 Bijlagen",
+  4: "Deelnemerslijst & Banen"
 };
 
 function initFirebase() {
@@ -267,7 +274,7 @@ function gaTerug() {
 }
 
 function updateCrumbBar() {
-  for (var s = 1; s <= 3; s++) {
+  for (var s = 1; s <= 4; s++) {
     document.getElementById('bhBtn' + s).classList.toggle('on', nav.sectie === s);
   }
   var bar = document.getElementById('crumbBar');
@@ -438,16 +445,209 @@ function matchZoek(h, q) {
 }
 
 // ============================================================
-// SECTIE 1: INSCHRIJVINGEN TOEVOEGEN
+// SECTIE 1: IMPORTEREN VANUIT EXCEL / CSV (BASISDOCUMENT)
+// ============================================================
+var importVoorbeeldStatus = "";
+
+function normaliseerKlasse(raw) {
+  var s = String(raw || '').trim().toLowerCase();
+  if (!s) return 'Open';
+  if (s.indexOf('jeugd') !== -1) return 'Jeugd';
+  if (s.indexOf('veteran') !== -1) return 'Veteranen';
+  if (s.indexOf('stamboomloos') !== -1 || s.indexOf('zonder stamboom') !== -1) return 'Stamboomloos';
+  if (s.indexOf('special') !== -1) return 'Specials';
+  return 'Open';
+}
+
+function normaliseerGeslacht(raw) {
+  var s = String(raw || '').trim().toLowerCase();
+  if (s.indexOf('teef') !== -1 || s === 'f' || s === 'v') return 'Teef';
+  return 'Reu';
+}
+
+function normaliseerBrevet(raw) {
+  var s = String(raw || '').trim().toUpperCase();
+  if (!s || s === 'GEEN' || s === 'NEE' || s === '-') return 'Geen';
+  var match = BREVET_OPTIES.find(function(b) { return b.toUpperCase() === s; });
+  return match || s;
+}
+
+function pakVeld(row, sleutels) {
+  var keys = Object.keys(row || {});
+  for (var i = 0; i < sleutels.length; i++) {
+    var doel = sleutels[i].toLowerCase();
+    for (var k = 0; k < keys.length; k++) {
+      var schoonsleutel = keys[k].toLowerCase().replace(/[^a-z0-9]/g, '');
+      var schoonDoel = doel.replace(/[^a-z0-9]/g, '');
+      if (schoonsleutel === schoonDoel || schoonsleutel.indexOf(schoonDoel) !== -1) {
+        var val = row[keys[k]];
+        if (val !== undefined && val !== null && String(val).trim() !== '') return String(val).trim();
+      }
+    }
+  }
+  return '';
+}
+
+function verwerkGeimporteerdeRijen(rijen, modus) {
+  if (!Array.isArray(rijen) || rijen.length === 0) {
+    alert('Geen rijen gevonden in het bestand.');
+    return;
+  }
+  if (modus === 'vervang') {
+    deelnemers = [];
+  }
+  var volgendNr = volgendeStartnummer();
+  var toegevoegd = 0;
+
+  rijen.forEach(function(row) {
+    var roepnaam = pakVeld(row, ['roepnaam hond', 'roepnaam', 'hond', 'naam hond']);
+    var stamboom = pakVeld(row, ['volledige naam van de hond', 'stamboomnaam', 'stamboom', 'naam']);
+    var eigenaar = pakVeld(row, ['naam', 'eigenaar', 'geleider', 'lid naam', 'deelnemer']);
+    if (!roepnaam && !stamboom) return;
+    if (!roepnaam) roepnaam = stamboom;
+    if (!stamboom) stamboom = roepnaam;
+    if (!eigenaar) eigenaar = 'Onbekend';
+
+    var district = pakVeld(row, ['traint in regio', 'district', 'regio', 'traint in regio / disctrict']);
+    var lidnr = pakVeld(row, ['lidnr', 'lidnummer', 'lid nr']) || '—';
+    var geslacht = normaliseerGeslacht(pakVeld(row, ['geslacht', 'sekse']));
+    var klasse = normaliseerKlasse(pakVeld(row, ['klasse', 'deelnameklasse']));
+    var huidigBrevet = normaliseerBrevet(pakVeld(row, ['heeft nu brevet', 'huidig brevet', 'brevet', 'nu brevet']));
+    var kcm = pakVeld(row, ['kcm', 'kcm kwalificatie', 'kwalificatie']) || 'GEEN';
+    var stamboomnr = pakVeld(row, ['stamboomnummer', 'nhsb', 'stamboomnr']);
+    var geboortedatum = pakVeld(row, ['geboortedatum', 'geb. datum', 'geboren']);
+    var kleur = pakVeld(row, ['kleur', 'vachtkleur']);
+    var email = pakVeld(row, ['e-mail', 'email', 'opgegeven e-mailadres']);
+
+    var nrRaw = parseInt(pakVeld(row, ['startnummer', 'startnr', 'nr', 'nummer']), 10);
+    var startnummer = (!isNaN(nrRaw) && nrRaw > 0 && !deelnemers.some(function(x) { return x.startnummer === nrRaw; })) ? nrRaw : volgendNr++;
+
+    deelnemers.push({
+      id: 'imp_' + jaar + '_' + startnummer + '_' + Math.random().toString(36).slice(2, 6),
+      startnummer: startnummer,
+      roepnaam: roepnaam,
+      stamboom: stamboom + (stamboomnr ? ' (' + stamboomnr + ')' : ''),
+      eigenaar: eigenaar,
+      district: district,
+      lidnr: lidnr,
+      geslacht: geslacht,
+      klasse: klasse,
+      huidigBrevet: huidigBrevet,
+      opvolgendBrevet: huidigBrevet === 'Geen' ? 'B1' : 'B2',
+      kcm: kcm,
+      geboortedatum: geboortedatum,
+      kleur: kleur,
+      email: email,
+      buitenMededinging: false,
+      baan: bepaalBaanVoorKlasse(klasse),
+      aanwezig: false,
+      betaald: true
+    });
+    toegevoegd++;
+  });
+
+  importVoorbeeldStatus = toegevoegd + ' inschrijving(en) verwerkt voor ' + jaar + '.';
+  bewaarDeelnemers(toegevoegd + ' inschrijvingen geïmporteerd');
+}
+
+function handelBestandUpload(inputEl) {
+  var file = inputEl && inputEl.files && inputEl.files[0];
+  if (!file) return;
+  var modusEl = document.getElementById('importModus');
+  var modus = modusEl ? modusEl.value : 'toevoegen';
+
+  if (typeof XLSX === 'undefined') {
+    alert('Excel-lezer wordt nog geladen of is offline niet beschikbaar. Gebruik in dat geval een .csv-bestand of vul handmatig aan.');
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, { type: 'array' });
+      var eersteBlad = wb.SheetNames[0];
+      var sheet = wb.Sheets[eersteBlad];
+      var rijen = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      verwerkGeimporteerdeRijen(rijen, modus);
+    } catch (err) {
+      alert('Kon het bestand niet lezen: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function downloadVoorbeeldExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('Excel-generator niet beschikbaar in deze omgeving.');
+    return;
+  }
+  var voorbeeldRijen = [
+    {
+      'Startnummer': 2601,
+      'Roepnaam hond': 'Rozi',
+      'Volledige naam van de hond': 'Coco Chanel vom Kaninchenberg',
+      'Naam': 'M. Mosch',
+      'Lidnr': '10002381',
+      'Traint in Regio / Disctrict': 'Baywatch -Limburg',
+      'Geslacht': 'Teef',
+      'Klasse': 'Jeugd',
+      'Heeft nu Brevet': 'Geen',
+      'KCM': 'GEEN',
+      'E-mail': 'secretarisnnfc@ziggo.nl'
+    }
+  ];
+  var ws = XLSX.utils.json_to_sheet(voorbeeldRijen);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Inschrijvingen');
+  XLSX.writeFile(wb, 'NNFC_Inschrijvingen_' + jaar + '_Voorbeeld.xlsx');
+}
+
+function renderSectie1() {
+  return '<div class="box">' +
+    '<div class="box-head">' +
+      '<div><h2>1. Importeren vanuit Excel / CSV – Basisdocument (' + esc(jaar) + ')</h2><div class="sub">Startpunt voor de inschrijvingen van de waterwerkdag: upload een Excel- (.xlsx / .xls) of CSV-bestand</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="sm" onclick="downloadVoorbeeldExcel()">Download voorbeeld-Excel</button>' +
+        '<button type="button" class="sm" onclick="gaNaarSectie(4)">Bekijk deelnemerslijst (' + deelnemers.length + ') →</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="grid2">' +
+      '<div class="kaart">' +
+        '<h3>Bestand kiezen & verwerken</h3>' +
+        '<label for="importModus">Hoe verwerken met bestaande lijst (' + deelnemers.length + ' deelnemers)?</label>' +
+        '<select id="importModus">' +
+          '<option value="toevoegen">Toevoegen aan bestaande lijst (behoud huidige deelnemers)</option>' +
+          '<option value="vervang">Vervang huidige lijst van ' + esc(jaar) + ' volledig</option>' +
+        '</select>' +
+        '<label for="excelBestand">Kies Excel- (.xlsx / .xls) of .csv-bestand</label>' +
+        '<input id="excelBestand" type="file" accept=".xlsx,.xls,.csv,.tsv" onchange="handelBestandUpload(this)">' +
+        (importVoorbeeldStatus ? '<div class="chip-ok" style="margin-top:4px">' + esc(importVoorbeeldStatus) + '</div>' : '') +
+      '</div>' +
+      '<div class="kaart">' +
+        '<h3>Herkende kolommen (zoals inschrijfformulier & ledenlijst)</h3>' +
+        '<div class="sub" style="margin-bottom:8px">De import herkent automatisch onder meer:</div>' +
+        '<div style="font-size:14px;line-height:1.5">' +
+          '<div>• <b>Hond:</b> Roepnaam hond, Volledige naam van de hond, Geslacht, Klasse, Heeft nu Brevet</div>' +
+          '<div>• <b>Eigenaar / Lid:</b> Naam, Lidnr, Traint in Regio / Disctrict, E-mail</div>' +
+          '<div>• <b>Wedstrijd:</b> Startnummer (of automatisch oplopend vanaf #2601) en automatische baanindeling</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// ============================================================
+// SECTIE 2: NIEUWE INSCHRIJVING TOEVOEGEN
 // ============================================================
 function renderSectie1() {
   var volgendNr = volgendeStartnummer();
   return '<div class="box">' +
     '<div class="box-head">' +
-      '<div><h2>1. Nieuwe inschrijving toevoegen (' + esc(jaar) + ')</h2><div class="sub">Voeg een hond en geleider toe voor de komende waterwerkdag</div></div>' +
+      '<div><h2>2. Nieuwe inschrijving toevoegen (' + esc(jaar) + ')</h2><div class="sub">Voeg een hond en geleider toe voor de komende waterwerkdag</div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
         '<button type="button" class="sm" onclick="laadVoorbeeldData()">+ Vul 5 testdeelnemers</button>' +
-        '<button type="button" class="sm" onclick="gaNaarSectie(3)">Bekijk lijst (' + deelnemers.length + ') →</button>' +
+        '<button type="button" class="sm" onclick="gaNaarSectie(4)">Bekijk lijst (' + deelnemers.length + ') →</button>' +
       '</div>' +
     '</div>' +
     '<form onsubmit="voegInschrijvingToe(event)">' +
@@ -483,9 +683,9 @@ function renderSectie1() {
 }
 
 // ============================================================
-// SECTIE 2: BAANINDELING & 3 BIJLAGEN
+// SECTIE 3: BAANINDELING & 3 BIJLAGEN
 // ============================================================
-function renderSectie2() {
+function renderSectie4() {
   var baanKaarten = ['1','2','3','4','5'].map(function(b) {
     var gekoppeld = baanIndeling.banen[b] || [];
     var aantHonden = deelnemers.filter(function(h) { return String(h.baan) === b; }).length;
@@ -504,7 +704,7 @@ function renderSectie2() {
 
   return '<div class="box">' +
     '<div class="box-head">' +
-      '<div><h2>2. Baanindeling per klasse (' + esc(jaar) + ')</h2><div class="sub">Koppel klassen aan Baan 1–5 en pas de banen van ingeschreven honden aan</div></div>' +
+      '<div><h2>3. Baanindeling per klasse (' + esc(jaar) + ')</h2><div class="sub">Koppel klassen aan Baan 1–5 en pas de banen van ingeschreven honden aan</div></div>' +
       '<button type="button" class="pri sm" onclick="herverdeelBanen()">Herverdeel deelnemers op klasse</button>' +
     '</div>' +
     '<div class="grid5">' + baanKaarten + '</div>' +
@@ -524,9 +724,9 @@ function renderSectie2() {
 }
 
 // ============================================================
-// SECTIE 3: DEELNEMERSLIJST & BANEN
+// SECTIE 4: DEELNEMERSLIJST & BANEN
 // ============================================================
-function renderSectie3() {
+function renderSectie4() {
   var lijst = deelnemers
     .filter(function(h) {
       if (nav.baanFilter !== 'ALLE' && String(h.baan) !== nav.baanFilter) return false;
@@ -554,8 +754,8 @@ function renderSectie3() {
 
   return '<div class="box">' +
     '<div class="box-head">' +
-      '<div><h2>3. Deelnemerslijst & Banen (' + esc(jaar) + ')</h2><div class="sub">Pas klasse, baan of startnummer aan vóór de wedstrijd start</div></div>' +
-      '<button type="button" class="sm" onclick="gaNaarSectie(1)">+ Nieuwe inschrijving</button>' +
+      '<div><h2>4. Deelnemerslijst & Banen (' + esc(jaar) + ')</h2><div class="sub">Pas klasse, baan of startnummer aan vóór de wedstrijd start</div></div>' +
+      '<button type="button" class="sm" onclick="gaNaarSectie(2)">+ Nieuwe inschrijving</button>' +
     '</div>' +
     '<div class="stats-pill">' +
       '<span>Totaal: <b>' + deelnemers.length + '</b></span>' +
@@ -584,6 +784,7 @@ function render() {
   if (nav.sectie === 1) html = renderSectie1();
   else if (nav.sectie === 2) html = renderSectie2();
   else if (nav.sectie === 3) html = renderSectie3();
+  else if (nav.sectie === 4) html = renderSectie4();
   document.getElementById('appContent').innerHTML = html;
 }
 
