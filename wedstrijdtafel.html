@@ -76,6 +76,10 @@ var UITSLAG_2026_REGISTRATIES = {"R2026_2601_A": {"id": "R2026_2601_A", "baan": 
 
 
 async function laadUitslag2026(pushenNaarFirebase) {
+  if (isArchiefJaar()) {
+    alert('De uitslag van 2026 is al vastgelegd en vergrendeld als alleen-lezen archief.');
+    return;
+  }
   if (!confirm('Huidige/testuitslagen voor 2026 vervangen door de uitslag van de Watertrials 2026 (74 honden uit alle klassen)?')) return;
   actiefJaar = '2026';
   deelnemersLijst = UITSLAG_2026_DEELNEMERS.map(function(d) { return Object.assign({}, d); });
@@ -116,6 +120,16 @@ function laadLokaleData() {
   } catch (e) {}
 }
 laadLokaleData();
+
+function isArchiefJaar() {
+  return String(actiefJaar) === '2026';
+}
+function blokkeerArchiefActie(label) {
+  if (!isArchiefJaar()) return false;
+  alert('2026 is vergrendeld als alleen-lezen archief. ' + (label || 'Wijzigingen zijn niet toegestaan.'));
+  return true;
+}
+
 
 function esc(str) {
   return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -186,20 +200,60 @@ function initFirebase() {
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.database();
+      function syncJaarData(jaar) {
+        var j = String(jaar);
+        try {
+          deelnemersLijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + j)) || [];
+          registraties = JSON.parse(localStorage.getItem('nnfc_registraties_' + j)) || {};
+          meldingen = JSON.parse(localStorage.getItem('nnfc_meldingen_' + j)) || {};
+          logboek = JSON.parse(localStorage.getItem('nnfc_logboek_' + j)) || {};
+          banenStatus = JSON.parse(localStorage.getItem('nnfc_banen_' + j)) || {};
+          kcmSelecties = JSON.parse(localStorage.getItem('nnfc_kcm_' + j)) || {};
+        } catch (e) {
+          deelnemersLijst = [];
+          registraties = {};
+          meldingen = {};
+          logboek = {};
+          banenStatus = {};
+          kcmSelecties = {};
+        }
+      }
+
       db.ref('wedstrijd/actief_jaar').on('value', function(s) {
         if (s.val()) {
-          actiefJaar = String(s.val());
-          laadLokaleData();
-          safeDraw();
+          var nieuwJaar = String(s.val());
+          if (nieuwJaar !== actiefJaar) {
+            actiefJaar = nieuwJaar;
+            syncJaarData(actiefJaar);
+            safeDraw();
+          }
         }
       });
-      db.ref('wedstrijd/registraties').on('value', function(s) { registraties = s.val() || {}; detectConflicts(); safeDraw(); });
-      db.ref('wedstrijd/meldingen').on('value', function(s) { meldingen = s.val() || {}; safeDraw(); });
-      db.ref('wedstrijd/logboek').on('value', function(s) { logboek = s.val() || {}; if (v === 'hist') draw(); });
-      db.ref('wedstrijd/banen_status').on('value', function(s) { banenStatus = s.val() || {}; safeDraw(); });
+      db.ref('wedstrijd/registraties').on('value', function(s) {
+        registraties = s.val() || {};
+        try { localStorage.setItem('nnfc_registraties_' + actiefJaar, JSON.stringify(registraties)); } catch (e) {}
+        if (!isArchiefJaar()) detectConflicts();
+        safeDraw();
+      });
+      db.ref('wedstrijd/meldingen').on('value', function(s) {
+        meldingen = s.val() || {};
+        try { localStorage.setItem('nnfc_meldingen_' + actiefJaar, JSON.stringify(meldingen)); } catch (e) {}
+        safeDraw();
+      });
+      db.ref('wedstrijd/logboek').on('value', function(s) {
+        logboek = s.val() || {};
+        try { localStorage.setItem('nnfc_logboek_' + actiefJaar, JSON.stringify(logboek)); } catch (e) {}
+        if (v === 'hist') draw();
+      });
+      db.ref('wedstrijd/banen_status').on('value', function(s) {
+        banenStatus = s.val() || {};
+        try { localStorage.setItem('nnfc_banen_' + actiefJaar, JSON.stringify(banenStatus)); } catch (e) {}
+        safeDraw();
+      });
       db.ref('wedstrijd/kcm_selecties').on('value', function(s) {
         var val = s.val() || {};
-        kcmSelecties = Object.assign({}, kcmSelecties, val);
+        kcmSelecties = Object.assign({}, val);
+        try { localStorage.setItem('nnfc_kcm_' + actiefJaar, JSON.stringify(kcmSelecties)); } catch (e) {}
         safeDraw();
       });
       db.ref('wedstrijd/beheer_deelnemers').on('value', function(s) {
@@ -233,6 +287,7 @@ function go(x) {
 function formatSec(ms, bm) { var s = (ms / 1000).toFixed(2).replace('.', ','); return bm ? s + '*' : s; }
 
 async function setKcm(nr, val) {
+  if (blokkeerArchiefActie('KCM-uitslagen van 2026 kunnen niet worden aangepast.')) return;
   var key = String(nr);
   if (val === 'GEEN') {
     delete kcmSelecties[key];
@@ -299,6 +354,35 @@ function getGroepen() {
 
 function openMeldingen() { return Object.values(meldingen).filter(function(m) { return m && m.status === 'OPEN'; }); }
 
+function getBehaaldeBrevetten() {
+  var lijst = [];
+  var gezien = {};
+  Object.values(registraties).forEach(function(r) {
+    if (!r || r.status === 'AFGEWEZEN') return;
+    var isBrevetOk = (r.type === 'BREVET_OK') || (String(r.oefening || '').toUpperCase() === 'BREVET' && r.type !== 'WEIGERING');
+    if (isBrevetOk) {
+      var meta = deelnemersLijst.find(function(d) { return String(d.startnummer) === String(r.startnummer); }) || {};
+      var brevetNaam = r.brevetNaam || r.brevet || meta.opvolgendBrevet || meta.heeftNuBrevet || 'Brevet behaald';
+      var key = String(r.startnummer) + '_' + brevetNaam;
+      if (!gezien[key]) {
+        gezien[key] = true;
+        lijst.push({
+          nr: r.startnummer,
+          naam: r.roepnaam || meta.roepnaam || '-',
+          stamboom: meta.stamboom || '-',
+          klasse: r.klasse || meta.klasse || '-',
+          geslacht: r.geslacht || meta.geslacht || '-',
+          baan: r.baan || meta.baan || '-',
+          brevet: brevetNaam,
+          bron: 'BREVET_OK'
+        });
+      }
+    }
+  });
+  return lijst;
+}
+
+
 function detectConflicts() {
   if (!db) return;
   var seen = {};
@@ -323,6 +407,7 @@ function detectConflicts() {
 }
 
 async function beslis(id, akkoord) {
+  if (blokkeerArchiefActie('Meldingen van 2026 zijn alleen-lezen.')) return;
   var m = meldingen[id]; if (!m) return;
   if (db) {
     if (akkoord) {
@@ -346,6 +431,7 @@ async function beslis(id, akkoord) {
 
 
 async function verwijderRegistratie(regId) {
+  if (blokkeerArchiefActie('Tijden van 2026 kunnen niet worden verwijderd.')) return;
   if (!regId) return;
   var r = registraties[regId];
   var label = r ? ('#' + r.startnummer + ' ' + r.roepnaam + ' (Oef. ' + r.oefening + ': ' + r.tijdTekst + ')') : regId;
@@ -366,6 +452,7 @@ async function verwijderRegistratie(regId) {
 }
 
 async function verwijderHondTijden(startnr, baanNr) {
+  if (blokkeerArchiefActie('Tijden van 2026 kunnen niet worden gewist.')) return;
   var keys = Object.keys(registraties).filter(function(k) {
     var r = registraties[k];
     return r && String(r.startnummer) === String(startnr) && (!baanNr || String(r.baan) === String(baanNr));
@@ -401,10 +488,11 @@ function verwijderGekozenNoodTijd() {
   else alert('Geen bestaande tijd gevonden voor deze hond en oefening.');
 }
 
-async function leesBericht(id) { if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' }); else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); } }
+async function leesBericht(id) { if (blokkeerArchiefActie('Berichten van 2026 zijn alleen-lezen.')) return; if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' }); else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); } }
 
 
 async function verwijderDeelnemer(nr) {
+  if (blokkeerArchiefActie('Deelnemers van 2026 kunnen niet worden verwijderd.')) return;
   var d = deelnemersLijst.find(function(x) { return String(x.startnummer) === String(nr); });
   if (!d) return;
   if (!confirm('Deelnemer #' + d.startnummer + ' ' + d.roepnaam + ' verwijderen uit de aanmelding en deelnemerslijst?')) return;
@@ -435,6 +523,7 @@ async function verwijderDeelnemer(nr) {
 }
 
 async function toggleAanwezig(nr) {
+  if (blokkeerArchiefActie('Aanwezigheid van 2026 kan niet worden gewijzigd.')) return;
   var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; }); if (!d) return;
   d.aanwezig = !d.aanwezig;
   localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst));
@@ -453,15 +542,39 @@ async function stuurBaan(baanNr) {
   await db.ref('wedstrijd/baan_lijsten/baan_' + baanNr).set(lijst);
 }
 
-async function syncAlleBanen() { if (!db) { alert('Firebase is nog niet gekoppeld in config.js.'); return; } for (var b = 1; b <= 5; b++) await stuurBaan(b); alert('Alle aanwezige honden zijn doorgestuurd naar Baan 1 t/m 5.'); }
+async function syncAlleBanen() { if (blokkeerArchiefActie('Banen van 2026 kunnen niet worden gesynchroniseerd.')) return; if (!db) { alert('Firebase is nog niet gekoppeld in config.js.'); return; } for (var b = 1; b <= 5; b++) await stuurBaan(b); alert('Alle aanwezige honden zijn doorgestuurd naar Baan 1 t/m 5.'); }
 
 async function slaExtraOp() {
+  if (blokkeerArchiefActie('Aan het archiefjaar 2026 kunnen geen extra deelnemers worden toegevoegd.')) return;
   var roep = document.getElementById('exRoep').value.trim(), stam = document.getElementById('exStam').value.trim();
   if (!roep && !stam) { alert('Vul minimaal een roepnaam of stamboomnaam in.'); return; }
   var nr = parseInt(document.getElementById('exNr').value, 10) || (deelnemersLijst.length + 101), baan = document.getElementById('exBaan').value;
   if (deelnemersLijst.some(function(x) { return x.startnummer == nr; })) { alert('Startnummer ' + nr + ' bestaat al.'); return; }
   var kcmVal = document.getElementById('exKcm').value || 'GEEN';
-  var nieuw = { id: 'EXTRA_' + Date.now(), startnummer: nr, baan: baan, roepnaam: roep || stam, stamboom: stam || roep, eigenaar: document.getElementById('exEig').value.trim() || 'Daginschrijving', geslacht: document.getElementById('exGesl').value, klasse: document.getElementById('exKlas').value, opvolgendBrevet: document.getElementById('exBrev').value, kcm: kcmVal, betaald: document.getElementById('exBet').checked, buitenMededinging: document.getElementById('exBm').checked, aanwezig: true };
+  var nieuw = {
+    id: 'EXTRA_' + Date.now(),
+    startnummer: nr,
+    baan: baan,
+    roepnaam: roep || stam,
+    stamboom: stam || roep,
+    eigenaar: document.getElementById('exEig').value.trim() || 'Daginschrijving',
+    lidnr: (document.getElementById('exLidnr') ? document.getElementById('exLidnr').value.trim() : '') || 'ONBEKEND',
+    email: document.getElementById('exEmail') ? document.getElementById('exEmail').value.trim() : '',
+    telefoon: document.getElementById('exTel') ? document.getElementById('exTel').value.trim() : '',
+    mobiel: document.getElementById('exMob') ? document.getElementById('exMob').value.trim() : '',
+    geboortedatum: document.getElementById('exGeb') ? document.getElementById('exGeb').value.trim() : '',
+    kleur: document.getElementById('exKleur') ? document.getElementById('exKleur').value.trim() : '',
+    stamboomnummer: document.getElementById('exStbnr') ? document.getElementById('exStbnr').value.trim() : '',
+    district: document.getElementById('exDist') ? document.getElementById('exDist').value.trim() : '',
+    heeftNuBrevet: document.getElementById('exNuBrev') ? document.getElementById('exNuBrev').value : 'Geen',
+    geslacht: document.getElementById('exGesl').value,
+    klasse: document.getElementById('exKlas').value,
+    opvolgendBrevet: document.getElementById('exBrev').value,
+    kcm: kcmVal,
+    betaald: document.getElementById('exBet').checked,
+    buitenMededinging: document.getElementById('exBm').checked,
+    aanwezig: true
+  };
   deelnemersLijst.push(nieuw);
   if (kcmVal !== 'GEEN') kcmSelecties[String(nr)] = kcmVal;
   localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst));
@@ -475,6 +588,7 @@ async function slaExtraOp() {
 }
 
 async function slaNoodOp() {
+  if (blokkeerArchiefActie('Aan het archiefjaar 2026 kunnen geen handmatige tijden worden toegevoegd.')) return;
   var nr = document.getElementById('ndHond').value, d = deelnemersLijst.find(function(x) { return x.startnummer == nr; });
   if (!d) { alert('Kies eerst een deelnemer.'); return; }
   var oef = document.getElementById('ndOef').value, type = document.getElementById('ndType').value, txt = type === 'WEIGERING' ? 'WEIGERING' : 'UITGEVOERD', ms = null;
@@ -523,6 +637,9 @@ function draw() {
     return '<button class="' + (v === k ? 'on ' : '') + (extraClass || '') + '" onclick="go(\'' + k + '\')">' + t + '</button>';
   };
 
+  if (isArchiefJaar()) {
+    h += '<div class="box n" style="border-color:var(--ac);margin-bottom:12px"><b>Archiefjaar 2026 (Alleen-lezen):</b> Alle uitslagen en deelnemersgegevens van 2026 zijn vergrendeld tegen wijzigen.</div>';
+  }
   h += '<div class="nav">' +
     nv('home', 'Overzicht') +
     nv('aanm', 'Aanmelding (' + deelnemersLijst.filter(function(d) { return d.aanwezig; }).length + '/' + deelnemersLijst.length + ')') +
@@ -530,6 +647,7 @@ function draw() {
     nv('nood', 'Handmatige tijd') +
     nv('meld', 'Meldingen' + (openM.length ? ' (' + openM.length + ')' : '')) +
     nv('beker', 'Bekers & KCM') +
+    nv('brevet', 'Brevetten (' + getBehaaldeBrevetten().length + ')') +
     nv('klok', 'Klokkersbeeld') +
     nv('hist', 'Wijzigingen') +
     '</div>';
@@ -570,7 +688,7 @@ function draw() {
     h += '</div>';
 
     var groepen = getGroepen();
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px"><h2 style="margin:0">Voorlopige stand (Som A+B+C in seconden)</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="laadUitslag2026(true)">Laad uitslag 2026</button><button onclick="exporteerUitslagCsv()">Exporteer Uitslag (CSV)</button></div></div><div class="g" style="margin-top:8px">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px"><h2 style="margin:0">Voorlopige stand (Som A+B+C in seconden)</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pri" onclick="laadUitslag2026(true)">Laad uitslag 2026</button><button onclick="exporteerUitslagCsv()">Exporteer Uitslag (CSV)</button></div></div><div class="g" style="margin-top:8px">';
     groepen.forEach(function(g, idx) {
       var top3 = g.lijst.slice(0, 3);
       h += '<button class="c" onclick="go(\'s' + idx + '\')"><b>' + esc(g.titel) + '</b>';
@@ -647,6 +765,15 @@ function draw() {
       '<div class="row"><div><label>Klasse</label><select id="exKlas"><option value="Open">Open (50m)</option><option value="Jeugd">Jeugd (30m)</option><option value="Veteranen">Veteranen (30m)</option><option value="Stamboomloos">Stamboomloos (30m)</option><option value="Specials">Specials (30m)</option></select></div>' +
       '<div><label>Opvolgend brevet</label><select id="exBrev"><option value="Brevet A">Brevet A</option><option value="Jeugdbrevet">Jeugdbrevet</option><option value="Brevet B">Brevet B</option><option value="Brevet C">Brevet C</option><option value="Brevet D">Brevet D</option><option value="Brevet E">Brevet E</option><option value="Seaman Brevet">Seaman Brevet</option></select></div></div>' +
       '<label>KCM-uitslag (indien van toepassing)</label><select id="exKcm">' + kcmOptsEx + '</select>' +
+      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" id="exBet" checked style="width:auto;margin:0;min-height:auto"> Betaald aan tafel (+ €2,50)</label>' +
+      '<div class="row"><div><label>Lidnummer (optioneel)</label><input type="text" id="exLidnr" placeholder="bijv. 10002381"></div>' +
+      '<div><label>Stamboomnummer NHSB / overig (optioneel)</label><input type="text" id="exStbnr" placeholder="bijv. NHSB / VDH/VND"></div></div>' +
+      '<div class="row"><div><label>Geboortedatum dd/mm/jjjj (optioneel)</label><input type="text" id="exGeb" placeholder="bijv. 09/05/2025"></div>' +
+      '<div><label>Kleur (optioneel)</label><input type="text" id="exKleur" placeholder="bijv. Zwart"></div></div>' +
+      '<div class="row"><div><label>Traint in Regio / District (optioneel)</label><input type="text" id="exDist" placeholder="bijv. Baywatch - Limburg"></div>' +
+      '<div><label>Heeft nu Brevet (optioneel)</label><select id="exNuBrev"><option value="Geen">Geen</option><option value="Brevet A">Brevet A</option><option value="Jeugdbrevet">Jeugdbrevet</option><option value="Brevet B">Brevet B</option><option value="Brevet C">Brevet C</option><option value="Brevet D">Brevet D</option><option value="Brevet E">Brevet E</option></select></div></div>' +
+      '<div class="row"><div><label>E-mail (optioneel)</label><input type="email" id="exEmail" placeholder="bijv. naam@voorbeeld.nl"></div>' +
+      '<div><label>Telefoon / Mobiel (optioneel)</label><input type="text" id="exMob" placeholder="bijv. 06-12345678"></div></div>' +
       '<label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" id="exBet" checked style="width:auto;margin:0;min-height:auto"> Betaald aan tafel (+ €2,50)</label>' +
       '<label style="display:flex;align-items:center;gap:8px;margin:6px 0 14px"><input type="checkbox" id="exBm" style="width:auto;margin:0;min-height:auto"> Buiten mededinging (*)</label>' +
       '<button class="pri" style="width:100%" onclick="slaExtraOp()">Opslaan en direct naar klokker sturen</button></div>';
@@ -753,6 +880,20 @@ function draw() {
       }).join('') + '</div>';
     }
     h += '</div>';
+
+  } else if (v === 'brevet') {
+    var behaald = getBehaaldeBrevetten();
+    h += back() + '<h2 style="margin-top:4px">Behaalde brevetten (' + esc(actiefJaar) + ')</h2>' +
+      '<div class="m" style="margin-bottom:10px">Overzicht van geregistreerde brevetresultaten (BREVET_OK).</div>';
+    if (behaald.length) {
+      h += '<div class="list-box">' + behaald.map(function(b) {
+        return '<div class="t"><b>#' + esc(b.nr) + '</b><div>' + esc(b.naam) + ' <span class="chip-ok">' + esc(b.brevet) + '</span>' +
+          '<div class="m">' + esc(b.stamboom) + ' • ' + esc(b.klasse) + ' • Baan ' + esc(b.baan) + '</div></div>' +
+          '<span class="m">Behaald</span></div>';
+      }).join('') + '</div>';
+    } else {
+      h += '<div class="box n"><div class="m">Nog geen behaalde brevetten geregistreerd voor ' + esc(actiefJaar) + '.</div></div>';
+    }
 
   } else if (v === 'hist') {
     var logs = Object.values(logboek).filter(Boolean).sort(function(a, b) { return b.timestamp.localeCompare(a.timestamp); });
