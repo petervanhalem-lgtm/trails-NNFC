@@ -312,13 +312,13 @@ async function verwijderRegistratie(regId) {
   if (!regId) return;
   var r = registraties[regId];
   var label = r ? ('#' + r.startnummer + ' ' + r.roepnaam + ' (Oef. ' + r.oefening + ': ' + r.tijdTekst + ')') : regId;
-  if (!confirm('Tijd verwijderen voor ' + label + '? Daarna kun je deze handmatig opnieuw invoeren.')) return;
+  if (!confirm('Tijd verwijderen voor ' + label + '? Daarna kun je deze handmatig invoeren.')) return;
   if (db) {
     await db.ref('wedstrijd/registraties/' + regId).remove();
     if (r) {
       await db.ref('wedstrijd/logboek/DEL_' + Date.now()).set({
         baan: r.baan,
-        actie: 'Tijd verwijderd voor #' + r.startnummer + ' ' + r.roepnaam + ' (Oef. ' + r.oefening + ')',
+        actie: 'Tafel verwijderde tijd voor #' + r.startnummer + ' ' + r.roepnaam + ' (Oef. ' + r.oefening + ')',
         timestamp: new Date().toISOString()
       });
     }
@@ -343,12 +343,25 @@ async function verwijderHondTijden(startnr, baanNr) {
   if (db) {
     await db.ref('wedstrijd/logboek/DELALL_' + Date.now()).set({
       baan: baanNr || '-',
-      actie: 'Alle oefeningen verwijderd voor #' + startnr + ' voor handmatige invoer',
+      actie: 'Tafel verwijderde alle oefeningen voor #' + startnr + ' voor handmatige invoer',
       timestamp: new Date().toISOString()
     });
   } else {
     draw();
   }
+}
+
+function verwijderGekozenNoodTijd() {
+  var hondEl = document.getElementById('ndHond');
+  var oefEl = document.getElementById('ndOef');
+  if (!hondEl || !oefEl) return;
+  var nrSel = hondEl.value;
+  var oefSel = oefEl.value;
+  var hit = Object.entries(registraties).find(function(e) {
+    return e[1] && String(e[1].startnummer) === String(nrSel) && e[1].oefening === oefSel && e[1].status !== 'AFGEWEZEN';
+  });
+  if (hit) verwijderRegistratie(hit[0]);
+  else alert('Geen bestaande tijd gevonden voor deze hond en oefening.');
 }
 
 async function leesBericht(id) { if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' }); else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); } }
@@ -579,7 +592,7 @@ function draw() {
       '<label>Oefening</label><select id="ndOef" onchange="var t=document.getElementById(\'ndType\');if(this.value!==\'BREVET\'&&t.value===\'BREVET_OK\')t.value=\'TIJD\';document.getElementById(\'ndVak\').style.display=t.value===\'TIJD\'?\'block\':\'none\'"><option value="A">Oefening A (Object)</option><option value="B">Oefening B (Pop)</option><option value="C">Oefening C (Springen)</option><option value="BREVET">Brevetoefening E t/m J</option></select>' +
       '<label>Resultaat</label><select id="ndType" onchange="if(this.value===\'BREVET_OK\'&&document.getElementById(\'ndOef\').value!==\'BREVET\'){alert(\'Brevet uitgevoerd geldt alleen voor Brevetoefening E t/m J.\');this.value=\'TIJD\';}document.getElementById(\'ndVak\').style.display=this.value===\'TIJD\'?\'block\':\'none\'"><option value="TIJD">Geklokte tijd</option><option value="WEIGERING">Weigering (600,00 sec)</option><option value="BREVET_OK">Brevet uitgevoerd (alleen E–J)</option></select>' +
       '<div id="ndVak"><label>Tijd in cijfers (bijv. 945 = 9,45 sec)</label><input type="tel" id="ndCijf" placeholder="bijv. 1425"></div>' +
-      '<button class="pri" style="width:100%" onclick="slaNoodOp()">Resultaat direct toevoegen</button><button style="width:100%;margin-top:8px;color:var(--bad);border-color:var(--bad)" onclick="var nrSel=document.getElementById('ndHond').value, oefSel=document.getElementById('ndOef').value; var hit=Object.entries(registraties).find(function(e){return e[1]&&String(e[1].startnummer)===String(nrSel)&&e[1].oefening===oefSel&&e[1].status!=='AFGEWEZEN';}); if(hit) verwijderRegistratie(hit[0]); else alert('Geen bestaande tijd gevonden voor deze hond en oefening.');">Bestaande tijd voor gekozen hond & oefening verwijderen</button></div>';
+      '<button class="pri" style="width:100%" onclick="slaNoodOp()">Resultaat direct toevoegen</button><button style="width:100%;margin-top:8px;color:var(--bad);border-color:var(--bad)" onclick="verwijderGekozenNoodTijd()">Bestaande tijd voor gekozen hond & oefening verwijderen</button></div>';
 
   } else if (v === 'meld') {
     h += back();
