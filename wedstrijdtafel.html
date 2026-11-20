@@ -352,7 +352,9 @@ function getGroepen() {
   return gr;
 }
 
-function openMeldingen()
+function openMeldingen() {
+  return Object.values(meldingen).filter(function(m) { return m && m.status === 'OPEN'; });
+}
 
 function getDagVoortgang() {
   var aanwezige = deelnemersLijst.filter(function(d) { return Boolean(d && d.aanwezig); });
@@ -408,7 +410,6 @@ function getDagVoortgang() {
     laatsteRegs: laatsteRegs.slice(0, 6)
   };
 }
- { return Object.values(meldingen).filter(function(m) { return m && m.status === 'OPEN'; }); }
 
 function getBehaaldeBrevetten() {
   var lijst = [];
