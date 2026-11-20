@@ -640,7 +640,7 @@ function renderSectie1() {
 // ============================================================
 // SECTIE 2: NIEUWE INSCHRIJVING TOEVOEGEN
 // ============================================================
-function renderSectie1() {
+function renderSectie2() {
   var volgendNr = volgendeStartnummer();
   return '<div class="box">' +
     '<div class="box-head">' +
@@ -685,7 +685,7 @@ function renderSectie1() {
 // ============================================================
 // SECTIE 3: BAANINDELING & 3 BIJLAGEN
 // ============================================================
-function renderSectie4() {
+function renderSectie3() {
   var baanKaarten = ['1','2','3','4','5'].map(function(b) {
     var gekoppeld = baanIndeling.banen[b] || [];
     var aantHonden = deelnemers.filter(function(h) { return String(h.baan) === b; }).length;
