@@ -307,6 +307,50 @@ async function beslis(id, akkoord) {
   }
 }
 
+
+async function verwijderRegistratie(regId) {
+  if (!regId) return;
+  var r = registraties[regId];
+  var label = r ? ('#' + r.startnummer + ' ' + r.roepnaam + ' (Oef. ' + r.oefening + ': ' + r.tijdTekst + ')') : regId;
+  if (!confirm('Tijd verwijderen voor ' + label + '? Daarna kun je deze handmatig opnieuw invoeren.')) return;
+  if (db) {
+    await db.ref('wedstrijd/registraties/' + regId).remove();
+    if (r) {
+      await db.ref('wedstrijd/logboek/DEL_' + Date.now()).set({
+        baan: r.baan,
+        actie: 'Tijd verwijderd voor #' + r.startnummer + ' ' + r.roepnaam + ' (Oef. ' + r.oefening + ')',
+        timestamp: new Date().toISOString()
+      });
+    }
+  } else {
+    delete registraties[regId];
+    draw();
+  }
+}
+
+async function verwijderHondTijden(startnr, baanNr) {
+  var keys = Object.keys(registraties).filter(function(k) {
+    var r = registraties[k];
+    return r && String(r.startnummer) === String(startnr) && (!baanNr || String(r.baan) === String(baanNr));
+  });
+  if (!keys.length) { alert('Geen geregistreerde oefeningen gevonden voor #' + startnr + '.'); return; }
+  if (!confirm('Alle ' + keys.length + ' geregistreerde oefening(en) van #' + startnr + ' verwijderen zodat ze handmatig ingevoerd kunnen worden?')) return;
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (db) await db.ref('wedstrijd/registraties/' + k).remove();
+    else delete registraties[k];
+  }
+  if (db) {
+    await db.ref('wedstrijd/logboek/DELALL_' + Date.now()).set({
+      baan: baanNr || '-',
+      actie: 'Alle oefeningen verwijderd voor #' + startnr + ' voor handmatige invoer',
+      timestamp: new Date().toISOString()
+    });
+  } else {
+    draw();
+  }
+}
+
 async function leesBericht(id) { if (db) await db.ref('wedstrijd/meldingen/' + id).update({ status: 'GELEZEN' }); else if (meldingen[id]) { meldingen[id].status = 'GELEZEN'; draw(); } }
 
 async function toggleAanwezig(nr) {
@@ -464,7 +508,7 @@ function draw() {
 
   } else if (v.charAt(0) === 'l') {
     var bNr = +v.slice(1);
-    var recs = Object.values(registraties).filter(function(r) { return r && r.baan == bNr && r.status !== 'AFGEWEZEN'; });
+    var recs = Object.entries(registraties).map(function(entry) { return Object.assign({ id: entry[0] }, entry[1]); }).filter(function(r) { return r && r.baan == bNr && r.status !== 'AFGEWEZEN'; });
     h += back() + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
       '<h2 style="margin:0">Baan ' + bNr + '</h2>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
@@ -472,8 +516,17 @@ function draw() {
         '<a href="klokker.html?baan=' + bNr + '" target="_blank" class="btn-link">Open klokker.html ↗</a>' +
       '</div></div>';
     if (recs.length) {
+      var uniekeHonden = Array.from(new Set(recs.map(function(r) { return String(r.startnummer); })));
+      h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+        uniekeHonden.map(function(nr) {
+          var firstR = recs.find(function(x) { return String(x.startnummer) === nr; });
+          return '<button onclick="verwijderHondTijden(\'' + esc(nr) + '\', \'' + bNr + '\')">Wis alle oefeningen #' + esc(nr) + (firstR ? ' (' + esc(firstR.roepnaam) + ')' : '') + '</button>';
+        }).join('') +
+      '</div>';
       h += '<div class="list-box">' + recs.map(function(r) {
-        return '<div class="t"><b>' + esc(r.startnummer) + '</b><div>' + esc(r.roepnaam) + ' <span class="m">(Oef. ' + esc(r.oefening) + ')</span></div><b>' + esc(r.tijdTekst) + '</b></div>';
+        return '<div class="t"><b>' + esc(r.startnummer) + '</b><div>' + esc(r.roepnaam) + ' <span class="m">(Oef. ' + esc(r.oefening) + ')</span></div>' +
+          '<div style="display:flex;align-items:center;gap:10px"><b>' + esc(r.tijdTekst) + '</b>' +
+          '<button style="min-height:34px;padding:4px 10px;font-size:14px;color:var(--bad);border-color:var(--bad)" onclick="verwijderRegistratie(\'' + esc(r.id || '') + '\')">Verwijder</button></div></div>';
       }).join('') + '</div>';
     } else {
       h += '<div class="m">Nog geen geregistreerde tijden op Baan ' + bNr + '.</div>';
@@ -526,7 +579,7 @@ function draw() {
       '<label>Oefening</label><select id="ndOef" onchange="var t=document.getElementById(\'ndType\');if(this.value!==\'BREVET\'&&t.value===\'BREVET_OK\')t.value=\'TIJD\';document.getElementById(\'ndVak\').style.display=t.value===\'TIJD\'?\'block\':\'none\'"><option value="A">Oefening A (Object)</option><option value="B">Oefening B (Pop)</option><option value="C">Oefening C (Springen)</option><option value="BREVET">Brevetoefening E t/m J</option></select>' +
       '<label>Resultaat</label><select id="ndType" onchange="if(this.value===\'BREVET_OK\'&&document.getElementById(\'ndOef\').value!==\'BREVET\'){alert(\'Brevet uitgevoerd geldt alleen voor Brevetoefening E t/m J.\');this.value=\'TIJD\';}document.getElementById(\'ndVak\').style.display=this.value===\'TIJD\'?\'block\':\'none\'"><option value="TIJD">Geklokte tijd</option><option value="WEIGERING">Weigering (600,00 sec)</option><option value="BREVET_OK">Brevet uitgevoerd (alleen E–J)</option></select>' +
       '<div id="ndVak"><label>Tijd in cijfers (bijv. 945 = 9,45 sec)</label><input type="tel" id="ndCijf" placeholder="bijv. 1425"></div>' +
-      '<button class="pri" style="width:100%" onclick="slaNoodOp()">Resultaat direct toevoegen</button></div>';
+      '<button class="pri" style="width:100%" onclick="slaNoodOp()">Resultaat direct toevoegen</button><button style="width:100%;margin-top:8px;color:var(--bad);border-color:var(--bad)" onclick="var nrSel=document.getElementById('ndHond').value, oefSel=document.getElementById('ndOef').value; var hit=Object.entries(registraties).find(function(e){return e[1]&&String(e[1].startnummer)===String(nrSel)&&e[1].oefening===oefSel&&e[1].status!=='AFGEWEZEN';}); if(hit) verwijderRegistratie(hit[0]); else alert('Geen bestaande tijd gevonden voor deze hond en oefening.');">Bestaande tijd voor gekozen hond & oefening verwijderen</button></div>';
 
   } else if (v === 'meld') {
     h += back();
