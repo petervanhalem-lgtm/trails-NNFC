@@ -46,6 +46,9 @@ label{display:block;font-weight:600;font-size:16px;margin-bottom:4px;color:var(-
 .chk{width:28px;height:28px;accent-color:var(--ok);cursor:pointer;margin:0}
 .chk-wrap{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:15px;font-weight:700;padding:6px 10px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);color:var(--mut);margin:0}
 .chk-wrap.on{border-color:var(--ok);color:var(--ok)}
+.search-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.search-bar input{margin-bottom:0;border-color:var(--ac);font-size:19px}
+.search-bar button{min-height:46px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -56,7 +59,7 @@ var params = new URLSearchParams(window.location.search);
 var IS_ADMIN = params.get('admin') === '1';
 var LOGO = 'nnfc-logo.png', db = null;
 var KCM_PUNTEN = {"GEEN":0,"BOB":75,"CAC":70,"Res. CAC":65,"U1":55,"U2":50,"U3":45,"U4":40,"U":35,"ZG":25,"G":15,"M":10,"S":5};
-var WEIGERING_MS = 600000, actiefJaar = String(new Date().getFullYear()), registraties = {}, meldingen = {}, logboek = {}, banenStatus = {}, deelnemersLijst = [], kcmSelecties = {}, v = 'home';
+var WEIGERING_MS = 600000, actiefJaar = String(new Date().getFullYear()), registraties = {}, meldingen = {}, logboek = {}, banenStatus = {}, deelnemersLijst = [], kcmSelecties = {}, v = 'home', zoekAanm = '';
 
 try {
   deelnemersLijst = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + actiefJaar)) || [];
@@ -68,10 +71,57 @@ function esc(str) {
 }
 function safeDraw() {
   if (v === 'extra' || v === 'nood') return;
+  if (v === 'aanm' && document.activeElement && document.activeElement.id === 'zoekAanmInp') return;
   draw();
 }
 function back() {
   return '<button onclick="go(\'home\')" style="margin-bottom:12px">← Terug naar overzicht</button>';
+}
+
+function matchZoek(d, q) {
+  if (!q) return true;
+  var woorden = q.toLowerCase().trim().split(/\s+/);
+  var tekst = [
+    d.startnummer, '#' + d.startnummer,
+    d.roepnaam, d.stamboom, d.eigenaar, d.lidnr,
+    d.klasse, d.geslacht, d.opvolgendBrevet,
+    'baan ' + d.baan, 'b' + d.baan,
+    d.betaald ? 'betaald' : 'nog betalen',
+    d.aanwezig ? 'aanwezig' : 'niet aanwezig'
+  ].join(' ').toLowerCase();
+  return woorden.every(function(w) { return tekst.indexOf(w) !== -1; });
+}
+
+function updateZoekAanm(val) {
+  zoekAanm = val;
+  var cont = document.getElementById('aanmLijstContainer');
+  if (cont) cont.innerHTML = renderAanmLijst();
+  else draw();
+}
+
+function wisZoekAanm() {
+  zoekAanm = '';
+  draw();
+  var el = document.getElementById('zoekAanmInp');
+  if (el) el.focus();
+}
+
+function renderAanmLijst() {
+  if (!deelnemersLijst.length) {
+    return '<div class="box n"><div class="m">Nog geen deelnemers ingeladen. Gebruik "+ Extra deelnemer" of laad vanuit Beheer.</div></div>';
+  }
+  var gefilterd = deelnemersLijst.filter(function(d) { return matchZoek(d, zoekAanm); });
+  var teller = zoekAanm.trim()
+    ? '<div class="m" style="margin-bottom:8px">Gevonden: <b>' + gefilterd.length + '</b> van ' + deelnemersLijst.length + ' deelnemers</div>'
+    : '';
+  if (!gefilterd.length) {
+    return teller + '<div class="box n"><div class="m">Geen deelnemers gevonden voor "<b>' + esc(zoekAanm) + '</b>".</div></div>';
+  }
+  return teller + gefilterd.map(function(d) {
+    return '<div class="t"><b>B' + esc(d.baan) + '</b><div>#' + esc(d.startnummer) + ' ' + esc(d.roepnaam) + ' <span class="' + (d.betaald ? 'chip-ok' : 'chip-bad') + '">' + (d.betaald ? 'Betaald' : 'Nog betalen') + '</span>' +
+      '<div class="m">' + esc(d.stamboom) + ' • ' + esc(d.eigenaar || '-') + (d.lidnr && d.lidnr !== 'ONBEKEND' ? ' (Lidnr: ' + esc(d.lidnr) + ')' : '') + ' • ' + esc(d.klasse) + '</div></div>' +
+      '<label class="chk-wrap' + (d.aanwezig ? ' on' : '') + '"><span>' + (d.aanwezig ? 'Aanwezig' : 'Niet aanwezig') + '</span><input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + esc(d.startnummer) + ')"></label></div>';
+  }).join('');
 }
 
 function initFirebase() {
@@ -101,7 +151,15 @@ function initFirebase() {
   } catch (e) {}
 }
 
-function go(x) { v = x; draw(); window.scrollTo(0, 0); }
+function go(x) {
+  v = x;
+  draw();
+  window.scrollTo(0, 0);
+  if (x === 'aanm') {
+    var inp = document.getElementById('zoekAanmInp');
+    if (inp) inp.focus();
+  }
+}
 function formatSec(ms, bm) { var s = (ms / 1000).toFixed(2).replace('.', ','); return bm ? s + '*' : s; }
 
 async function setKcm(nr, val) {
@@ -216,7 +274,9 @@ async function leesBericht(id) { if (db) await db.ref('wedstrijd/meldingen/' + i
 
 async function toggleAanwezig(nr) {
   var d = deelnemersLijst.find(function(x) { return x.startnummer == nr; }); if (!d) return;
-  d.aanwezig = !d.aanwezig; localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst)); draw();
+  d.aanwezig = !d.aanwezig;
+  localStorage.setItem('nnfc_deelnemers_' + actiefJaar, JSON.stringify(deelnemersLijst));
+  draw();
   if (db) {
     await db.ref('wedstrijd/beheer_deelnemers/' + d.id).set(d);
     await stuurBaan(d.baan);
@@ -382,16 +442,10 @@ function draw() {
   } else if (v === 'aanm') {
     h += back() + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">' +
       '<div><h2 style="margin:0">Aanmelding Secretariaat (Art. 2.5)</h2><div class="m">Vink <b>Aanwezig</b> aan zodra de hond is aangemeld (ook laatkomers). Alleen aangevinkte honden verschijnen op het klokkersscherm.</div></div>' +
-      '<button class="pri" onclick="syncAlleBanen()">Synchroniseer alle banen</button></div>';
-    if (deelnemersLijst.length) {
-      deelnemersLijst.forEach(function(d) {
-        h += '<div class="t"><b>B' + esc(d.baan) + '</b><div>#' + esc(d.startnummer) + ' ' + esc(d.roepnaam) + ' <span class="' + (d.betaald ? 'chip-ok' : 'chip-bad') + '">' + (d.betaald ? 'Betaald' : 'Nog betalen') + '</span>' +
-          '<div class="m">' + esc(d.stamboom) + ' • ' + esc(d.eigenaar || '-') + ' (' + esc(d.klasse) + ')</div></div>' +
-          '<label class="chk-wrap' + (d.aanwezig ? ' on' : '') + '"><span>' + (d.aanwezig ? 'Aanwezig' : 'Niet aanwezig') + '</span><input type="checkbox" class="chk" ' + (d.aanwezig ? 'checked' : '') + ' onchange="toggleAanwezig(' + esc(d.startnummer) + ')"></label></div>';
-      });
-    } else {
-      h += '<div class="box n"><div class="m">Nog geen deelnemers ingeladen. Gebruik "+ Extra deelnemer" of laad vanuit Beheer.</div></div>';
-    }
+      '<button class="pri" onclick="syncAlleBanen()">Synchroniseer alle banen</button></div>' +
+      '<div class="search-bar"><input type="search" id="zoekAanmInp" value="' + esc(zoekAanm) + '" oninput="updateZoekAanm(this.value)" placeholder="Zoek op startnr, roepnaam, stamboomnaam, eigenaar, lidnr, baan of betaald...">' +
+      (zoekAanm ? '<button onclick="wisZoekAanm()">Wis</button>' : '') + '</div>' +
+      '<div id="aanmLijstContainer">' + renderAanmLijst() + '</div>';
 
   } else if (v === 'extra') {
     h += back() + '<div class="box n" style="max-width:600px"><h2 style="margin-top:0">+ Extra deelnemer (Daginschrijving)</h2>' +
