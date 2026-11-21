@@ -150,6 +150,7 @@ tbody tr.rij-nu{background:rgba(255,210,63,0.22)!important}
 <div id="toast" class="toast">Opgeslagen</div>
 
 <script src="config.js"></script>
+<script src="nnfc-jaar-nav.js"></script>
 <script>
 var db = null;
 function initFirebase() {
@@ -176,7 +177,7 @@ function toonToast(msg) {
 
 var selJaarEl = document.getElementById('selJaar');
 var params = new URLSearchParams(window.location.search);
-var urlJaar = params.get('jaar');
+var urlJaar = (window.NNFCJaarNav && window.NNFCJaarNav.bepaalStartJaar) ? window.NNFCJaarNav.bepaalStartJaar('2026') : params.get('jaar');
 var huidigKalenderJaar = new Date().getFullYear();
 var standaardJaar = (urlJaar && /^20\d{2}$/.test(urlJaar))
   ? urlJaar
@@ -662,6 +663,23 @@ function render() {
 }
 
 render();
+
+if (window.NNFCJaarNav && typeof window.NNFCJaarNav.installeerTerugEnSyncListeners === 'function') {
+  window.NNFCJaarNav.werkLinksBij(typeof jaar !== 'undefined' ? jaar : '2026');
+  window.NNFCJaarNav.installeerTerugEnSyncListeners(function (actueelJaar) {
+    if (typeof jaar !== 'undefined' && actueelJaar && actueelJaar !== jaar) {
+      jaar = actueelJaar;
+      var sel = document.getElementById('selJaar');
+      if (sel) sel.value = jaar;
+      if (typeof laadData === 'function') laadData();
+      if (typeof render === 'function') render();
+    }
+    if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') {
+      window.NNFCJaarNav.werkLinksBij(typeof jaar !== 'undefined' ? jaar : actueelJaar);
+    }
+  }, '2026');
+}
+
 </script>
 </body>
 </html>
