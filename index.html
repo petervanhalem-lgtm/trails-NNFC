@@ -3,90 +3,272 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NNFC Watertrials – Beheerdersportaal</title>
+<title>Menu – NNFC Waterwerk</title>
 <style>
 :root{
-  --bg:#EEF3F5;--sf:#FFFFFF;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
-  --cur:#FFD23F;--curink:#1B1500;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;
+  --bg:#EEF3F5;--sf:#FFFFFF;--sf2:#F7FAFC;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
+  --cur:#FFD23F;--curink:#1B1500;--bad:#B3261E;--ok:#1F7A4D;--ln:#C3D3DB;--soft:#DDE8ED;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#0C1A22;--sf:#14293A;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;
-    --cur:#FFD23F;--curink:#1B1500;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;
+    --bg:#0C1A22;--sf:#14293A;--sf2:#102230;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;
+    --cur:#FFD23F;--curink:#1B1500;--bad:#FF8A80;--ok:#6FD6A0;--ln:#2C4558;--soft:#1D3547;
   }
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:18px;line-height:1.3;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
-.card{background:var(--sf);border:2px solid var(--ln);border-radius:18px;padding:22px;max-width:540px;width:100%}
-.warn-bar{background:var(--cur);color:var(--curink);border-radius:12px;padding:10px 14px;font-weight:700;font-size:16px;margin-bottom:16px}
-.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.top img{width:52px;height:52px;border-radius:50%;flex:none}
-h1{font-size:26px;margin:0;font-weight:700;line-height:1.1}
-.sub{color:var(--mut);font-size:16px}
-.sec{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin:18px 0 8px}
-.row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px}
-a.btn,button.cp{display:flex;align-items:center;justify-content:center;text-decoration:none;border:2px solid var(--ln);background:var(--sf);color:var(--ink);border-radius:12px;min-height:52px;padding:8px 14px;font:inherit;font-weight:700;font-size:19px;cursor:pointer}
-a.btn:hover,button.cp:hover{border-color:var(--ac)}
-a.pri{background:var(--ac);border-color:var(--ac);color:var(--acink)}
-a.ok{background:var(--ok);border-color:var(--ok);color:#FFFFFF}
-button.cp{font-size:15px;padding:8px 12px;min-width:118px;background:var(--soft);border-color:var(--ln)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:17px;line-height:1.35}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 18px 64px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:14px 18px;margin-bottom:16px}
+.top-l{display:flex;align-items:center;gap:14px}
+.top img{width:54px;height:54px;border-radius:50%;flex:none}
+h1{font-size:25px;margin:0;font-weight:800;line-height:1.15}
+h2{font-size:19px;margin:0;font-weight:700}
+.sub{color:var(--mut);font-size:14px}
+.top-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:16px}
+.box-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.jaar-strip{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.jaar-btn{font:inherit;border:1.5px solid var(--ln);background:var(--sf2);color:var(--ink);border-radius:10px;padding:6px 12px;min-height:40px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:7px;transition:border-color .12s,background .12s}
+.jaar-btn:hover{border-color:var(--ac)}
+.jaar-btn.on{background:var(--ac);border-color:var(--ac);color:var(--acink)}
+.jaar-btn.has-data:not(.on){border-color:var(--ok)}
+.dot-ok{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+.jaar-btn.on .dot-ok{background:var(--acink)}
+.slot-ico{font-size:13px;opacity:.9}
+.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:920px){.menu-grid{grid-template-columns:1fr}}
+.kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:14px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;transition:border-color .12s}
+.kaart:hover{border-color:var(--ac)}
+.kaart .k-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.kaart .k-ttl{font-size:20px;font-weight:800;margin:0}
+.chip{display:inline-block;background:var(--soft);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.chip-ok{display:inline-block;background:rgba(31,122,77,0.15);color:var(--ok);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.chip-slot{display:inline-block;background:rgba(255,210,63,0.28);color:var(--ink);border:1px solid rgba(180,83,9,0.35);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.btn-go{font:inherit;background:var(--ac);border:1.5px solid var(--ac);color:var(--acink);border-radius:10px;min-height:42px;padding:6px 14px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%}
+.btn-go:hover{opacity:.95}
+.btn-sm{font:inherit;background:var(--sf2);border:1.5px solid var(--ln);color:var(--ink);border-radius:9px;min-height:36px;padding:4px 10px;font-size:14px;cursor:pointer;font-weight:700}
+.btn-sm:hover{border-color:var(--ac)}
+.stats-bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:14px;color:var(--mut);background:var(--sf2);border:1px solid var(--ln);border-radius:10px;padding:10px 12px}
+.meta-list{margin:8px 0 0;padding-left:18px;color:var(--mut);font-size:14px}
+.meta-list li{margin-bottom:3px}
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="warn-bar">ALLEEN VOOR BEHEERDERS • Deel dit startmenu niet met klokkers of bezoekers. Gebruik de kopieerknoppen om directe links per baan te delen.</div>
-
-    <div class="top">
+<div class="wrap">
+  <div class="top">
+    <div class="top-l">
       <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
       <div>
-        <h1>NNFC Watertrials</h1>
-        <div class="sub">Beheerdersportaal • Reglement 2026</div>
+        <h1>NNFC Waterwerk – Hoofdmenu</h1>
+        <div class="sub">Kies een wedstrijdjaar met beschikbare data en open het gewenste onderdeel</div>
       </div>
     </div>
-
-    <div class="sec">Voorbereiding & Wedstrijdtafel</div>
-    <a href="beheer.html" class="btn ok" style="margin-bottom:8px">Beheer, Excel-import & Baanindeling</a>
-    <div class="row">
-      <a href="wedstrijdtafel.html?admin=1" class="btn pri">Wedstrijdtafel openen</a>
-      <button class="cp" onclick="kopieer('wedstrijdtafel.html', this)">Kopieer link</button>
-    </div>
-
-    <div class="sec">Klokkersschermen per Baan</div>
-    <div class="row">
-      <a href="klokker.html?baan=1&admin=1" class="btn">Baan 1</a>
-      <button class="cp" onclick="kopieer('klokker.html?baan=1', this)">Kopieer link</button>
-    </div>
-    <div class="row">
-      <a href="klokker.html?baan=2&admin=1" class="btn">Baan 2</a>
-      <button class="cp" onclick="kopieer('klokker.html?baan=2', this)">Kopieer link</button>
-    </div>
-    <div class="row">
-      <a href="klokker.html?baan=3&admin=1" class="btn">Baan 3</a>
-      <button class="cp" onclick="kopieer('klokker.html?baan=3', this)">Kopieer link</button>
-    </div>
-    <div class="row">
-      <a href="klokker.html?baan=4&admin=1" class="btn">Baan 4</a>
-      <button class="cp" onclick="kopieer('klokker.html?baan=4', this)">Kopieer link</button>
-    </div>
-    <div class="row">
-      <a href="klokker.html?baan=5&admin=1" class="btn">Baan 5</a>
-      <button class="cp" onclick="kopieer('klokker.html?baan=5', this)">Kopieer link</button>
-    </div>
+    <div class="top-r" id="huidigJaarBadge">Actief jaar: <b>2026</b></div>
   </div>
 
+  <div class="box">
+    <div class="box-head">
+      <div>
+        <h2>Beschikbare jaren &amp; datastatus</h2>
+        <div class="sub">Groene stip = data aanwezig • Slot = heel jaar gefinaliseerd en vergrendeld</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div id="jaarKnoppen" class="jaar-strip" role="group" aria-label="Beschikbare wedstrijd jaren"></div>
+        <button type="button" id="btnAlleJaren" class="btn-sm" onclick="toggleAlleJaren()">Toon meer jaren</button>
+      </div>
+    </div>
+    <div id="jaarSamenvatting" class="stats-bar"></div>
+  </div>
+
+  <div class="menu-grid">
+    <div class="kaart">
+      <div>
+        <div class="k-top">
+          <p class="k-ttl">Banen / Klokkers</p>
+          <span class="chip">Baan 1–5</span>
+        </div>
+        <div class="sub" style="margin-top:6px">Startvolgorde per baan, stopwatch, punten per oefening en de 3 bijlagen bij het waterwerkreglement.</div>
+        <ul class="meta-list">
+          <li>Live tijdregistratie en puntoptelling per oefening</li>
+          <li>Directe inzage in de 3 bijlagen langs de waterkant</li>
+        </ul>
+      </div>
+      <a id="linkBanen" href="banen.html" class="btn-go">Open Banen / Klokkers →</a>
+    </div>
+
+    <div class="kaart">
+      <div>
+        <div class="k-top">
+          <p class="k-ttl">Wedstrijdtafel</p>
+          <span class="chip">Uitslagen</span>
+        </div>
+        <div class="sub" style="margin-top:6px">Aanwezigheid, basispunten, brevetuitslagen, RT-kandidaten en bekers per klasse.</div>
+        <ul class="meta-list">
+          <li>Overzicht van aanwezigheid en klasse-uitslagen</li>
+          <li>Brevetstatus, RT-kandidaten en bekerverdeling</li>
+        </ul>
+      </div>
+      <a id="linkTafel" href="wedstrijdtafel-v2.html" class="btn-go">Open Wedstrijdtafel →</a>
+    </div>
+
+    <div class="kaart">
+      <div>
+        <div class="k-top">
+          <p class="k-ttl">Beheer</p>
+          <span class="chip">Deelnemers &amp; Jaar</span>
+        </div>
+        <div class="sub" style="margin-top:6px">Deelnemerslijst (inclusief kennel- en stamboomnamen), baanindeling, bijlagen en jaarfinalisatie.</div>
+        <ul class="meta-list">
+          <li>Import, inschrijvingen en baanindeling per jaar</li>
+          <li>Volledig jaar afsluiten en vergrendelen na afloop</li>
+        </ul>
+      </div>
+      <a id="linkBeheer" href="beheer.html" class="btn-go">Open Beheer →</a>
+    </div>
+  </div>
+</div>
+
 <script>
-function kopieer(pad, btn) {
-  var basis = window.location.href.replace(/index\.html.*$/, '').replace(/\/$/, '');
-  var url = basis + '/' + pad;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url);
-    var oud = btn.textContent;
-    btn.textContent = 'Gekopieerd!';
-    setTimeout(function() { btn.textContent = oud; }, 1800);
+function esc(str) {
+  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function getSlotInfo(y) {
+  var s = String(y);
+  try {
+    var raw = localStorage.getItem('nnfc_slot_' + s);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.vergrendeld) {
+        return { vergrendeld: true, datum: parsed.datum || '' };
+      }
+    }
+  } catch (e) {}
+  return { vergrendeld: false, datum: '' };
+}
+
+function getJaarInfo(y) {
+  var s = String(y);
+  var deelnemers = [];
+  var tafel = {};
+  var klok = {};
+  try { deelnemers = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + s)) || []; } catch (e) { deelnemers = []; }
+  try { tafel = JSON.parse(localStorage.getItem('nnfc_tafel_' + s)) || {}; } catch (e) { tafel = {}; }
+  try { klok = JSON.parse(localStorage.getItem('nnfc_klokkers_' + s)) || {}; } catch (e) { klok = {}; }
+
+  var aantalDeelnemers = Array.isArray(deelnemers) ? deelnemers.length : 0;
+  var aantalAanwezig = Array.isArray(deelnemers) ? deelnemers.filter(function(d) { return !!d.aanwezig; }).length : 0;
+  var heeftTafel = Object.keys(tafel || {}).length > 0;
+  var heeftKlok = Object.keys(klok || {}).length > 0;
+  var slot = getSlotInfo(s);
+  var heeftData = aantalDeelnemers > 0 || heeftTafel || heeftKlok;
+
+  return {
+    jaar: s,
+    aantalDeelnemers: aantalDeelnemers,
+    aantalAanwezig: aantalAanwezig,
+    heeftTafel: heeftTafel,
+    heeftKlok: heeftKlok,
+    heeftData: heeftData,
+    vergrendeld: slot.vergrendeld,
+    slotDatum: slot.datum
+  };
+}
+
+function verzamelBeschikbareJaren() {
+  var jarenSet = {};
+  for (var y = 2026; y <= 2035; y++) {
+    jarenSet[String(y)] = true;
+  }
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i) || '';
+    var m = k.match(/^nnfc_(?:deelnemers|tafel|klokkers|baanindeling|slot|archief)_(\d{4})$/);
+    if (m && m[1]) jarenSet[m[1]] = true;
+  }
+  return Object.keys(jarenSet).sort();
+}
+
+var beschikbareJaren = verzamelBeschikbareJaren();
+var metData = beschikbareJaren.map(getJaarInfo).filter(function(info) { return info.heeftData; });
+
+var params = new URLSearchParams(window.location.search);
+var startJaar = params.get('jaar');
+if (!startJaar) {
+  if (metData.some(function(x) { return x.jaar === '2026'; })) {
+    startJaar = '2026';
+  } else if (metData.length > 0) {
+    startJaar = metData[metData.length - 1].jaar;
   } else {
-    prompt('Kopieer deze directe link:', url);
+    startJaar = '2026';
   }
 }
+
+var gekozenJaar = startJaar;
+var toonAlleJaren = false;
+
+function kiesJaar(y) {
+  gekozenJaar = String(y);
+  renderMenu();
+}
+
+function toggleAlleJaren() {
+  toonAlleJaren = !toonAlleJaren;
+  renderMenu();
+}
+
+function renderMenu() {
+  var actInfo = getJaarInfo(gekozenJaar);
+  var badgeHtml = 'Actief jaar: <b>' + esc(gekozenJaar) + '</b>';
+  if (actInfo.vergrendeld) {
+    badgeHtml += ' <span class="chip-slot">Gefinaliseerd</span>';
+  }
+  document.getElementById('huidigJaarBadge').innerHTML = badgeHtml;
+
+  document.getElementById('linkBanen').href = 'banen.html?jaar=' + encodeURIComponent(gekozenJaar);
+  document.getElementById('linkTafel').href = 'wedstrijdtafel-v2.html?jaar=' + encodeURIComponent(gekozenJaar);
+  document.getElementById('linkBeheer').href = 'beheer.html?jaar=' + encodeURIComponent(gekozenJaar);
+
+  var alleInfo = beschikbareJaren.map(getJaarInfo);
+  var jarenMetData = alleInfo.filter(function(x) { return x.heeftData; });
+
+  var zichtbareJaren = toonAlleJaren
+    ? alleInfo
+    : alleInfo.filter(function(x) {
+        return x.heeftData || x.jaar === '2026' || x.jaar === '2027' || x.jaar === '2028' || x.jaar === gekozenJaar;
+      });
+
+  document.getElementById('btnAlleJaren').textContent = toonAlleJaren ? 'Minder jaren tonen' : 'Toon meer jaren';
+
+  document.getElementById('jaarKnoppen').innerHTML = zichtbareJaren.map(function(info) {
+    var active = info.jaar === gekozenJaar ? ' on' : '';
+    var hasD = info.heeftData ? ' has-data' : '';
+    var dot = info.heeftData ? '<span class="dot-ok" title="Data beschikbaar"></span>' : '';
+    var slotIco = info.vergrendeld ? '<span class="slot-ico" title="Gefinaliseerd">🔒</span>' : '';
+    return '<button type="button" class="jaar-btn' + active + hasD + '" onclick="kiesJaar(\'' + esc(info.jaar) + '\')">' +
+      dot + '<span>' + esc(info.jaar) + '</span>' + slotIco +
+      (info.aantalDeelnemers > 0 ? '<span style="font-size:12px;opacity:.85">(' + info.aantalDeelnemers + ')</span>' : '') +
+      '</button>';
+  }).join('');
+
+  var lijstMetDataTekst = jarenMetData.length > 0
+    ? jarenMetData.map(function(x) {
+        return '<b>' + esc(x.jaar) + '</b> (' + x.aantalDeelnemers + ' honden' + (x.vergrendeld ? ', 🔒' : '') + ')';
+      }).join(', ')
+    : 'nog geen opgeslagen wedstrijddata';
+
+  var statusChip = actInfo.vergrendeld
+    ? '<span class="chip-slot">🔒 Gefinaliseerd' + (actInfo.slotDatum ? ' (' + esc(actInfo.slotDatum) + ')' : '') + '</span>'
+    : (actInfo.heeftData
+        ? '<span class="chip-ok">' + actInfo.aantalDeelnemers + ' deelnemers • ' + actInfo.aantalAanwezig + ' aanwezig • Open</span>'
+        : '<span class="chip">Nog geen data ingevuld • Open</span>');
+
+  document.getElementById('jaarSamenvatting').innerHTML =
+    '<span>Beschikbare jaren met data: ' + lijstMetDataTekst + '</span>' +
+    '<span>•</span>' +
+    '<span>Geselecteerd <b>' + esc(gekozenJaar) + '</b>: ' + statusChip + '</span>';
+}
+
+renderMenu();
 </script>
 </body>
 </html>
