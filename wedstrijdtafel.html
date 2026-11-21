@@ -156,6 +156,7 @@ tbody tr:hover{background:var(--soft)}
 </div>
 
 <script src="config.js"></script>
+<script src="nnfc-jaar-nav.js"></script>
 <script>
 var db = null;
 var KCM_PUNTEN = {"GEEN":0,"BOB":75,"CAC":70,"Res. CAC":65,"U1":55,"U2":50,"U3":45,"U4":40,"U":35,"ZG":25,"G":15,"M":10,"S":5};
@@ -182,12 +183,11 @@ function esc(str) {
 }
 
 var selJaarEl = document.getElementById('selJaar');
-var params = new URLSearchParams(window.location.search);
-var urlJaar = params.get('jaar');
 var huidigKalenderJaar = new Date().getFullYear();
-var standaardJaar = (urlJaar && /^20\d{2}$/.test(urlJaar))
-  ? urlJaar
-  : ((huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026');
+var fallbackTafelJaar = (huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026';
+var standaardJaar = (window.NNFCJaarNav && typeof window.NNFCJaarNav.bepaalStartJaar === 'function')
+  ? window.NNFCJaarNav.bepaalStartJaar(fallbackTafelJaar)
+  : fallbackTafelJaar;
 for (var y = 2026; y <= 2040; y++) {
   var o = document.createElement('option');
   o.value = String(y);
@@ -255,10 +255,18 @@ function bewaarAlles() {
 }
 
 function wisselJaar() {
-  jaar = selJaarEl.value;
+  var gekozen = selJaarEl.value;
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.zetActiefJaar === 'function') {
+    jaar = window.NNFCJaarNav.zetActiefJaar(gekozen, { persist: true, updateUrl: true }) || gekozen;
+  } else {
+    jaar = gekozen;
+  }
   document.getElementById('lblJaar').textContent = jaar;
   laadData();
   render();
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') {
+    window.NNFCJaarNav.werkLinksBij(jaar);
+  }
 }
 
 // Navigatiefuncties: 1 niveau terug ("Terug") en terug naar hoofdniveau ("Wedstrijdtafel")
@@ -891,6 +899,7 @@ function leesInkomendeKlokkerData() {
 }
 
 function render() {
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') window.NNFCJaarNav.werkLinksBij(jaar);
   updateCrumbBar();
   var html = '';
   if (nav.stap === 1) html = renderStap1();
@@ -950,6 +959,22 @@ function render() {
 }
 
 render();
+
+if (window.NNFCJaarNav && typeof window.NNFCJaarNav.installeerTerugEnSyncListeners === 'function') {
+  window.NNFCJaarNav.installeerTerugEnSyncListeners(function (actueelJaar) {
+    if (actueelJaar && actueelJaar !== jaar) {
+      jaar = actueelJaar;
+      if (selJaarEl) selJaarEl.value = jaar;
+      var lbl = document.getElementById('lblJaar');
+      if (lbl) lbl.textContent = jaar;
+      laadData();
+      render();
+    } else if (window.NNFCJaarNav.werkLinksBij) {
+      window.NNFCJaarNav.werkLinksBij(jaar);
+    }
+  }, fallbackTafelJaar);
+}
+
 </script>
 </body>
 </html>
