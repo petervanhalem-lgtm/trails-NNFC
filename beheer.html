@@ -85,6 +85,10 @@ tbody tr:hover{background:var(--soft)}
 .chip-warn{display:inline-block;background:rgba(179,38,30,0.14);color:var(--bad);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
 .hond-main{font-weight:700;font-size:16px}
 .hond-sub{color:var(--mut);font-size:13px}
+
+.chip-slot{display:inline-block;background:rgba(255,210,63,0.28);color:var(--ink);border:1px solid rgba(180,83,9,0.45);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.warn-box{background:rgba(255,210,63,0.16);border:1.5px solid rgba(180,83,9,0.4);border-radius:12px;padding:12px;margin-bottom:12px}
+
 .toast{position:fixed;bottom:18px;right:18px;background:var(--ok);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.22);z-index:99;display:none}
 </style>
 </head>
@@ -100,14 +104,15 @@ tbody tr:hover{background:var(--soft)}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="selJaar" onchange="wisselJaar()" style="width:auto;margin:0;font-weight:700" aria-label="Selecteer wedstrijdjaar"></select>
-      <a href="wedstrijdtafel-v2.html" class="btn-link pri">Wedstrijdtafel →</a>
+      <span id="slotStatusBadge"></span>
+      <a href="wedstrijdtafel.html" class="btn-link pri">Wedstrijdtafel →</a>
       <a href="banen.html" class="btn-link">Banen / Klokkers →</a>
       <a href="index.html" class="btn-link">← Menu</a>
     </div>
   </div>
 
   <!-- 4 BEHEERSECTIES (MET IMPORT ALS DEEL 1) -->
-  <div class="beheer-nav" role="navigation" aria-label="Beheer secties">
+  <div class="beheer-nav" role="navigation" aria-label="Beheer secties" style="grid-template-columns:repeat(5,1fr)">
     <button type="button" id="bhBtn1" class="beheer-btn on" onclick="gaNaarSectie(1)">
       <span class="nr">Deel 1 • Basis</span>
       <span class="ttl">Importeren (Excel / CSV)</span>
@@ -124,6 +129,10 @@ tbody tr:hover{background:var(--soft)}
       <span class="nr">Deel 4</span>
       <span class="ttl">Deelnemerslijst & Banen</span>
     </button>
+    <button type="button" id="bhBtn5" class="beheer-btn" onclick="gaNaarSectie(5)">
+      <span class="nr">Deel 5 • Afsluiten</span>
+      <span class="ttl">Back-up &amp; Jaarvergrendeling</span>
+    </button>
   </div>
 
   <!-- VASTE ANKERBALK BIJ SUBPAGINA'S (TERUG & WEDSTRIJDTAFEL) -->
@@ -131,7 +140,7 @@ tbody tr:hover{background:var(--soft)}
     <div id="crumbTrail" class="crumb-trail"></div>
     <div class="crumb-acts">
       <button type="button" class="sm" onclick="gaTerug()">← Terug</button>
-      <a href="wedstrijdtafel-v2.html" class="btn-link pri sm">Wedstrijdtafel</a>
+      <a href="wedstrijdtafel.html" class="btn-link pri sm">Wedstrijdtafel</a>
     </div>
   </div>
 
@@ -152,7 +161,8 @@ var SECTIE_NAMEN = {
   1: "Importeren (Excel / CSV)",
   2: "Nieuwe inschrijving",
   3: "Baanindeling & 3 Bijlagen",
-  4: "Deelnemerslijst & Banen"
+  4: "Deelnemerslijst & Banen",
+  5: "Back-up & Jaarvergrendeling"
 };
 
 function initFirebase() {
@@ -218,6 +228,7 @@ function laadData() {
   } catch (e) {}
 }
 laadData();
+laadSlot();
 
 function syncFirebase() {
   if (!db) return;
@@ -247,6 +258,7 @@ function wisselJaar() {
   jaar = selJaarEl.value;
   document.getElementById('lblJaar').textContent = jaar;
   laadData();
+laadSlot();
   render();
 }
 
@@ -274,7 +286,7 @@ function gaTerug() {
 }
 
 function updateCrumbBar() {
-  for (var s = 1; s <= 4; s++) {
+  for (var s = 1; s <= 5; s++) {
     document.getElementById('bhBtn' + s).classList.toggle('on', nav.sectie === s);
   }
   var bar = document.getElementById('crumbBar');
@@ -296,6 +308,7 @@ function bepaalBaanVoorKlasse(klasse) {
 }
 
 function herverdeelBanen() {
+  if (waarschuwIndienVergrendeld()) return;
   deelnemers.forEach(function(h) {
     h.baan = bepaalBaanVoorKlasse(h.klasse);
   });
@@ -312,6 +325,7 @@ function volgendeStartnummer() {
 }
 
 function voegInschrijvingToe(e) {
+  if (waarschuwIndienVergrendeld()) return;
   e.preventDefault();
   var roepnaam = document.getElementById('fRoepnaam').value.trim();
   var stamboom = document.getElementById('fStamboom').value.trim();
@@ -394,6 +408,7 @@ function laadVoorbeeldData() {
 }
 
 function toggleBaanKlasse(baanNr, kl) {
+  if (waarschuwIndienVergrendeld()) { render(); return; }
   var lijst = (baanIndeling.banen[baanNr] || []).slice();
   var idx = lijst.indexOf(kl);
   if (idx === -1) lijst.push(kl);
@@ -405,6 +420,7 @@ function toggleBaanKlasse(baanNr, kl) {
 }
 
 function slaBijlagenOp() {
+  if (waarschuwIndienVergrendeld()) return;
   baanIndeling.bijlagen.b1 = document.getElementById('bijlage1').value;
   baanIndeling.bijlagen.b2 = document.getElementById('bijlage2').value;
   baanIndeling.bijlagen.b3 = document.getElementById('bijlage3').value;
@@ -412,6 +428,7 @@ function slaBijlagenOp() {
 }
 
 function wijzigHondVeld(id, veld, waarde) {
+  if (waarschuwIndienVergrendeld()) { render(); return; }
   var h = deelnemers.find(function(x) { return x.id === id; });
   if (!h) return;
   if (veld === 'startnummer') {
@@ -430,6 +447,7 @@ function wijzigHondVeld(id, veld, waarde) {
 }
 
 function verwijderDeelnemer(id) {
+  if (waarschuwIndienVergrendeld()) { render(); return; }
   var h = deelnemers.find(function(x) { return x.id === id; });
   if (!h) return;
   if (!confirm('#' + h.startnummer + ' ' + h.roepnaam + ' verwijderen uit ' + jaar + '?')) return;
@@ -489,6 +507,7 @@ function pakVeld(row, sleutels) {
 }
 
 function verwerkGeimporteerdeRijen(rijen, modus) {
+  if (waarschuwIndienVergrendeld()) return;
   if (!Array.isArray(rijen) || rijen.length === 0) {
     alert('Geen rijen gevonden in het bestand.');
     return;
@@ -778,13 +797,187 @@ function renderSectie4() {
   '</div>';
 }
 
+
+var jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
+
+function laadSlot() {
+  try {
+    var raw = JSON.parse(localStorage.getItem('nnfc_slot_' + jaar));
+    if (raw && typeof raw === 'object') {
+      jaarSlot = {
+        vergrendeld: !!raw.vergrendeld,
+        datum: raw.datum || '',
+        toelichting: raw.toelichting || ''
+      };
+    } else {
+      jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
+    }
+  } catch (e) {
+    jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
+  }
+  var badge = document.getElementById('slotStatusBadge');
+  if (badge) {
+    badge.innerHTML = jaarSlot.vergrendeld
+      ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' vergrendeld</span>'
+      : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
+  }
+}
+
+function isJaarVergrendeld() {
+  return !!(jaarSlot && jaarSlot.vergrendeld);
+}
+
+function waarschuwIndienVergrendeld() {
+  if (isJaarVergrendeld()) {
+    alert('Wedstrijdjaar ' + jaar + ' is vergrendeld en gefinaliseerd. Ontgrendel het jaar eerst in Deel 5 (Back-up & Jaarvergrendeling) als je wijzigingen wilt aanbrengen.');
+    return true;
+  }
+  return false;
+}
+
+function toggleJaarSlot() {
+  var toelichtingEl = document.getElementById('slotToelichting');
+  var toelichting = toelichtingEl ? toelichtingEl.value.trim() : (jaarSlot.toelichting || '');
+  if (!jaarSlot.vergrendeld) {
+    if (!confirm('Weet je zeker dat je wedstrijdjaar ' + jaar + ' wilt finaliseren en vergrendelen?')) return;
+    jaarSlot = {
+      vergrendeld: true,
+      datum: new Date().toLocaleDateString('nl-NL'),
+      toelichting: toelichting
+    };
+    localStorage.setItem('nnfc_slot_' + jaar, JSON.stringify(jaarSlot));
+    if (db) {
+      try { db.ref('wedstrijd/slot_' + jaar).set(jaarSlot); } catch (e) {}
+    }
+    render();
+    toonToast('Jaar ' + jaar + ' vergrendeld');
+  } else {
+    if (!confirm('Wedstrijdjaar ' + jaar + ' weer ontgrendelen voor aanpassingen?')) return;
+    jaarSlot = { vergrendeld: false, datum: '', toelichting: toelichting };
+    localStorage.setItem('nnfc_slot_' + jaar, JSON.stringify(jaarSlot));
+    if (db) {
+      try { db.ref('wedstrijd/slot_' + jaar).set(jaarSlot); } catch (e) {}
+    }
+    render();
+    toonToast('Jaar ' + jaar + ' ontgrendeld');
+  }
+}
+
+function synchroniseerNaarTafel() {
+  localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
+  localStorage.setItem('nnfc_baanindeling_' + jaar, JSON.stringify(baanIndeling));
+  var kcmMap = {};
+  deelnemers.forEach(function(h) {
+    if (h.startnummer != null) kcmMap[String(h.startnummer)] = h.kcm || 'GEEN';
+  });
+  localStorage.setItem('nnfc_kcm_' + jaar, JSON.stringify(kcmMap));
+  if (db) {
+    try {
+      db.ref('wedstrijd/actief_jaar').set(jaar);
+      db.ref('wedstrijd/baanindeling_' + jaar).set(baanIndeling);
+      db.ref('wedstrijd/kcm_selecties_' + jaar).set(kcmMap);
+      var updates = {};
+      deelnemers.forEach(function(h) { updates[h.id] = h; });
+      db.ref('wedstrijd/beheer_deelnemers').update(updates);
+    } catch (e) {}
+  }
+  toonToast('Gesynchroniseerd met Wedstrijdtafel (' + jaar + ')');
+}
+
+function exportJSON() {
+  var payload = {
+    jaar: jaar,
+    geexporteerdOp: new Date().toISOString(),
+    slot: jaarSlot,
+    baanIndeling: baanIndeling,
+    deelnemers: deelnemers
+  };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'nnfc_deelnemers_' + jaar + '_backup.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toonToast('JSON-back-up gedownload');
+}
+
+function importJSON(inputEl) {
+  if (waarschuwIndienVergrendeld()) { inputEl.value = ''; return; }
+  var file = inputEl && inputEl.files && inputEl.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (!data || !Array.isArray(data.deelnemers)) {
+        alert('Ongeldig JSON-back-upbestand: deelnemerslijst ontbreekt.');
+        return;
+      }
+      deelnemers = data.deelnemers;
+      if (data.baanIndeling && data.baanIndeling.banen) {
+        baanIndeling = {
+          banen: Object.assign({ "1": [], "2": [], "3": [], "4": [], "5": [] }, data.baanIndeling.banen),
+          bijlagen: Object.assign({ b1: "", b2: "", b3: "" }, data.baanIndeling.bijlagen || {})
+        };
+        localStorage.setItem('nnfc_baanindeling_' + jaar, JSON.stringify(baanIndeling));
+      }
+      bewaarDeelnemers('JSON-back-up hersteld (' + deelnemers.length + ' deelnemers)');
+    } catch (err) {
+      alert('Kon JSON niet inlezen: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function renderSectie5() {
+  var vergrendeld = isJaarVergrendeld();
+  return '<div class="box">' +
+    '<div class="box-head">' +
+      '<div><h2>5. Back-up, Synchronisatie &amp; Jaarvergrendeling (' + esc(jaar) + ')</h2><div class="sub">Maak een JSON-back-up, synchroniseer met de wedstrijdtafel of vergrendel het jaar na afloop en protesttijd</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="pri sm" onclick="synchroniseerNaarTafel()">Synchroniseer met Wedstrijdtafel</button>' +
+        '<button type="button" class="sm" onclick="exportJSON()">Back-up (JSON)</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="grid2">' +
+      '<div class="kaart">' +
+        '<h3>JSON-back-up &amp; herstel</h3>' +
+        '<div class="sub" style="margin-bottom:10px">Download een volledige JSON-back-up van de deelnemerslijst en baanindeling van ' + esc(jaar) + ', of zet een eerdere back-up terug.</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+          '<button type="button" class="pri sm" onclick="exportJSON()">Download JSON-back-up</button>' +
+        '</div>' +
+        '<label for="jsonHerstelInput">Herstel vanuit JSON-back-upbestand</label>' +
+        '<input id="jsonHerstelInput" type="file" accept=".json,application/json" onchange="importJSON(this)">' +
+      '</div>' +
+      '<div class="kaart">' +
+        '<h3>Jaar ' + esc(jaar) + ' finaliseren &amp; vergrendelen</h3>' +
+        '<div class="' + (vergrendeld ? 'warn-box' : 'sub') + '" style="margin-bottom:10px">' +
+          (vergrendeld
+            ? '<b>🔒 Dit jaar is vergrendeld</b>' + (jaarSlot.datum ? ' op ' + esc(jaarSlot.datum) : '') + '. Nieuwe wijzigingen in Beheer worden geblokkeerd tot je het slot weer opent.'
+            : 'Dit jaar staat nu <b>Open</b>. Zodra de wedstrijd en eventuele protesttijd zijn afgerond, kun je het jaar hier vergrendelen.') +
+        '</div>' +
+        '<label for="slotToelichting">Notitie bij afsluiting / protesttijd</label>' +
+        '<input id="slotToelichting" type="text" value="' + esc(jaarSlot.toelichting || '') + '" placeholder="Bijv. Definitief na protesttijd 17:30...">' +
+        '<button type="button" class="' + (vergrendeld ? 'sm' : 'ok') + '" onclick="toggleJaarSlot()">' +
+          (vergrendeld ? '🔓 Ontgrendel jaar ' + esc(jaar) : '🔒 Finaliseer &amp; vergrendel jaar ' + esc(jaar)) +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
 function render() {
+  laadSlot();
   updateCrumbBar();
   var html = '';
   if (nav.sectie === 1) html = renderSectie1();
   else if (nav.sectie === 2) html = renderSectie2();
   else if (nav.sectie === 3) html = renderSectie3();
   else if (nav.sectie === 4) html = renderSectie4();
+  else if (nav.sectie === 5) html = renderSectie5();
   document.getElementById('appContent').innerHTML = html;
 }
 
