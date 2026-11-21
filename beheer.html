@@ -42,8 +42,17 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .box-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.baan-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:1180px){.baan-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
-.kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:12px}
+@media(max-width:620px){.baan-grid{grid-template-columns:1fr}}
+.kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.baan-kop{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
+.tag-lijst{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tag{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border-radius:8px;padding:4px 8px;font-size:14px;font-weight:700}
+.tag button{min-height:22px;padding:0 5px;border-radius:6px;font-size:12px;border-width:1px}
+.toevoeg-rij{display:flex;gap:6px;align-items:center}
+.toevoeg-rij input,.toevoeg-rij select{margin-bottom:0;min-height:36px;padding:4px 8px;font-size:14px}
 label{display:block;font-weight:600;font-size:14px;margin-bottom:3px;color:var(--mut)}
 input,select,textarea{font:inherit;color:var(--ink);background:var(--sf);border:1.5px solid var(--ln);border-radius:10px;padding:7px 10px;width:100%;margin-bottom:9px;min-height:40px}
 .chip{display:inline-block;background:var(--soft);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
@@ -75,7 +84,7 @@ th{background:var(--sf2);color:var(--mut);font-size:14px}
   </div>
 
   <div class="deel-nav" role="navigation" aria-label="Onderdelen Beheer">
-    <button type="button" id="deelBtn1" class="deel-btn on" onclick="gaNaarDeel(1)">
+    <button type="button" id="deelBtn1" class="deel-btn" onclick="gaNaarDeel(1)">
       <span class="nr">Deel 1 • Basis</span>
       <span class="ttl">Importeren (CSV / JSON)</span>
     </button>
@@ -83,7 +92,7 @@ th{background:var(--sf2);color:var(--mut);font-size:14px}
       <span class="nr">Deel 2 • Inschrijven</span>
       <span class="ttl">Nieuwe inschrijving</span>
     </button>
-    <button type="button" id="deelBtn3" class="deel-btn" onclick="gaNaarDeel(3)">
+    <button type="button" id="deelBtn3" class="deel-btn on" onclick="gaNaarDeel(3)">
       <span class="nr">Deel 3 • Banen &amp; Tekst</span>
       <span class="ttl">Baanindeling &amp; 3 Bijlagen</span>
     </button>
@@ -108,6 +117,15 @@ function esc(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+var STANDAARD_KLASSEN = ["Jeugd", "Open", "Veteranen", "Stamboomloos", "Specials"];
+var STANDAARD_BANEN = {
+  "1": ["Open"],
+  "2": ["Jeugd"],
+  "3": ["Veteranen"],
+  "4": ["Stamboomloos"],
+  "5": ["Specials"]
+};
+
 var selJaarEl = document.getElementById('selJaar');
 var startJaar = (window.NNFCJaarNav && typeof window.NNFCJaarNav.bepaalStartJaar === 'function')
   ? window.NNFCJaarNav.bepaalStartJaar('2026')
@@ -128,7 +146,7 @@ if (!Array.from(selJaarEl.options).some(function(o) { return o.value === startJa
 selJaarEl.value = startJaar;
 
 var jaar = selJaarEl.value;
-var actiefDeel = 1;
+var actiefDeel = 3;
 var deelnemers = [];
 var baanIndeling = {
   banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] },
@@ -136,17 +154,34 @@ var baanIndeling = {
 };
 var slotInfo = { vergrendeld: jaar === '2026', datum: '' };
 
+function kloonStandaardBanen() {
+  return {
+    "1": STANDAARD_BANEN["1"].slice(),
+    "2": STANDAARD_BANEN["2"].slice(),
+    "3": STANDAARD_BANEN["3"].slice(),
+    "4": STANDAARD_BANEN["4"].slice(),
+    "5": STANDAARD_BANEN["5"].slice()
+  };
+}
+
 function laadJaarData() {
   try { deelnemers = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || []; } catch (e) { deelnemers = []; }
+  baanIndeling = {
+    banen: kloonStandaardBanen(),
+    bijlagen: { b1: "", b2: "", b3: "" }
+  };
   try {
     var b = JSON.parse(localStorage.getItem('nnfc_baanindeling_' + jaar));
     if (b && b.banen) {
-      baanIndeling = {
-        banen: Object.assign({ "1": [], "2": [], "3": [], "4": [], "5": [] }, b.banen),
-        bijlagen: Object.assign({ b1: "", b2: "", b3: "" }, b.bijlagen || {})
-      };
+      ["1", "2", "3", "4", "5"].forEach(function(nr) {
+        if (Array.isArray(b.banen[nr])) {
+          baanIndeling.banen[nr] = b.banen[nr].slice();
+        }
+      });
+      baanIndeling.bijlagen = Object.assign({ b1: "", b2: "", b3: "" }, b.bijlagen || {});
     }
   } catch (e) {}
+
   try {
     var s = JSON.parse(localStorage.getItem('nnfc_slot_' + jaar));
     if (s && typeof s.vergrendeld === 'boolean') {
@@ -199,6 +234,91 @@ function wisselVergrendeling() {
   renderBeheer();
 }
 
+function voegKlasseAanBaanToe(baanNr) {
+  if (slotInfo.vergrendeld) {
+    alert('Jaar ' + jaar + ' is vergrendeld.');
+    return;
+  }
+  var selEl = document.getElementById('selKlasseBaan' + baanNr);
+  var vrijEl = document.getElementById('inpKlasseBaan' + baanNr);
+  var waarde = (vrijEl && vrijEl.value.trim()) ? vrijEl.value.trim() : (selEl ? selEl.value : '');
+  if (!waarde) return;
+
+  if (!Array.isArray(baanIndeling.banen[baanNr])) baanIndeling.banen[baanNr] = [];
+  var bestaat = baanIndeling.banen[baanNr].some(function(k) {
+    return String(k).toLowerCase() === waarde.toLowerCase();
+  });
+  if (!bestaat) {
+    baanIndeling.banen[baanNr].push(waarde);
+    bewaarJaarData();
+  }
+  if (vrijEl) vrijEl.value = '';
+  renderBeheer();
+}
+
+function verwijderKlasseUitBaan(baanNr, idx) {
+  if (slotInfo.vergrendeld) {
+    alert('Jaar ' + jaar + ' is vergrendeld.');
+    return;
+  }
+  if (!Array.isArray(baanIndeling.banen[baanNr])) return;
+  baanIndeling.banen[baanNr].splice(idx, 1);
+  bewaarJaarData();
+  renderBeheer();
+}
+
+function herstelStandaardBaanindeling() {
+  if (slotInfo.vergrendeld) {
+    alert('Jaar ' + jaar + ' is vergrendeld.');
+    return;
+  }
+  baanIndeling.banen = kloonStandaardBanen();
+  bewaarJaarData();
+  renderBeheer();
+}
+
+function pasBaanindelingToeOpDeelnemers() {
+  if (slotInfo.vergrendeld) {
+    alert('Jaar ' + jaar + ' is vergrendeld.');
+    return;
+  }
+  var klasseNaarBaan = {};
+  ["1", "2", "3", "4", "5"].forEach(function(nr) {
+    (baanIndeling.banen[nr] || []).forEach(function(kl) {
+      klasseNaarBaan[String(kl).trim().toLowerCase()] = nr;
+    });
+  });
+
+  var bijgewerkt = 0;
+  deelnemers = deelnemers.map(function(d) {
+    var klKey = String(d.klasse || '').trim().toLowerCase();
+    var doelBaan = klasseNaarBaan[klKey];
+    if (doelBaan && String(d.baan) !== doelBaan) {
+      bijgewerkt++;
+      return Object.assign({}, d, { baan: doelBaan });
+    }
+    return d;
+  });
+
+  bewaarJaarData();
+  renderBeheer();
+  alert('Baanindeling opgeslagen. ' + bijgewerkt + ' deelnemer(s) bijgewerkt op basis van klasse.');
+}
+
+function slaBijlagenOp() {
+  if (slotInfo.vergrendeld) {
+    alert('Jaar ' + jaar + ' is vergrendeld.');
+    return;
+  }
+  baanIndeling.bijlagen = {
+    b1: document.getElementById('txtBijlage1').value,
+    b2: document.getElementById('txtBijlage2').value,
+    b3: document.getElementById('txtBijlage3').value
+  };
+  bewaarJaarData();
+  alert('Baanindeling en bijlagen opgeslagen voor ' + jaar + '.');
+}
+
 function voegInschrijvingToe(ev) {
   ev.preventDefault();
   if (slotInfo.vergrendeld) {
@@ -242,20 +362,6 @@ function verwijderDeelnemer(id) {
   deelnemers = deelnemers.filter(function(d) { return d.id !== id; });
   bewaarJaarData();
   renderBeheer();
-}
-
-function slaBijlagenOp() {
-  if (slotInfo.vergrendeld) {
-    alert('Jaar ' + jaar + ' is vergrendeld.');
-    return;
-  }
-  baanIndeling.bijlagen = {
-    b1: document.getElementById('txtBijlage1').value,
-    b2: document.getElementById('txtBijlage2').value,
-    b3: document.getElementById('txtBijlage3').value
-  };
-  bewaarJaarData();
-  alert('Bijlagen opgeslagen voor ' + jaar + '.');
 }
 
 function importeerTekstData() {
@@ -303,6 +409,60 @@ function importeerTekstData() {
   }
 }
 
+function renderDeel3() {
+  var b = baanIndeling.bijlagen || {};
+  var baanKaarten = ["1", "2", "3", "4", "5"].map(function(nr) {
+    var gekoppelde = baanIndeling.banen[nr] || [];
+    var aantalHonden = deelnemers.filter(function(d) { return String(d.baan) === nr; }).length;
+    var tagsHtml = gekoppelde.length
+      ? gekoppelde.map(function(kl, idx) {
+          return '<span class="tag">' + esc(kl) +
+            '<button type="button" title="Verwijder uit Baan ' + nr + '" onclick="verwijderKlasseUitBaan(\'' + nr + '\',' + idx + ')">×</button></span>';
+        }).join('')
+      : '<span class="sub">Geen klassen gekoppeld</span>';
+
+    var optiesHtml = STANDAARD_KLASSEN.map(function(kl) {
+      return '<option value="' + esc(kl) + '">' + esc(kl) + '</option>';
+    }).join('');
+
+    return '<div class="kaart">' +
+      '<div>' +
+        '<div class="baan-kop"><h3>Baan ' + nr + '</h3><span class="chip">' + aantalHonden + ' honden</span></div>' +
+        '<div class="tag-lijst">' + tagsHtml + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<label for="selKlasseBaan' + nr + '">Klasse toevoegen</label>' +
+        '<div class="toevoeg-rij">' +
+          '<select id="selKlasseBaan' + nr + '">' + optiesHtml + '</select>' +
+          '<button type="button" class="sm" onclick="voegKlasseAanBaanToe(\'' + nr + '\')">+ Koppel</button>' +
+        '</div>' +
+        '<input id="inpKlasseBaan' + nr + '" placeholder="Of eigen klasse/onderdeel..." style="margin-top:6px;margin-bottom:0;min-height:34px;font-size:14px">' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  return '<div class="box">' +
+    '<div class="box-head">' +
+      '<div><h2>3A. Baanindeling per baan (' + esc(jaar) + ')</h2><div class="sub">Koppel klassen of onderdelen aan Banen 1 t/m 5 en pas de indeling toe op de deelnemers</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="sm" onclick="herstelStandaardBaanindeling()">Standaard 1–5</button>' +
+        '<button type="button" class="pri sm" onclick="pasBaanindelingToeOpDeelnemers()">Opslaan &amp; deelnemers indelen</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="baan-grid">' + baanKaarten + '</div>' +
+  '</div>' +
+  '<div class="box">' +
+    '<h2>3B. 3 Bijlagen Waterwerkreglement (' + esc(jaar) + ')</h2>' +
+    '<div class="sub" style="margin-bottom:10px">Teksten voor de 3 bijlagen bij het waterwerkreglement voor wedstrijdjaar ' + esc(jaar) + '</div>' +
+    '<div class="grid3">' +
+      '<div class="kaart"><label for="txtBijlage1">Bijlage 1</label><textarea id="txtBijlage1" rows="5">' + esc(b.b1 || '') + '</textarea></div>' +
+      '<div class="kaart"><label for="txtBijlage2">Bijlage 2</label><textarea id="txtBijlage2" rows="5">' + esc(b.b2 || '') + '</textarea></div>' +
+      '<div class="kaart"><label for="txtBijlage3">Bijlage 3</label><textarea id="txtBijlage3" rows="5">' + esc(b.b3 || '') + '</textarea></div>' +
+    '</div>' +
+    '<button type="button" class="pri" onclick="slaBijlagenOp()">Bijlagen opslaan</button>' +
+  '</div>';
+}
+
 function renderBeheer() {
   document.getElementById('lblJaar').textContent = jaar;
   document.getElementById('slotBadge').innerHTML = slotInfo.vergrendeld
@@ -319,55 +479,4 @@ function renderBeheer() {
 
   var html = '';
   if (actiefDeel === 1) {
-    html = '<div class="box"><h2>1. Importeren (' + esc(jaar) + ')</h2><div class="sub" style="margin-bottom:10px">Plak CSV-regels (startnr;roepnaam;eigenaar;klasse;baan;stamboom) of een JSON-array met deelnemers.</div>' +
-      '<textarea id="txtImport" rows="5" placeholder="1;Storm;Jan Jansen;Open;1;Storm van het Waterwerk"></textarea>' +
-      '<button type="button" class="pri" onclick="importeerTekstData()">Importeer deelnemers</button></div>';
-  } else if (actiefDeel === 2) {
-    html = '<div class="box"><h2>2. Nieuwe inschrijving (' + esc(jaar) + ')</h2><form onsubmit="voegInschrijvingToe(event)"><div class="grid2">' +
-      '<div><label>Roepnaam *</label><input id="inpRoepnaam" required></div>' +
-      '<div><label>Eigenaar *</label><input id="inpEigenaar" required></div>' +
-      '<div><label>Klasse</label><select id="inpKlasse"><option>Jeugd</option><option selected>Open</option><option>Veteranen</option><option>Stamboomloos</option><option>Specials</option></select></div>' +
-      '<div><label>Baan</label><select id="inpBaan"><option value="1">Baan 1</option><option value="2">Baan 2</option><option value="3">Baan 3</option><option value="4">Baan 4</option><option value="5">Baan 5</option></select></div>' +
-      '</div><label>Stamboomnaam</label><input id="inpStamboom"><button type="submit" class="pri">Inschrijving opslaan</button></form></div>';
-  } else if (actiefDeel === 3) {
-    var b = baanIndeling.bijlagen || {};
-    html = '<div class="box"><h2>3. 3 Bijlagen Waterwerkreglement (' + esc(jaar) + ')</h2><div class="grid3">' +
-      '<div class="kaart"><label>Bijlage 1</label><textarea id="txtBijlage1" rows="5">' + esc(b.b1 || '') + '</textarea></div>' +
-      '<div class="kaart"><label>Bijlage 2</label><textarea id="txtBijlage2" rows="5">' + esc(b.b2 || '') + '</textarea></div>' +
-      '<div class="kaart"><label>Bijlage 3</label><textarea id="txtBijlage3" rows="5">' + esc(b.b3 || '') + '</textarea></div>' +
-      '</div><button type="button" class="pri" onclick="slaBijlagenOp()">Bijlagen opslaan</button></div>';
-  } else if (actiefDeel === 4) {
-    var rijen = deelnemers.map(function(d) {
-      return '<tr><td><b>#' + esc(d.startnummer) + '</b></td><td><b>' + esc(d.roepnaam) + '</b> <span class="sub">(' + esc(d.stamboom || '') + ')</span></td><td>' + esc(d.eigenaar) + '</td><td><span class="chip">' + esc(d.klasse) + '</span></td><td><span class="chip">Baan ' + esc(d.baan) + '</span></td><td><button type="button" class="bad sm" onclick="verwijderDeelnemer(\'' + esc(d.id) + '\')">Verwijder</button></td></tr>';
-    }).join('');
-    html = '<div class="box"><h2>4. Deelnemerslijst (' + esc(jaar) + ') – ' + deelnemers.length + ' deelnemers</h2><div class="table-wrap"><table><thead><tr><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Baan</th><th>Actie</th></tr></thead><tbody>' +
-      (rijen || '<tr><td colspan="6" class="sub">Nog geen deelnemers voor ' + esc(jaar) + '.</td></tr>') +
-      '</tbody></table></div></div>';
-  } else if (actiefDeel === 5) {
-    html = '<div class="box"><h2>5. Back-up &amp; Jaarvergrendeling (' + esc(jaar) + ')</h2><p class="sub">Huidige status voor ' + esc(jaar) + ': <b>' + (slotInfo.vergrendeld ? 'Vergrendeld (alleen-lezen)' : 'Open') + '</b></p>' +
-      '<button type="button" class="' + (slotInfo.vergrendeld ? 'ok' : 'pri') + '" onclick="wisselVergrendeling()">' +
-      (slotInfo.vergrendeld ? 'Jaar ' + esc(jaar) + ' ontgrendelen' : 'Jaar ' + esc(jaar) + ' afsluiten en vergrendelen') +
-      '</button></div>';
-  }
-
-  document.getElementById('beheerContent').innerHTML = banner + html;
-}
-
-laadJaarData();
-renderBeheer();
-
-if (window.NNFCJaarNav && typeof window.NNFCJaarNav.installeerTerugEnSyncListeners === 'function') {
-  window.NNFCJaarNav.installeerTerugEnSyncListeners(function (actueelJaar) {
-    if (actueelJaar && actueelJaar !== jaar) {
-      jaar = actueelJaar;
-      selJaarEl.value = jaar;
-      laadJaarData();
-      renderBeheer();
-    } else if (window.NNFCJaarNav.werkLinksBij) {
-      window.NNFCJaarNav.werkLinksBij(jaar);
-    }
-  }, '2026');
-}
-</script>
-</body>
-</html>
+    html = '<div class="box"><h2>1. Importeren (' + esc(jaar) + ')</h2><div class="sub
