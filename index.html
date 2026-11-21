@@ -96,7 +96,7 @@ h2{font-size:19px;margin:0;font-weight:700}
       <div>
         <div class="sub" style="margin-bottom:6px;font-weight:700">Klokkersscherm per baan (voor gekozen jaar):</div>
         <div id="klokkerBaanLinks" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
-        <a id="linkBanen" href="banen.html" class="btn-go">Open Banen / Klokkers →</a>
+        <a id="linkBanen" href="banen.html" data-pagina="banen.html" class="btn-go">Open Banen / Klokkers →</a>
       </div>
     </div>
 
@@ -112,7 +112,7 @@ h2{font-size:19px;margin:0;font-weight:700}
           <li>Brevetuitslagen en bekerverdeling per klasse</li>
         </ul>
       </div>
-      <a id="linkTafel" href="wedstrijdtafel.html" class="btn-go">Open Wedstrijdtafel →</a>
+      <a id="linkTafel" href="wedstrijdtafel.html" data-pagina="wedstrijdtafel.html" class="btn-go">Open Wedstrijdtafel →</a>
     </div>
 
     <div class="kaart">
@@ -127,7 +127,7 @@ h2{font-size:19px;margin:0;font-weight:700}
           <li>Volledig jaar afsluiten en vergrendelen na afloop</li>
         </ul>
       </div>
-      <a id="linkBeheer" href="beheer.html" class="btn-go">Open Beheer / Admin →</a>
+      <a id="linkBeheer" href="beheer.html" data-pagina="beheer.html" class="btn-go">Open Beheer / Admin →</a>
     </div>
   </div>
 </div>
@@ -248,33 +248,39 @@ function bepaalStartJaar() {
 var gekozenJaar = bepaalStartJaar();
 var toonAlleJaren = false;
 
+function maakDoelUrl(pagina, extraParams) {
+  var params = new URLSearchParams(extraParams || {});
+  params.set('jaar', gekozenJaar);
+  return pagina + '?' + params.toString();
+}
+
+function werkAlleLinksBij() {
+  var linkBanen = document.getElementById('linkBanen');
+  var linkTafel = document.getElementById('linkTafel');
+  var linkBeheer = document.getElementById('linkBeheer');
+  if (linkBanen) linkBanen.href = maakDoelUrl('banen.html');
+  if (linkTafel) linkTafel.href = maakDoelUrl('wedstrijdtafel.html');
+  if (linkBeheer) linkBeheer.href = maakDoelUrl('beheer.html');
+
+  var baanLinksEl = document.getElementById('klokkerBaanLinks');
+  if (baanLinksEl) {
+    baanLinksEl.innerHTML = ['1', '2', '3', '4', '5'].map(function(b) {
+      return '<a href="' + maakDoelUrl('klokker.html', { baan: b }) + '" class="btn-sm">Klokker B' + b + '</a>';
+    }).join('');
+  }
+}
+
 function kiesJaar(y) {
   if (!isGeldigJaar(y)) return;
   gekozenJaar = String(y).trim();
   bewaarJaar(gekozenJaar, true);
+  werkAlleLinksBij();
   renderMenu();
 }
 
 function toggleAlleJaren() {
   toonAlleJaren = !toonAlleJaren;
   renderMenu();
-}
-
-function werkAlleLinksBij() {
-  var q = '?jaar=' + encodeURIComponent(gekozenJaar);
-  var linkBanen = document.getElementById('linkBanen');
-  var linkTafel = document.getElementById('linkTafel');
-  var linkBeheer = document.getElementById('linkBeheer');
-  if (linkBanen) linkBanen.href = 'banen.html' + q;
-  if (linkTafel) linkTafel.href = 'wedstrijdtafel.html' + q;
-  if (linkBeheer) linkBeheer.href = 'beheer.html' + q;
-
-  var baanLinksEl = document.getElementById('klokkerBaanLinks');
-  if (baanLinksEl) {
-    baanLinksEl.innerHTML = ['1', '2', '3', '4', '5'].map(function(b) {
-      return '<a href="klokker.html?baan=' + b + '&jaar=' + encodeURIComponent(gekozenJaar) + '" class="btn-sm">Klokker B' + b + '</a>';
-    }).join('');
-  }
 }
 
 function renderMenu() {
@@ -341,6 +347,13 @@ function renderMenu() {
     if (errEl) errEl.textContent = 'Actief jaar: ' + gekozenJaar;
   }
 }
+
+document.addEventListener('click', function(ev) {
+  var a = ev.target && ev.target.closest ? ev.target.closest('a[data-pagina]') : null;
+  if (!a) return;
+  bewaarJaar(gekozenJaar, true);
+  a.href = maakDoelUrl(a.getAttribute('data-pagina'));
+});
 
 window.addEventListener('pageshow', function() {
   gekozenJaar = bepaalStartJaar();
