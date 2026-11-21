@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Beheer – NNFC</title>
+<title>Beheer / Admin – NNFC</title>
 <style>
 :root{
   --bg:#EEF3F5;--sf:#FFFFFF;--sf2:#F7FAFC;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
@@ -98,7 +98,7 @@ tbody tr:hover{background:var(--soft)}
     <div class="top-l">
       <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
       <div>
-        <h1>Beheer – Voorbereiding & Inschrijvingen (<span id="lblJaar">2026</span>)</h1>
+        <h1>Beheer / Admin – Voorbereiding & Inschrijvingen (<span id="lblJaar">2026</span>)</h1>
         <div class="sub">Inschrijven, baanindeling & 3 bijlagen, deelnemerslijst en testdata voor de wedstrijddag</div>
       </div>
     </div>
@@ -107,7 +107,7 @@ tbody tr:hover{background:var(--soft)}
       <span id="slotStatusBadge"></span>
       <a href="wedstrijdtafel.html" class="btn-link pri">Wedstrijdtafel →</a>
       <a href="banen.html" class="btn-link">Banen / Klokkers →</a>
-      <a href="index.html" class="btn-link">← Menu</a>
+      <a href="index.html" class="btn-link">← Startscherm</a>
     </div>
   </div>
 
@@ -296,7 +296,7 @@ function updateCrumbBar() {
     return;
   }
   bar.style.display = 'flex';
-  trail.innerHTML = 'Beheer &rsaquo; ' + esc(SECTIE_NAMEN[nav.sectie]) + ' &rsaquo; <b>' + esc(nav.subLabel) + '</b>';
+  trail.innerHTML = 'Beheer / Admin &rsaquo; ' + esc(SECTIE_NAMEN[nav.sectie]) + ' &rsaquo; <b>' + esc(nav.subLabel) + '</b>';
 }
 
 function bepaalBaanVoorKlasse(klasse) {
@@ -375,6 +375,7 @@ function voegInschrijvingToe(e) {
 }
 
 function laadVoorbeeldData() {
+  if (waarschuwIndienVergrendeld()) return;
   if (deelnemers.length > 0 && !confirm('Er staan al ' + deelnemers.length + ' deelnemers in ' + jaar + '. Wil je een set voorbeeldeelnemers toevoegen?')) return;
   var voorbeelden = [
     { roepnaam: 'Bram', stamboom: 'Bram van het Waterriet', eigenaar: 'Jan de Vries', district: 'Noord', lidnr: '1042', geslacht: 'Reu', klasse: 'Open', huidigBrevet: 'B1', opvolgendBrevet: 'B2', kcm: 'U1', buitenMededinging: false, betaald: true },
@@ -803,22 +804,28 @@ var jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
 function laadSlot() {
   try {
     var raw = JSON.parse(localStorage.getItem('nnfc_slot_' + jaar));
-    if (raw && typeof raw === 'object') {
+    if (raw && typeof raw === 'object' && typeof raw.vergrendeld === 'boolean') {
       jaarSlot = {
-        vergrendeld: !!raw.vergrendeld,
+        vergrendeld: raw.vergrendeld,
         datum: raw.datum || '',
         toelichting: raw.toelichting || ''
+      };
+    } else if (String(jaar) === '2026') {
+      jaarSlot = {
+        vergrendeld: true,
+        datum: 'Afgesloten (2026)',
+        toelichting: 'Jaar 2026 is afgesloten en alleen-lezen.'
       };
     } else {
       jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
     }
   } catch (e) {
-    jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
+    jaarSlot = { vergrendeld: String(jaar) === '2026', datum: '', toelichting: '' };
   }
   var badge = document.getElementById('slotStatusBadge');
   if (badge) {
     badge.innerHTML = jaarSlot.vergrendeld
-      ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' vergrendeld</span>'
+      ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
       : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
   }
 }
@@ -978,7 +985,26 @@ function render() {
   else if (nav.sectie === 3) html = renderSectie3();
   else if (nav.sectie === 4) html = renderSectie4();
   else if (nav.sectie === 5) html = renderSectie5();
-  document.getElementById('appContent').innerHTML = html;
+  var bannerHtml = isJaarVergrendeld()
+    ? '<div class="warn-box" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<div><b>🔒 Wedstrijdjaar ' + esc(jaar) + ' is afgesloten en vergrendeld (alleen-lezen)</b>' +
+        '<div class="sub">Bewerken, importeren, inschrijven en verwijderen zijn uitgeschakeld. Je kunt data bekijken, exporteren of het jaar in Deel 5 ontgrendelen.</div></div>' +
+        '<button type="button" class="sm" onclick="gaNaarSectie(5)">Naar jaarvergrendeling →</button>' +
+      '</div>'
+    : '';
+  document.getElementById('appContent').innerHTML = bannerHtml + html;
+  if (isJaarVergrendeld()) {
+    var container = document.getElementById('appContent');
+    container.querySelectorAll('input,select,textarea').forEach(function(el) {
+      if (el.id === 'slotToelichting') return;
+      el.disabled = true;
+    });
+    container.querySelectorAll('button').forEach(function(btn) {
+      var txt = (btn.textContent || '').trim();
+      if (txt.indexOf('Ontgrendel jaar') !== -1 || txt.indexOf('Download') !== -1 || txt.indexOf('Back-up (JSON)') !== -1 || txt.indexOf('Bekijk') !== -1 || txt.indexOf('Naar jaarvergrendeling') !== -1) return;
+      btn.disabled = true;
+    });
+  }
 }
 
 render();
