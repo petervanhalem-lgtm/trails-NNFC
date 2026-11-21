@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Menu – NNFC Waterwerk</title>
+<title>Startscherm – NNFC Waterwerk</title>
 <style>
 :root{
   --bg:#EEF3F5;--sf:#FFFFFF;--sf2:#F7FAFC;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
@@ -59,7 +59,7 @@ h2{font-size:19px;margin:0;font-weight:700}
     <div class="top-l">
       <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
       <div>
-        <h1>NNFC Waterwerk – Hoofdmenu</h1>
+        <h1>NNFC Waterwerk – Startscherm</h1>
         <div class="sub">Kies een wedstrijdjaar met beschikbare data en open het gewenste onderdeel</div>
       </div>
     </div>
@@ -114,7 +114,7 @@ h2{font-size:19px;margin:0;font-weight:700}
     <div class="kaart">
       <div>
         <div class="k-top">
-          <p class="k-ttl">Beheer</p>
+          <p class="k-ttl">Beheer / Admin</p>
           <span class="chip">Deelnemers &amp; Jaar</span>
         </div>
         <div class="sub" style="margin-top:6px">Deelnemerslijst (inclusief kennel- en stamboomnamen), baanindeling, bijlagen en jaarfinalisatie.</div>
@@ -123,7 +123,7 @@ h2{font-size:19px;margin:0;font-weight:700}
           <li>Volledig jaar afsluiten en vergrendelen na afloop</li>
         </ul>
       </div>
-      <a id="linkBeheer" href="beheer.html" class="btn-go">Open Beheer →</a>
+      <a id="linkBeheer" href="beheer.html" class="btn-go">Open Beheer / Admin →</a>
     </div>
   </div>
 </div>
@@ -139,11 +139,14 @@ function getSlotInfo(y) {
     var raw = localStorage.getItem('nnfc_slot_' + s);
     if (raw) {
       var parsed = JSON.parse(raw);
-      if (parsed && parsed.vergrendeld) {
-        return { vergrendeld: true, datum: parsed.datum || '' };
+      if (parsed && typeof parsed.vergrendeld === 'boolean') {
+        return { vergrendeld: parsed.vergrendeld, datum: parsed.datum || (parsed.vergrendeld ? 'Afgesloten' : '') };
       }
     }
   } catch (e) {}
+  if (s === '2026') {
+    return { vergrendeld: true, datum: 'Afgesloten (2026)' };
+  }
   return { vergrendeld: false, datum: '' };
 }
 
