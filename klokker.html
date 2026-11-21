@@ -67,7 +67,9 @@ input,select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid
 var params = new URLSearchParams(window.location.search);
 var BAAN_NR = String(params.get('baan') || '1').replace(/[^1-5]/g, '') || '1';
 var IS_ADMIN = params.get('admin') === '1';
-document.title = 'Baan ' + BAAN_NR + ' – NNFC Klokkersscherm';
+var rawJaarParam = params.get('jaar');
+var JAAR = (rawJaarParam && /^20\d{2}$/.test(rawJaarParam)) ? rawJaarParam : '2026';
+document.title = 'Baan ' + BAAN_NR + ' (' + JAAR + ') – NNFC Klokkersscherm';
 var LOGO = 'nnfc-logo.png';
 
 function esc(str) {
@@ -76,9 +78,9 @@ function esc(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 var db = null;
-var KEY_STATE = 'nnfc_klokker_state_' + BAAN_NR;
-var KEY_DOGS = 'nnfc_klokker_dogs_' + BAAN_NR;
-var KEY_OUTBOX = 'nnfc_klokker_outbox_' + BAAN_NR;
+var KEY_STATE = 'nnfc_klokker_state_' + JAAR + '_' + BAAN_NR;
+var KEY_DOGS = 'nnfc_klokker_dogs_' + JAAR + '_' + BAAN_NR;
+var KEY_OUTBOX = 'nnfc_klokker_outbox_' + JAAR + '_' + BAAN_NR;
 
 var DOGS = [];
 try { DOGS = JSON.parse(localStorage.getItem(KEY_DOGS)) || []; } catch (e) {}
@@ -220,6 +222,51 @@ function renderSyncBadge(count) {
 
 window.addEventListener('online', flushOutbox);
 setInterval(flushOutbox, 5000);
+
+function isJaarVergrendeld() {
+  try {
+    var raw = localStorage.getItem('nnfc_slot_' + JAAR);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.vergrendeld === 'boolean') return parsed.vergrendeld;
+    }
+  } catch (e) {}
+  return String(JAAR) === '2026';
+}
+
+function waarschuwVergrendeld() {
+  if (isJaarVergrendeld()) {
+    alert('Wedstrijdjaar ' + JAAR + ' is afgesloten en vergrendeld (alleen-lezen). Open Beheer / Admin om het jaar te ontgrendelen indien nodig.');
+    return true;
+  }
+  return false;
+}
+
+function pasKlokkerLockToe() {
+  var appEl = document.getElementById('app');
+  if (!appEl) return;
+  var vergrendeld = isJaarVergrendeld();
+  var banner = document.getElementById('klokkerSlotBanner');
+  if (vergrendeld) {
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'klokkerSlotBanner';
+      banner.style.cssText = 'background:rgba(255,210,63,0.22);border:2px solid var(--warn);border-radius:12px;padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap';
+      banner.innerHTML = '<div><b>🔒 Jaar ' + esc(JAAR) + ' vergrendeld (alleen-lezen)</b><div style="font-size:14px;opacity:.9">Registreren, corrigeren en berichten versturen is uitgeschakeld.</div></div><a href="beheer.html?jaar=' + encodeURIComponent(JAAR) + '" class="btn-link" style="min-height:36px;padding:4px 10px;font-size:15px">Beheer / Admin →</a>';
+      appEl.insertBefore(banner, appEl.firstChild);
+    }
+    appEl.querySelectorAll('input,select,textarea').forEach(function(el) { el.disabled = true; });
+    appEl.querySelectorAll('button').forEach(function(btn) {
+      var act = btn.dataset.a || '';
+      var navActies = ['ex', 'tab'];
+      if (navActies.indexOf(act) !== -1) return;
+      btn.disabled = true;
+    });
+  } else if (banner && banner.parentNode) {
+    banner.parentNode.removeChild(banner);
+  }
+}
+
 function render() {
   var o = S.ox[S.ex];
   var relDogs = S.ex === 'BREVET' ? DOGS.filter(isBrevetHond) : DOGS;
@@ -230,7 +277,7 @@ function render() {
   var boxLen = 0;
   try { boxLen = (JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []).length; } catch (e) {}
 
-  var menuLink = IS_ADMIN ? '<a href="index.html" class="btn-link">← Startscherm</a>' : '';
+  var menuLink = IS_ADMIN ? '<a href="index.html?jaar=' + encodeURIComponent(JAAR) + '" class="btn-link">← Startscherm</a>' : '';
   var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'">' +
     '<div><h1>Baan ' + esc(BAAN_NR) + (klassen ? ', ' + esc(klassen) : '') + '</h1>' +
     '<p class="sub">' + (DOGS.length ? ('Oefening ' + esc(S.ex) + ': ' + done + ' van ' + relDogs.length + ' gedaan') : 'Wacht op aanmelding bij tafel') + '</p></div></div>' +
@@ -245,6 +292,7 @@ function render() {
 
   h += S.tab === 'reg' ? reg(o, cd, nd) : lijst(o, relDogs);
   document.getElementById('app').innerHTML = h;
+  pasKlokkerLockToe();
 }
 
 function reg(o, cd, nd) {
@@ -327,6 +375,11 @@ document.getElementById('app').addEventListener('click', function(e) {
   var b = e.target.closest('button');
   if (!b) return;
   var a = b.dataset.a, v = b.dataset.v, o = S.ox[S.ex];
+  var mutatieActies = ['k', 'del', 'clr', 'ct', 'cok', 'cw', 'step2', 'yes', 'mv', 'msgopen', 'msgsend', 'corropen', 'corrsend'];
+  if (mutatieActies.indexOf(a) !== -1 && waarschuwVergrendeld()) {
+    pasKlokkerLockToe();
+    return;
+  }
 
   if (a === 'ex') { S.ex = v; inp = ''; conf = null; confStep = 1; corrId = null; pushStatus(); }
   else if (a === 'tab') { S.tab = v; conf = null; confStep = 1; corrId = null; }
@@ -415,48 +468,6 @@ document.getElementById('app').addEventListener('click', function(e) {
   save();
   render();
 
-function isJaarVergrendeldKlokker() {
-  var actiefJaar = (typeof jaar !== 'undefined' && jaar) ? String(jaar) : '2026';
-  try {
-    var raw = localStorage.getItem('nnfc_slot_' + actiefJaar);
-    if (raw) {
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed.vergrendeld === 'boolean') return parsed.vergrendeld;
-    }
-  } catch (e) {}
-  return actiefJaar === '2026';
-}
-
-function waarschuwVergrendeldKlokker() {
-  if (isJaarVergrendeldKlokker()) {
-    alert('Dit wedstrijdjaar is afgesloten en vergrendeld (alleen-lezen). Tijdmeting en invoer zijn uitgeschakeld.');
-    return true;
-  }
-  return false;
-}
-
-  var klHost = document.querySelector('.wrap') || document.body;
-  if (isJaarVergrendeldKlokker()) {
-    var exK = document.getElementById('klokkerSlotBanner');
-    if (!exK && klHost.firstChild) {
-      var b = document.createElement('div');
-      b.id = 'klokkerSlotBanner';
-      b.style.cssText = 'background:rgba(255,210,63,0.18);border:1.5px solid rgba(180,83,9,0.45);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap';
-      b.innerHTML = '<div><b>🔒 Dit wedstrijdjaar is afgesloten en vergrendeld (alleen-lezen)</b><div style="font-size:14px;opacity:.85">Klokken, registraties en meldingen zijn vergrendeld. Alleen bekijken is actief.</div></div><a href="index.html" class="btn-link sm">← Startscherm</a>';
-      klHost.insertBefore(b, klHost.firstChild.nextSibling || klHost.firstChild);
-    }
-    klHost.querySelectorAll('input,select,textarea').forEach(function(el) {
-      el.disabled = true;
-    });
-    klHost.querySelectorAll('button').forEach(function(btn) {
-      var t = (btn.textContent || '').trim();
-      if (t.indexOf('Baan ') === 0 || t.indexOf('Startscherm') !== -1 || t.indexOf('Terug') !== -1) return;
-      btn.disabled = true;
-    });
-  } else {
-    var oldKl = document.getElementById('klokkerSlotBanner');
-    if (oldKl && oldKl.parentNode) oldKl.parentNode.removeChild(oldKl);
-  }
 });
 
 initFirebase();
