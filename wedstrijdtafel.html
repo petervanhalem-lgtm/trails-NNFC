@@ -112,9 +112,9 @@ tbody tr:hover{background:var(--soft)}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="selJaar" onchange="wisselJaar()" style="width:auto;margin:0;font-weight:700" aria-label="Selecteer wedstrijdjaar"></select>
-      <a href="banen.html" class="btn-link">Banen / Klokkers →</a>
-      <a href="beheer.html" class="btn-link">Beheer / Admin →</a>
-      <a href="index.html" class="btn-link">← Startscherm</a>
+      <a href="banen.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link">Banen / Klokkers →</a>
+      <a href="beheer.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link">Beheer / Admin →</a>
+      <a href="index.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link">← Startscherm</a>
     </div>
   </div>
 
@@ -346,10 +346,12 @@ function toggleAanwezig(id) {
   if (h) { h.aanwezig = !h.aanwezig; bewaarAlles(); }
 }
 function toggleBetaald(id) {
+  if (waarschuwVergrendeldTafel()) return;
   var h = deelnemers.find(function(x) { return x.id === id; });
   if (h) { h.betaald = !h.betaald; bewaarAlles(); }
 }
 function wijzigStartnr(id, val) {
+  if (waarschuwVergrendeldTafel()) return;
   var nr = parseInt(val, 10);
   if (!nr || nr < 1) return;
   if (deelnemers.some(function(x) { return x.id !== id && x.startnummer === nr; })) {
@@ -361,41 +363,49 @@ function wijzigStartnr(id, val) {
   if (h) { h.startnummer = nr; bewaarAlles(); }
 }
 function wijzigBaan(id, b) {
+  if (waarschuwVergrendeldTafel()) return;
   var h = deelnemers.find(function(x) { return x.id === id; });
   if (h) { h.baan = b; bewaarAlles(); }
 }
 function setBasisPunten(id, p) {
+  if (waarschuwVergrendeldTafel()) return;
   if (!tafelData[id]) return;
   tafelData[id].basisPunten = p;
   if (p !== '' && tafelData[id].basisStatus === 'Open') tafelData[id].basisStatus = 'Klaar';
   bewaarAlles();
 }
 function setBasisStatus(id, st) {
+  if (waarschuwVergrendeldTafel()) return;
   if (!tafelData[id]) return;
   tafelData[id].basisStatus = st;
   bewaarAlles();
 }
 function setBrevetUitslag(id, u) {
+  if (waarschuwVergrendeldTafel()) return;
   if (!tafelData[id]) return;
   tafelData[id].brevetUitslag = u;
   bewaarAlles();
 }
 function setBrevetOpmerking(id, txt) {
+  if (waarschuwVergrendeldTafel()) return;
   if (!tafelData[id]) return;
   tafelData[id].brevetOpmerking = txt;
   localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
 }
 function toggleRtKandidaat(id) {
+  if (waarschuwVergrendeldTafel()) return;
   if (!tafelData[id]) return;
   tafelData[id].rtKandidaat = !tafelData[id].rtKandidaat;
   bewaarAlles();
 }
 function setRtRang(id, r) {
+  if (waarschuwVergrendeldTafel()) return;
   if (!tafelData[id]) return;
   tafelData[id].rtRang = r;
   bewaarAlles();
 }
 function setBeker(id, b) {
+  if (waarschuwVergrendeldTafel()) return;
   if (!tafelData[id]) return;
   tafelData[id].beker = b;
   localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
@@ -843,6 +853,43 @@ function waarschuwVergrendeldTafel() {
   return false;
 }
 
+
+function leesInkomendeKlokkerData() {
+  var registraties = [];
+  var meldingen = [];
+  ['1','2','3','4','5'].forEach(function(bNr) {
+    try {
+      var rawBox = JSON.parse(localStorage.getItem('nnfc_klokker_outbox_' + jaar + '_' + bNr)) || [];
+      rawBox.forEach(function(item) {
+        if (!item || !item.data) return;
+        if (item.pad === 'registraties') registraties.push(item.data);
+        if (item.pad === 'meldingen') meldingen.push(item.data);
+      });
+    } catch (e) {}
+    try {
+      var rawState = JSON.parse(localStorage.getItem('nnfc_klokker_state_' + jaar + '_' + bNr));
+      if (rawState && rawState.ox) {
+        ['A','B','C','BREVET'].forEach(function(exKey) {
+          var resMap = (rawState.ox[exKey] && rawState.ox[exKey].res) || {};
+          Object.keys(resMap).forEach(function(hId) {
+            var r = resMap[hId];
+            var tijdTxt = r.t === 'tijd' ? (Math.floor(r.cs/6000) ? (Math.floor(r.cs/6000)+':'+String(Math.floor(r.cs%6000/100)).padStart(2,'0')+','+String(r.cs%100).padStart(2,'0')) : (Math.floor(r.cs/100)+','+String(r.cs%100).padStart(2,'0'))) : (r.t === 'ok' ? 'UITGEVOERD' : 'WEIGERING');
+            registraties.push({
+              id: 'LOC_B' + bNr + '_' + exKey + '_' + hId,
+              baan: bNr,
+              oefening: exKey,
+              startnummer: hId,
+              tijdTekst: tijdTxt,
+              bron: 'klokker_state'
+            });
+          });
+        });
+      }
+    } catch (e) {}
+  });
+  return { registraties: registraties, meldingen: meldingen };
+}
+
 function render() {
   updateCrumbBar();
   var html = '';
@@ -852,6 +899,30 @@ function render() {
   else if (nav.stap === 4) html = renderStap4();
   else if (nav.stap === 5) html = renderStap5();
   document.getElementById('appContent').innerHTML = html;
+
+
+  var feed = leesInkomendeKlokkerData();
+  var hostFeed = document.getElementById('appContent');
+  if (hostFeed && (feed.registraties.length || feed.meldingen.length)) {
+    var fBox = document.getElementById('klokkerFeedBox');
+    if (!fBox) {
+      fBox = document.createElement('div');
+      fBox.id = 'klokkerFeedBox';
+      fBox.className = 'box no-print';
+      hostFeed.insertBefore(fBox, hostFeed.firstChild);
+    }
+    var melHtml = feed.meldingen.slice(-5).reverse().map(function(m) {
+      return '<li><b>Baan ' + esc(m.baan) + '</b> (' + esc(m.soort || 'MELDING') + '): ' + esc(m.tekst || (m.roepnaam ? ('#' + m.startnummer + ' ' + m.roepnaam + ' ' + m.oudeTijd + ' → ' + m.nieuweTijd + ' (' + (m.reden || '') + ')') : '')) + '</li>';
+    }).join('');
+    var regHtml = feed.registraties.slice(-6).reverse().map(function(r) {
+      return '<li><b>Baan ' + esc(r.baan) + ' • Oef. ' + esc(r.oefening) + '</b>: #' + esc(r.startnummer) + (r.roepnaam ? ' ' + esc(r.roepnaam) : '') + ' → <b>' + esc(r.tijdTekst) + '</b></li>';
+    }).join('');
+    fBox.innerHTML = '<div class="box-head"><div><h2>Inkomend van Klokkers (' + feed.registraties.length + ' registraties • ' + feed.meldingen.length + ' meldingen)</h2><div class="sub">Overzicht van klokkertijden, weigeringen, correctie-aanvragen en baanmeldingen</div></div></div>' +
+      '<div class="grid2">' +
+        '<div class="kaart"><h3>Laatste klokker-registraties</h3><ul style="margin:0;padding-left:18px;font-size:14px">' + (regHtml || '<li class="sub">Geen registraties</li>') + '</ul></div>' +
+        '<div class="kaart"><h3>Meldingen &amp; correcties voor tafel</h3><ul style="margin:0;padding-left:18px;font-size:14px">' + (melHtml || '<li class="sub">Geen meldingen</li>') + '</ul></div>' +
+      '</div>';
+  }
 
   var mainHost = document.getElementById('appContent') || document.querySelector('.wrap');
   if (mainHost && isJaarVergrendeldTafel()) {
