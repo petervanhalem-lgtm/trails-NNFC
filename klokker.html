@@ -230,7 +230,7 @@ function render() {
   var boxLen = 0;
   try { boxLen = (JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []).length; } catch (e) {}
 
-  var menuLink = IS_ADMIN ? '<a href="index.html" class="btn-link">← Menu</a>' : '';
+  var menuLink = IS_ADMIN ? '<a href="index.html" class="btn-link">← Startscherm</a>' : '';
   var h = '<div class="top"><div class="top-l"><img src="' + LOGO + '" alt="NNFC" onerror="this.style.display=\'none\'">' +
     '<div><h1>Baan ' + esc(BAAN_NR) + (klassen ? ', ' + esc(klassen) : '') + '</h1>' +
     '<p class="sub">' + (DOGS.length ? ('Oefening ' + esc(S.ex) + ': ' + done + ' van ' + relDogs.length + ' gedaan') : 'Wacht op aanmelding bij tafel') + '</p></div></div>' +
@@ -414,6 +414,49 @@ document.getElementById('app').addEventListener('click', function(e) {
 
   save();
   render();
+
+function isJaarVergrendeldKlokker() {
+  var actiefJaar = (typeof jaar !== 'undefined' && jaar) ? String(jaar) : '2026';
+  try {
+    var raw = localStorage.getItem('nnfc_slot_' + actiefJaar);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.vergrendeld === 'boolean') return parsed.vergrendeld;
+    }
+  } catch (e) {}
+  return actiefJaar === '2026';
+}
+
+function waarschuwVergrendeldKlokker() {
+  if (isJaarVergrendeldKlokker()) {
+    alert('Dit wedstrijdjaar is afgesloten en vergrendeld (alleen-lezen). Tijdmeting en invoer zijn uitgeschakeld.');
+    return true;
+  }
+  return false;
+}
+
+  var klHost = document.querySelector('.wrap') || document.body;
+  if (isJaarVergrendeldKlokker()) {
+    var exK = document.getElementById('klokkerSlotBanner');
+    if (!exK && klHost.firstChild) {
+      var b = document.createElement('div');
+      b.id = 'klokkerSlotBanner';
+      b.style.cssText = 'background:rgba(255,210,63,0.18);border:1.5px solid rgba(180,83,9,0.45);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap';
+      b.innerHTML = '<div><b>🔒 Dit wedstrijdjaar is afgesloten en vergrendeld (alleen-lezen)</b><div style="font-size:14px;opacity:.85">Klokken, registraties en meldingen zijn vergrendeld. Alleen bekijken is actief.</div></div><a href="index.html" class="btn-link sm">← Startscherm</a>';
+      klHost.insertBefore(b, klHost.firstChild.nextSibling || klHost.firstChild);
+    }
+    klHost.querySelectorAll('input,select,textarea').forEach(function(el) {
+      el.disabled = true;
+    });
+    klHost.querySelectorAll('button').forEach(function(btn) {
+      var t = (btn.textContent || '').trim();
+      if (t.indexOf('Baan ') === 0 || t.indexOf('Startscherm') !== -1 || t.indexOf('Terug') !== -1) return;
+      btn.disabled = true;
+    });
+  } else {
+    var oldKl = document.getElementById('klokkerSlotBanner');
+    if (oldKl && oldKl.parentNode) oldKl.parentNode.removeChild(oldKl);
+  }
 });
 
 initFirebase();
