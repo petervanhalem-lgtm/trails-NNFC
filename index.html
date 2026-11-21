@@ -174,6 +174,13 @@ function getSlotInfo(y) {
   return { vergrendeld: false, datum: '' };
 }
 
+function heeftInhoud(val) {
+  if (!val) return false;
+  if (Array.isArray(val)) return val.length > 0;
+  if (typeof val === 'object') return Object.keys(val).length > 0;
+  return String(val).trim().length > 0;
+}
+
 function getJaarInfo(y) {
   var s = String(y);
   var deelnemers = [];
@@ -185,7 +192,9 @@ function getJaarInfo(y) {
   try { klok = JSON.parse(localStorage.getItem('nnfc_klokkers_' + s)) || {}; } catch (e) { klok = {}; }
   for (var b = 1; b <= 5; b++) {
     try {
-      if (localStorage.getItem('nnfc_klokker_state_' + s + '_' + b) || localStorage.getItem('nnfc_klokker_dogs_' + s + '_' + b)) {
+      var st = JSON.parse(localStorage.getItem('nnfc_klokker_state_' + s + '_' + b) || 'null');
+      var dg = JSON.parse(localStorage.getItem('nnfc_klokker_dogs_' + s + '_' + b) || 'null');
+      if (heeftInhoud(st) || heeftInhoud(dg)) {
         heeftKlokPerBaan = true;
       }
     } catch (e) {}
@@ -193,8 +202,8 @@ function getJaarInfo(y) {
 
   var aantalDeelnemers = Array.isArray(deelnemers) ? deelnemers.length : 0;
   var aantalAanwezig = Array.isArray(deelnemers) ? deelnemers.filter(function(d) { return !!d.aanwezig; }).length : 0;
-  var heeftTafel = Object.keys(tafel || {}).length > 0;
-  var heeftKlok = Object.keys(klok || {}).length > 0 || heeftKlokPerBaan;
+  var heeftTafel = heeftInhoud(tafel);
+  var heeftKlok = heeftInhoud(klok) || heeftKlokPerBaan;
   var slot = getSlotInfo(s);
   var heeftData = aantalDeelnemers > 0 || heeftTafel || heeftKlok;
 
