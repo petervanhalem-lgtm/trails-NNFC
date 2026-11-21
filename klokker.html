@@ -63,6 +63,7 @@ input,select{font:inherit;color:var(--ink);background:var(--sf);border:2px solid
 <body>
 <div id="app"></div>
 <script src="config.js"></script>
+<script src="nnfc-jaar-nav.js"></script>
 <script>
 var params = new URLSearchParams(window.location.search);
 var BAAN_NR = String(params.get('baan') || '1').replace(/[^1-5]/g, '') || '1';
@@ -473,6 +474,16 @@ document.getElementById('app').addEventListener('click', function(e) {
 initFirebase();
 render();
 flushOutbox();
+
+if (window.NNFCJaarNav && typeof window.NNFCJaarNav.installeerTerugEnSyncListeners === 'function') {
+  window.NNFCJaarNav.werkLinksBij(typeof JAAR !== 'undefined' ? JAAR : '2026');
+  window.NNFCJaarNav.installeerTerugEnSyncListeners(function (actueelJaar) {
+    if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') {
+      window.NNFCJaarNav.werkLinksBij(typeof JAAR !== 'undefined' ? JAAR : actueelJaar);
+    }
+  }, '2026');
+}
+
 </script>
 </body>
 </html>
