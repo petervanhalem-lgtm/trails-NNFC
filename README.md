@@ -1,43 +1,51 @@
-NNFC Digitale Waarneming – Watertrials
+NNFC Waterwerk (trails-NNFC)
 
-Webapplicatie voor de voorbereiding, aanmelding, tijdwaarneming en uitslagenverwerking van de NNFC Watertrials (volgens het Reglement Trials 4 oktober 2026), geschikt voor de wedstrijdjaargangen 2026 t/m 2040.
+Webapplicatie voor de voorbereiding, baan- en klokregistratie, wedstrijdtafel en uitslagenverwerking van de NNFC-waterwerkdagen (met ondersteuning voor lokale opslag via localStorage en optionele live synchronisatie via Firebase Realtime Database).
 
-Overzicht van de onderdelen
+Onderdelen en schermen
 
-index.html – Startmenu voor de verschillende rollen en schermen.
+Startscherm (index.html): Kies een wedstrijdjaar, bekijk de aanwezige data en finalisatiestatus, en open Banen / Klokkers, Wedstrijdtafel of Beheer / Admin.
 
-beheer.html – Voorbereiding door waterwerkcoördinator en secretariaat: CSV-import uit Excel, handmatige invoer (inclusief spellinghulp uit referentie2026.js en KCM-uitslagen), baanindeling (Baan 1 t/m 5), startnummers, JSON-back-up en synchronisatie met de wedstrijdtafel.
+Beheer / Admin (beheer.html):
 
-wedstrijdtafel.html – Live wedstrijdtafel voor het secretariaat en wedstrijdleiding: aanmelding (Aanwezig), daginschrijvingen (+ Extra deelnemer), handmatige tijden/weigeringen, conflictmeldingen, Klokkersbeeld per baan, Bekers & KCM ((Junior) Spettertrofee) en CSV-uitslagenexport.
+Deel 1 – Importeren (Excel / CSV): Inladen van inschrijvingen (inclusief voorbeeld-Excel).
 
-klokker.html – Scherm voor de tijdwaarneming aan de baan.
+Deel 2 – Nieuwe inschrijving: Handmatig toevoegen van een deelnemer en optionele testdata.
 
-config.js – Configuratie van de Firebase Realtime Database.
+Deel 3 – Baanindeling & 3 Bijlagen: Klassen koppelen aan Baan 1–5 en de 3 bijlagen bij het waterwerkreglement vastleggen.
 
-audit.md – Uitgebreide technische en reglementaire audit (zie audit.md).
+Deel 4 – Deelnemerslijst & Banen: Zoeken, filteren op baan en aanpassen van startnummer, klasse of baan.
 
-Wedstrijddag-checklist
+Deel 5 – Back-up, Synchronisatie & Jaarvergrendeling: JSON-back-up downloaden/herstellen, synchroniseren met de wedstrijdtafel en een jaar finaliseren/vergrendelen (nnfc_slot_<jaar>).
 
-Vooraf (voorbereiding):
+Wedstrijdtafel (wedstrijdtafel.html): Dagverloop in 5 stappen (aanmelden & startnummer, basis oefeningen, brevetten, Beste Reu & Beste Teef, en einduitslagen/brevetten/bekers inclusief print/PDF).
 
-Controleer in beheer.html het actieve jaar (2026 t/m 2040) en laad de deelnemerslijst in via CSV of handmatige invoer.
+Banen / Klokkers (banen.html) & Klokkersscherm (klokker.html): Baanoverzicht, startvolgorde, stopwatch/tijdmeting, oefenpunten en de 3 bijlagen bij het waterwerkreglement.
 
-Vul bekende KCM-uitslagen (BOB t/m S) in voor de Spettertrofee en Junior Spettertrofee.
+Afgesloten jaren & alleen-lezen stand
 
-Maak een JSON-back-up (Back-up (JSON)) en klik op Synchroniseer met Wedstrijdtafel.
+Wedstrijdjaar 2026 staat standaard op afgesloten / vergrendeld (alleen-lezen) tenzij het in Beheer / Admin (Deel 5) expliciet wordt ontgrendeld.
 
-Testdata opschonen vóór de start:
+In de alleen-lezen stand kunnen gegevens wel worden bekeken, geëxporteerd of geprint, maar zijn wijzigingen en verwijderacties geblokkeerd.
 
-Controleer op de wedstrijdtafel of er geen oude testregistraties, testmeldingen of een afwijkend actief jaar meer staan voordat de eerste honden starten.
+Bestanden in de repository
 
-Tijdens de trials:
+index.html – Startscherm en jaarkeuze
 
-Vink in wedstrijdtafel.html bij Aanmelding honden op Aanwezig zodra ze zich melden bij het secretariaat en synchroniseer de banen.
+beheer.html – Beheer / Admin
 
-Gebruik Klokkersbeeld om snel te controleren welke aanwezige honden en tijden op een baan zichtbaar zijn, en Meldingen om eventuele tijdconflicten te beoordelen.
+wedstrijdtafel.html – Wedstrijdtafel
 
-Na afloop:
+banen.html – Banen en klokkersoverzicht
 
-Controleer de standen en de Spettertrofee / Junior Spettertrofee onder Bekers & KCM.
+klokker.html – Klokkersscherm per baan
 
-Exporteer de uitslag via Exporteer Uitslag (CSV) en sla zowel het CSV-bestand als een definitieve JSON-back-up veilig op.
+config.js – Firebase-configuratie
+
+referentie2026.js – Referentiegegevens 2026
+
+nnfc-logo.png – Clublogo
+
+audit.md – Technische en functionele audit
+
+README.md – Overzicht en gebruik van het project
