@@ -108,7 +108,7 @@ h2{font-size:19px;margin:0;font-weight:700}
           <li>Brevetstatus, RT-kandidaten en bekerverdeling</li>
         </ul>
       </div>
-      <a id="linkTafel" href="wedstrijdtafel-v2.html" class="btn-go">Open Wedstrijdtafel →</a>
+      <a id="linkTafel" href="wedstrijdtafel.html" class="btn-go">Open Wedstrijdtafel →</a>
     </div>
 
     <div class="kaart">
@@ -225,7 +225,7 @@ function renderMenu() {
   document.getElementById('huidigJaarBadge').innerHTML = badgeHtml;
 
   document.getElementById('linkBanen').href = 'banen.html?jaar=' + encodeURIComponent(gekozenJaar);
-  document.getElementById('linkTafel').href = 'wedstrijdtafel-v2.html?jaar=' + encodeURIComponent(gekozenJaar);
+  document.getElementById('linkTafel').href = 'wedstrijdtafel.html?jaar=' + encodeURIComponent(gekozenJaar);
   document.getElementById('linkBeheer').href = 'beheer.html?jaar=' + encodeURIComponent(gekozenJaar);
 
   var alleInfo = beschikbareJaren.map(getJaarInfo);
