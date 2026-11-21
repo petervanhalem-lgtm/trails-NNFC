@@ -182,8 +182,12 @@ function esc(str) {
 }
 
 var selJaarEl = document.getElementById('selJaar');
+var params = new URLSearchParams(window.location.search);
+var urlJaar = params.get('jaar');
 var huidigKalenderJaar = new Date().getFullYear();
-var standaardJaar = (huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026';
+var standaardJaar = (urlJaar && /^20\d{2}$/.test(urlJaar))
+  ? urlJaar
+  : ((huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026');
 for (var y = 2026; y <= 2040; y++) {
   var o = document.createElement('option');
   o.value = String(y);
@@ -225,7 +229,7 @@ function laadData() {
       tafelData[h.id] = {
         basisPunten: '',
         basisStatus: 'Open', // Open, Bezig, Klaar
-        brevetUitslag: 'Nog niet gezwommen', // Nog niet gezwommen, Geslaagd, Niet geslaagd
+        brevetUitslag: (isJaarVergrendeldTafel() ? 'Afgesloten' : 'Nog niet gezwommen'), // Nog niet gezwommen, Geslaagd, Niet geslaagd
         brevetOpmerking: '',
         rtKandidaat: false,
         rtRang: '',
@@ -337,6 +341,7 @@ function matchZoek(h, q) {
 
 // Acties op deelnemers
 function toggleAanwezig(id) {
+  if (waarschuwVergrendeldTafel()) return;
   var h = deelnemers.find(function(x) { return x.id === id; });
   if (h) { h.aanwezig = !h.aanwezig; bewaarAlles(); }
 }
@@ -566,7 +571,7 @@ function renderStap3() {
       '<div class="box-head"><div><h2>Brevetbeoordeling: #' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '</h2><div class="sub">Opgaand voor: <b>' + esc(h.opvolgendBrevet) + '</b> (Huidig: ' + esc(h.huidigBrevet) + ')</div></div></div>' +
       '<div class="grid2">' +
         '<div class="kaart"><label>Brevetuitslag</label><select onchange="setBrevetUitslag(\'' + esc(h.id) + '\',this.value)">' +
-          ['Nog niet gezwommen','Geslaagd','Niet geslaagd'].map(function(u){ return '<option value="'+u+'" '+(td.brevetUitslag===u?'selected':'')+'>'+u+'</option>'; }).join('') +
+          [(isJaarVergrendeldTafel() ? 'Afgesloten' : 'Nog niet gezwommen'),'Geslaagd','Niet geslaagd'].map(function(u){ return '<option value="'+u+'" '+(td.brevetUitslag===u?'selected':'')+'>'+u+'</option>'; }).join('') +
         '</select></div>' +
         '<div class="kaart"><label>Opmerking keurmeester / tafel</label><input type="text" value="' + esc(td.brevetOpmerking) + '" placeholder="Bijv. Onderdeel 3 herkanst..." onchange="setBrevetOpmerking(\'' + esc(h.id) + '\',this.value)"></div>' +
       '</div>' +
@@ -575,7 +580,7 @@ function renderStap3() {
 
   var gefilterd = deelnemers.filter(function(h) {
     if (nav.sub === 'GESLAAGD' && (tafelData[h.id] || {}).brevetUitslag !== 'Geslaagd') return false;
-    if (nav.sub === 'OPEN_BREVET' && (tafelData[h.id] || {}).brevetUitslag !== 'Nog niet gezwommen') return false;
+    if (nav.sub === 'OPEN_BREVET' && (tafelData[h.id] || {}).brevetUitslag !== (isJaarVergrendeldTafel() ? 'Afgesloten' : 'Nog niet gezwommen')) return false;
     return matchZoek(h, nav.zoek);
   });
 
@@ -588,7 +593,7 @@ function renderStap3() {
       '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.eigenaar) + '</div></td>' +
       '<td><span class="chip">' + esc(h.huidigBrevet) + '</span> &rarr; <b>' + esc(h.opvolgendBrevet) + '</b></td>' +
       '<td><select style="width:auto;margin:0;min-height:34px" onchange="setBrevetUitslag(\'' + esc(h.id) + '\',this.value)">' +
-        ['Nog niet gezwommen','Geslaagd','Niet geslaagd'].map(function(u){ return '<option value="'+u+'" '+(td.brevetUitslag===u?'selected':'')+'>'+u+'</option>'; }).join('') +
+        [(isJaarVergrendeldTafel() ? 'Afgesloten' : 'Nog niet gezwommen'),'Geslaagd','Niet geslaagd'].map(function(u){ return '<option value="'+u+'" '+(td.brevetUitslag===u?'selected':'')+'>'+u+'</option>'; }).join('') +
       '</select></td>' +
       '<td><button type="button" class="sm" onclick="openSub(\'BREVET_DETAIL\',\'Brevetdetails\');openSubSub(\'' + esc(h.id) + '\',\'#' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '\')">Detail →</button></td>' +
     '</tr>';
@@ -818,6 +823,26 @@ function renderStap5() {
     '</div>' : '');
 }
 
+
+function isJaarVergrendeldTafel() {
+  try {
+    var raw = localStorage.getItem('nnfc_slot_' + jaar);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.vergrendeld === 'boolean') return parsed.vergrendeld;
+    }
+  } catch (e) {}
+  return String(jaar) === '2026';
+}
+
+function waarschuwVergrendeldTafel() {
+  if (isJaarVergrendeldTafel()) {
+    alert('Wedstrijdjaar ' + jaar + ' is afgesloten en vergrendeld (alleen-lezen). Open Beheer / Admin om het jaar te ontgrendelen indien nodig.');
+    return true;
+  }
+  return false;
+}
+
 function render() {
   updateCrumbBar();
   var html = '';
@@ -827,6 +852,30 @@ function render() {
   else if (nav.stap === 4) html = renderStap4();
   else if (nav.stap === 5) html = renderStap5();
   document.getElementById('appContent').innerHTML = html;
+
+  var mainHost = document.getElementById('appContent') || document.querySelector('.wrap');
+  if (mainHost && isJaarVergrendeldTafel()) {
+    var existing = document.getElementById('tafelSlotBanner');
+    if (!existing) {
+      var b = document.createElement('div');
+      b.id = 'tafelSlotBanner';
+      b.style.cssText = 'background:rgba(255,210,63,0.18);border:1.5px solid rgba(180,83,9,0.45);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap';
+      b.innerHTML = '<div><b>🔒 Wedstrijdjaar ' + esc(jaar) + ' is afgesloten en vergrendeld (alleen-lezen)</b><div style="font-size:14px;opacity:.85">Uitslagen en aanpassingen zijn vergrendeld. Je kunt het overzicht bekijken of afdrukken.</div></div><a href="beheer.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link sm">Beheer / Admin →</a>';
+      mainHost.insertBefore(b, mainHost.firstChild);
+    }
+    mainHost.querySelectorAll('input,select,textarea').forEach(function(el) {
+      if (el.id === 'selJaar') return;
+      el.disabled = true;
+    });
+    mainHost.querySelectorAll('button').forEach(function(btn) {
+      var t = (btn.textContent || '').trim();
+      if (t.indexOf('Print') !== -1 || t.indexOf('PDF') !== -1 || t.indexOf('Stap ') !== -1) return;
+      btn.disabled = true;
+    });
+  } else {
+    var oldB = document.getElementById('tafelSlotBanner');
+    if (oldB && oldB.parentNode) oldB.parentNode.removeChild(oldB);
+  }
 }
 
 render();
