@@ -94,7 +94,7 @@ h2{font-size:19px;margin:0;font-weight:700}
         </ul>
       </div>
       <div>
-        <div class="sub" style="margin-bottom:6px;font-weight:700">Direct klokkersscherm per baan (met gekozen jaar):</div>
+        <div class="sub" style="margin-bottom:6px;font-weight:700">Klokkersscherm per baan (voor gekozen jaar):</div>
         <div id="klokkerBaanLinks" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
         <a id="linkBanen" href="banen.html" class="btn-go">Open Banen / Klokkers →</a>
       </div>
@@ -106,10 +106,10 @@ h2{font-size:19px;margin:0;font-weight:700}
           <p class="k-ttl">Wedstrijdtafel</p>
           <span class="chip">Uitslagen</span>
         </div>
-        <div class="sub" style="margin-top:6px">Aanwezigheid, basispunten, brevetuitslagen, RT-kandidaten en bekers per klasse.</div>
+        <div class="sub" style="margin-top:6px">Aanwezigheid, oefenpunten, brevetuitslagen en bekers per klasse volgens het reglement.</div>
         <ul class="meta-list">
           <li>Overzicht van aanwezigheid en klasse-uitslagen</li>
-          <li>Brevetstatus, RT-kandidaten en bekerverdeling</li>
+          <li>Brevetuitslagen en bekerverdeling per klasse</li>
         </ul>
       </div>
       <a id="linkTafel" href="wedstrijdtafel.html" class="btn-go">Open Wedstrijdtafel →</a>
@@ -137,16 +137,31 @@ function esc(str) {
   return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+function isGeldigJaar(y) {
+  return /^20\d{2}$/.test(String(y == null ? '' : y).trim());
+}
+
+function parseTijdstip(obj) {
+  if (!obj || typeof obj !== 'object') return 0;
+  var raw = obj.bijgewerktOp || obj.updatedAt || obj.timestamp || obj.datum || '';
+  if (typeof raw === 'number') return raw;
+  var ms = Date.parse(String(raw));
+  return isNaN(ms) ? 0 : ms;
+}
+
 function leesOpgeslagenJaar() {
   try {
-    return localStorage.getItem('nnfc_jaar') || localStorage.getItem('nnfc_actief_jaar') || '';
-  } catch (e) {
-    return '';
-  }
+    var k1 = localStorage.getItem('nnfc_jaar');
+    if (isGeldigJaar(k1)) return String(k1).trim();
+    var k2 = localStorage.getItem('nnfc_actief_jaar');
+    if (isGeldigJaar(k2)) return String(k2).trim();
+  } catch (e) {}
+  return '';
 }
 
 function bewaarJaar(y, updateUrl) {
-  var s = String(y);
+  if (!isGeldigJaar(y)) return;
+  var s = String(y).trim();
   try {
     localStorage.setItem('nnfc_jaar', s);
     localStorage.setItem('nnfc_actief_jaar', s);
@@ -167,17 +182,38 @@ function getSlotInfo(y) {
     if (raw) {
       var parsed = JSON.parse(raw);
       if (parsed && typeof parsed.vergrendeld === 'boolean') {
-        return { vergrendeld: parsed.vergrendeld, datum: parsed.datum || (parsed.vergrendeld ? 'Afgesloten' : '') };
+        return {
+          vergrendeld: parsed.vergrendeld,
+          datum: parsed.datum || (parsed.vergrendeld ? 'Afgesloten' : ''),
+          ts: parseTijdstip(parsed),
+          heeftOpgeslagenSlot: true
+        };
       }
     }
   } catch (e) {}
-  return { vergrendeld: false, datum: '' };
+  if (s === '2026') {
+    return { vergrendeld: true, datum: 'Afgesloten (2026)', ts: 0, heeftOpgeslagenSlot: false };
+  }
+  return { vergrendeld: false, datum: '', ts: 0, heeftOpgeslagenSlot: false };
 }
 
 function heeftInhoud(val) {
   if (!val) return false;
-  if (Array.isArray(val)) return val.length > 0;
-  if (typeof val === 'object') return Object.keys(val).length > 0;
+  if (Array.isArray(val)) {
+    return val.some(function(item) { return heeftInhoud(item); });
+  }
+  if (typeof val === 'object') {
+    var keys = Object.keys(val);
+    if (keys.length === 0) return false;
+    return keys.some(function(k) {
+      var v = val[k];
+      if (k === 'ox' && v && typeof v === 'object') {
+        return Object.keys(v).some(function(oxKey) { return heeftInhoud(v[oxKey]); });
+      }
+      return heeftInhoud(v);
+    });
+  }
+  if (typeof val === 'number') return val !== 0;
   return String(val).trim().length > 0;
 }
 
@@ -190,6 +226,9 @@ function getJaarInfo(y) {
   try { deelnemers = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + s)) || []; } catch (e) { deelnemers = []; }
   try { tafel = JSON.parse(localStorage.getItem('nnfc_tafel_' + s)) || {}; } catch (e) { tafel = {}; }
   try { klok = JSON.parse(localStorage.getItem('nnfc_klokkers_' + s)) || {}; } catch (e) { klok = {}; }
+  if (!heeftInhoud(klok)) {
+    try { klok = JSON.parse(localStorage.getItem('nnfc_klokkers')) || {}; } catch (e) { klok = {}; }
+  }
   for (var b = 1; b <= 5; b++) {
     try {
       var st = JSON.parse(localStorage.getItem('nnfc_klokker_state_' + s + '_' + b) || 'null');
@@ -227,25 +266,25 @@ function verzamelBeschikbareJaren() {
   for (var i = 0; i < localStorage.length; i++) {
     var k = localStorage.key(i) || '';
     var m = k.match(/^nnfc_(?:deelnemers|tafel|klokkers|baanindeling|slot|archief|klokker_state|klokker_dogs|klokker_outbox)_(\d{4})(?:_\d+)?$/);
-    if (m && m[1]) jarenSet[m[1]] = true;
+    if (m && m[1] && isGeldigJaar(m[1])) jarenSet[m[1]] = true;
   }
   return Object.keys(jarenSet).sort();
 }
 
-var beschikbareJaren = verzamelBeschikbareJaren();
-var metData = beschikbareJaren.map(getJaarInfo).filter(function(info) { return info.heeftData; });
-
 function bepaalStartJaar() {
   var params = new URLSearchParams(window.location.search);
   var urlJ = params.get('jaar') || params.get('y') || params.get('year');
-  if (urlJ) {
-    bewaarJaar(urlJ, false);
-    return String(urlJ);
+  if (urlJ && isGeldigJaar(urlJ)) {
+    var cleanUrlJ = String(urlJ).trim();
+    bewaarJaar(cleanUrlJ, false);
+    return cleanUrlJ;
   }
   var opgeslagen = leesOpgeslagenJaar();
   if (opgeslagen) {
-    return String(opgeslagen);
+    return opgeslagen;
   }
+  var jaren = verzamelBeschikbareJaren();
+  var metData = jaren.map(getJaarInfo).filter(function(info) { return info.heeftData; });
   if (metData.some(function(x) { return x.jaar === '2026'; })) {
     return '2026';
   }
@@ -258,10 +297,36 @@ function bepaalStartJaar() {
 var gekozenJaar = bepaalStartJaar();
 var toonAlleJaren = false;
 
+function syncSlot(jaar) {
+  var s = String(jaar);
+  if (!isGeldigJaar(s)) return;
+  try {
+    if (typeof firebase === 'undefined' || typeof firebaseConfig === 'undefined' || !firebaseConfig.apiKey || firebaseConfig.apiKey === 'JOUW_API_KEY') return;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    firebase.database().ref('wedstrijd/slot_' + s).once('value').then(function(snap) {
+      var val = snap.val();
+      if (val && typeof val.vergrendeld === 'boolean') {
+        var lokaal = getSlotInfo(s);
+        var remoteTs = parseTijdstip(val);
+        if (!lokaal.heeftOpgeslagenSlot || remoteTs >= lokaal.ts) {
+          localStorage.setItem('nnfc_slot_' + s, JSON.stringify(val));
+          if (s === gekozenJaar) renderMenu();
+        }
+      }
+    }).catch(function() {});
+  } catch (e) {}
+}
+
+function initFirebase() {
+  syncSlot(gekozenJaar);
+}
+
 function kiesJaar(y) {
-  gekozenJaar = String(y);
+  if (!isGeldigJaar(y)) return;
+  gekozenJaar = String(y).trim();
   bewaarJaar(gekozenJaar, true);
   renderMenu();
+  syncSlot(gekozenJaar);
 }
 
 function toggleAlleJaren() {
@@ -270,7 +335,7 @@ function toggleAlleJaren() {
 }
 
 function renderMenu() {
-  beschikbareJaren = verzamelBeschikbareJaren();
+  var beschikbareJaren = verzamelBeschikbareJaren();
   var actInfo = getJaarInfo(gekozenJaar);
   var badgeHtml = 'Actief jaar: <b>' + esc(gekozenJaar) + '</b>';
   if (actInfo.vergrendeld) {
@@ -282,7 +347,7 @@ function renderMenu() {
   document.getElementById('linkTafel').href = 'wedstrijdtafel.html?jaar=' + encodeURIComponent(gekozenJaar);
   document.getElementById('linkBeheer').href = 'beheer.html?jaar=' + encodeURIComponent(gekozenJaar);
   document.getElementById('klokkerBaanLinks').innerHTML = ['1','2','3','4','5'].map(function(b) {
-    return '<a href="klokker.html?baan=' + b + '&jaar=' + encodeURIComponent(gekozenJaar) + '&admin=1" class="btn-sm">Klokker B' + b + '</a>';
+    return '<a href="klokker.html?baan=' + b + '&jaar=' + encodeURIComponent(gekozenJaar) + '" class="btn-sm">Klokker B' + b + '</a>';
   }).join('');
 
   var alleInfo = beschikbareJaren.map(getJaarInfo);
@@ -328,34 +393,23 @@ function renderMenu() {
 window.addEventListener('pageshow', function() {
   gekozenJaar = bepaalStartJaar();
   renderMenu();
+  syncSlot(gekozenJaar);
 });
 
 window.addEventListener('storage', function(ev) {
   if (!ev || ev.key === 'nnfc_jaar' || ev.key === 'nnfc_actief_jaar') {
-    gekozenJaar = bepaalStartJaar();
+    var nieuwJaar = leesOpgeslagenJaar();
+    if (nieuwJaar) {
+      gekozenJaar = nieuwJaar;
+      bewaarJaar(gekozenJaar, true);
+    }
   }
   renderMenu();
 });
 
 renderMenu();
+syncSlot(gekozenJaar);
 </script>
 <script src="config.js"></script>
-<script>
-(function syncSlotViaFirebase() {
-  try {
-    if (typeof firebase === 'undefined' || typeof firebaseConfig === 'undefined' || !firebaseConfig.apiKey || firebaseConfig.apiKey === 'JOUW_API_KEY') return;
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    var db = firebase.database();
-    var targetJaar = gekozenJaar;
-    db.ref('wedstrijd/slot_' + targetJaar).once('value').then(function(snap) {
-      var val = snap.val();
-      if (val && typeof val.vergrendeld === 'boolean') {
-        localStorage.setItem('nnfc_slot_' + targetJaar, JSON.stringify(val));
-        renderMenu();
-      }
-    }).catch(function() {});
-  } catch (e) {}
-})();
-</script>
 </body>
 </html>
