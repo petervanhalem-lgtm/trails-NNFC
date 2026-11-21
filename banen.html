@@ -101,9 +101,9 @@ tbody tr.rij-nu{background:rgba(255,210,63,0.22)!important}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="selJaar" onchange="wisselJaar()" style="width:auto;margin:0;font-weight:700" aria-label="Selecteer wedstrijdjaar"></select>
-      <a href="wedstrijdtafel-v2.html" class="btn-link">Wedstrijdtafel →</a>
-      <a href="beheer.html" class="btn-link">Beheer →</a>
-      <a href="index.html" class="btn-link">← Menu</a>
+      <a href="wedstrijdtafel.html" class="btn-link">Wedstrijdtafel →</a>
+      <a href="beheer.html" class="btn-link">Beheer / Admin →</a>
+      <a href="index.html" class="btn-link">← Startscherm</a>
     </div>
   </div>
 
@@ -140,7 +140,7 @@ tbody tr.rij-nu{background:rgba(255,210,63,0.22)!important}
     <div id="crumbTrail" class="crumb-trail"></div>
     <div class="crumb-acts">
       <button type="button" class="sm" onclick="gaTerug()">← Terug</button>
-      <a href="wedstrijdtafel-v2.html" class="btn-link pri sm">Wedstrijdtafel</a>
+      <a href="wedstrijdtafel.html" class="btn-link pri sm">Wedstrijdtafel</a>
     </div>
   </div>
 
@@ -175,8 +175,12 @@ function toonToast(msg) {
 }
 
 var selJaarEl = document.getElementById('selJaar');
+var params = new URLSearchParams(window.location.search);
+var urlJaar = params.get('jaar');
 var huidigKalenderJaar = new Date().getFullYear();
-var standaardJaar = (huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026';
+var standaardJaar = (urlJaar && /^20\d{2}$/.test(urlJaar))
+  ? urlJaar
+  : ((huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026');
 for (var y = 2026; y <= 2040; y++) {
   var o = document.createElement('option');
   o.value = String(y);
@@ -601,6 +605,49 @@ function render() {
     html = renderBaanDetail(nav.baan);
   }
   document.getElementById('appContent').innerHTML = html;
+
+function isJaarVergrendeldBanen() {
+  try {
+    var raw = localStorage.getItem('nnfc_slot_' + jaar);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.vergrendeld === 'boolean') return parsed.vergrendeld;
+    }
+  } catch (e) {}
+  return String(jaar) === '2026';
+}
+
+function waarschuwVergrendeldBanen() {
+  if (isJaarVergrendeldBanen()) {
+    alert('Wedstrijdjaar ' + jaar + ' is afgesloten en vergrendeld (alleen-lezen). Aanpassingen op de banen zijn uitgeschakeld.');
+    return true;
+  }
+  return false;
+}
+
+  var wrapEl = document.querySelector('.wrap') || document.body;
+  if (isJaarVergrendeldBanen()) {
+    var exB = document.getElementById('banenSlotBanner');
+    if (!exB && wrapEl.firstChild) {
+      var b = document.createElement('div');
+      b.id = 'banenSlotBanner';
+      b.style.cssText = 'background:rgba(255,210,63,0.18);border:1.5px solid rgba(180,83,9,0.45);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap';
+      b.innerHTML = '<div><b>🔒 Wedstrijdjaar ' + esc(jaar) + ' is afgesloten en vergrendeld (alleen-lezen)</b><div style="font-size:14px;opacity:.85">Baanlijsten, scores en klokkers zijn vergrendeld. Je kunt de gegevens en bijlagen alleen bekijken.</div></div><a href="beheer.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link sm">Beheer / Admin →</a>';
+      wrapEl.insertBefore(b, wrapEl.firstChild.nextSibling || wrapEl.firstChild);
+    }
+    wrapEl.querySelectorAll('input,select,textarea').forEach(function(el) {
+      if (el.id === 'selJaar') return;
+      el.disabled = true;
+    });
+    wrapEl.querySelectorAll('button').forEach(function(btn) {
+      var t = (btn.textContent || '').trim();
+      if (t.indexOf('Baan ') === 0 || t.indexOf('Bijlage') !== -1 || t.indexOf('Alle') === 0) return;
+      btn.disabled = true;
+    });
+  } else {
+    var oldBn = document.getElementById('banenSlotBanner');
+    if (oldBn && oldBn.parentNode) oldBn.parentNode.removeChild(oldBn);
+  }
 }
 
 render();
