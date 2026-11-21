@@ -145,17 +145,19 @@ function leesOpgeslagenJaar() {
   }
 }
 
-function bewaarJaar(y) {
+function bewaarJaar(y, updateUrl) {
   var s = String(y);
   try {
     localStorage.setItem('nnfc_jaar', s);
     localStorage.setItem('nnfc_actief_jaar', s);
   } catch (e) {}
-  try {
-    var url = new URL(window.location.href);
-    url.searchParams.set('jaar', s);
-    window.history.replaceState({}, '', url.toString());
-  } catch (e) {}
+  if (updateUrl) {
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set('jaar', s);
+      window.history.replaceState({}, '', url.toString());
+    } catch (e) {}
+  }
 }
 
 function getSlotInfo(y) {
@@ -224,25 +226,32 @@ function verzamelBeschikbareJaren() {
 var beschikbareJaren = verzamelBeschikbareJaren();
 var metData = beschikbareJaren.map(getJaarInfo).filter(function(info) { return info.heeftData; });
 
-var params = new URLSearchParams(window.location.search);
-var startJaar = params.get('jaar') || params.get('y') || params.get('year') || leesOpgeslagenJaar();
-if (!startJaar) {
-  if (metData.some(function(x) { return x.jaar === '2026'; })) {
-    startJaar = '2026';
-  } else if (metData.length > 0) {
-    startJaar = metData[metData.length - 1].jaar;
-  } else {
-    startJaar = '2026';
+function bepaalStartJaar() {
+  var params = new URLSearchParams(window.location.search);
+  var urlJ = params.get('jaar') || params.get('y') || params.get('year');
+  if (urlJ) {
+    bewaarJaar(urlJ, false);
+    return String(urlJ);
   }
+  var opgeslagen = leesOpgeslagenJaar();
+  if (opgeslagen) {
+    return String(opgeslagen);
+  }
+  if (metData.some(function(x) { return x.jaar === '2026'; })) {
+    return '2026';
+  }
+  if (metData.length > 0) {
+    return metData[metData.length - 1].jaar;
+  }
+  return '2026';
 }
 
-var gekozenJaar = String(startJaar);
-bewaarJaar(gekozenJaar);
+var gekozenJaar = bepaalStartJaar();
 var toonAlleJaren = false;
 
 function kiesJaar(y) {
   gekozenJaar = String(y);
-  bewaarJaar(gekozenJaar);
+  bewaarJaar(gekozenJaar, true);
   renderMenu();
 }
 
@@ -252,6 +261,7 @@ function toggleAlleJaren() {
 }
 
 function renderMenu() {
+  beschikbareJaren = verzamelBeschikbareJaren();
   var actInfo = getJaarInfo(gekozenJaar);
   var badgeHtml = 'Actief jaar: <b>' + esc(gekozenJaar) + '</b>';
   if (actInfo.vergrendeld) {
@@ -305,6 +315,18 @@ function renderMenu() {
     '<span>•</span>' +
     '<span>Geselecteerd <b>' + esc(gekozenJaar) + '</b>: ' + statusChip + '</span>';
 }
+
+window.addEventListener('pageshow', function() {
+  gekozenJaar = bepaalStartJaar();
+  renderMenu();
+});
+
+window.addEventListener('storage', function(ev) {
+  if (!ev || ev.key === 'nnfc_jaar' || ev.key === 'nnfc_actief_jaar') {
+    gekozenJaar = bepaalStartJaar();
+  }
+  renderMenu();
+});
 
 renderMenu();
 </script>
