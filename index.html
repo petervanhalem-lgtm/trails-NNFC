@@ -137,6 +137,27 @@ function esc(str) {
   return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+function leesOpgeslagenJaar() {
+  try {
+    return localStorage.getItem('nnfc_jaar') || localStorage.getItem('nnfc_actief_jaar') || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function bewaarJaar(y) {
+  var s = String(y);
+  try {
+    localStorage.setItem('nnfc_jaar', s);
+    localStorage.setItem('nnfc_actief_jaar', s);
+  } catch (e) {}
+  try {
+    var url = new URL(window.location.href);
+    url.searchParams.set('jaar', s);
+    window.history.replaceState({}, '', url.toString());
+  } catch (e) {}
+}
+
 function getSlotInfo(y) {
   var s = String(y);
   try {
@@ -204,7 +225,7 @@ var beschikbareJaren = verzamelBeschikbareJaren();
 var metData = beschikbareJaren.map(getJaarInfo).filter(function(info) { return info.heeftData; });
 
 var params = new URLSearchParams(window.location.search);
-var startJaar = params.get('jaar');
+var startJaar = params.get('jaar') || params.get('y') || params.get('year') || leesOpgeslagenJaar();
 if (!startJaar) {
   if (metData.some(function(x) { return x.jaar === '2026'; })) {
     startJaar = '2026';
@@ -215,11 +236,13 @@ if (!startJaar) {
   }
 }
 
-var gekozenJaar = startJaar;
+var gekozenJaar = String(startJaar);
+bewaarJaar(gekozenJaar);
 var toonAlleJaren = false;
 
 function kiesJaar(y) {
   gekozenJaar = String(y);
+  bewaarJaar(gekozenJaar);
   renderMenu();
 }
 
