@@ -151,6 +151,7 @@ tbody tr:hover{background:var(--soft)}
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="config.js"></script>
+<script src="nnfc-jaar-nav.js"></script>
 <script>
 var db = null;
 var KLASSEN_OPTIES = ["Jeugd", "Open", "Veteranen", "Stamboomloos", "Specials"];
@@ -192,6 +193,11 @@ function isGeldigJaar(y) {
 }
 
 function bepaalStartJaar() {
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.bepaalStartJaar === 'function') {
+    var huidigKalenderJaar = new Date().getFullYear();
+    var fb = (huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026';
+    return window.NNFCJaarNav.bepaalStartJaar(fb);
+  }
   try {
     var params = new URLSearchParams(window.location.search || '');
     var q = params.get('jaar') || params.get('y') || params.get('year');
@@ -203,13 +209,17 @@ function bepaalStartJaar() {
     var k2 = localStorage.getItem('nnfc_actief_jaar');
     if (isGeldigJaar(k2)) return String(k2).trim();
   } catch (e) {}
-  var huidigKalenderJaar = new Date().getFullYear();
-  return (huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026';
+  var calJaar = new Date().getFullYear();
+  return (calJaar >= 2026 && calJaar <= 2040) ? String(calJaar) : '2026';
 }
 
 function bewaarActiefJaar(y, updateUrl) {
   if (!isGeldigJaar(y)) return;
   var s = String(y).trim();
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.zetActiefJaar === 'function') {
+    window.NNFCJaarNav.zetActiefJaar(s, { persist: true, updateUrl: Boolean(updateUrl) });
+    return;
+  }
   try {
     localStorage.setItem('nnfc_jaar', s);
     localStorage.setItem('nnfc_actief_jaar', s);
@@ -278,6 +288,7 @@ function normaliseerDeelnemerRecord(h) {
   return h;
 }
 
+var jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
 var deelnemers = [];
 var baanIndeling = {
   banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] },
@@ -291,6 +302,69 @@ var nav = {
   zoek: '',
   baanFilter: 'ALLE'
 };
+
+function laadSlot() {
+  try {
+    var raw = JSON.parse(localStorage.getItem('nnfc_slot_' + jaar));
+    if (raw && typeof raw === 'object' && typeof raw.vergrendeld === 'boolean') {
+      jaarSlot = {
+        vergrendeld: raw.vergrendeld,
+        datum: raw.datum || '',
+        toelichting: raw.toelichting || ''
+      };
+    } else if (String(jaar) === '2026') {
+      jaarSlot = {
+        vergrendeld: true,
+        datum: 'Afgesloten (2026)',
+        toelichting: 'Jaar 2026 is afgesloten en alleen-lezen.'
+      };
+    } else {
+      jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
+    }
+  } catch (e) {
+    jaarSlot = { vergrendeld: String(jaar) === '2026', datum: '', toelichting: '' };
+  }
+  var badge = document.getElementById('slotStatusBadge');
+  if (badge) {
+    badge.innerHTML = jaarSlot.vergrendeld
+      ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
+      : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
+  }
+  if (db) {
+    try {
+      db.ref('wedstrijd/slot_' + jaar).once('value', function(snap) {
+        var remote = snap.val();
+        if (remote && typeof remote === 'object' && typeof remote.vergrendeld === 'boolean') {
+          jaarSlot = {
+            vergrendeld: remote.vergrendeld,
+            datum: remote.datum || '',
+            toelichting: remote.toelichting || ''
+          };
+          localStorage.setItem('nnfc_slot_' + jaar, JSON.stringify(jaarSlot));
+          var bEl = document.getElementById('slotStatusBadge');
+          if (bEl) {
+            bEl.innerHTML = jaarSlot.vergrendeld
+              ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
+              : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
+          }
+          render();
+        }
+      });
+    } catch (e) {}
+  }
+}
+
+function isJaarVergrendeld() {
+  return !!(jaarSlot && jaarSlot.vergrendeld);
+}
+
+function waarschuwIndienVergrendeld() {
+  if (isJaarVergrendeld()) {
+    alert('Wedstrijdjaar ' + jaar + ' is vergrendeld en gefinaliseerd. Ontgrendel het jaar eerst in Deel 5 (Back-up & Jaarvergrendeling) als je wijzigingen wilt aanbrengen.');
+    return true;
+  }
+  return false;
+}
 
 function laadData() {
   try {
@@ -362,6 +436,9 @@ function wisselJaar() {
   laadSlot();
   laadData();
   render();
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') {
+    window.NNFCJaarNav.werkLinksBij(jaar);
+  }
 }
 
 function gaNaarSectie(nr) {
@@ -843,7 +920,7 @@ function renderSectie4() {
     '</div>' +
     '<div class="toolbar">' +
       '<div class="search-wrap">' +
-        '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar, district of lidnr...">' +
+        '<input type="search" value="' + esc(nav.zoek) + '" onchange="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar, district of lidnr...">' +
         '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
       '</div>' +
       '<select style="width:auto;margin:0;min-height:36px" onchange="nav.baanFilter=this.value;render()">' +
@@ -855,70 +932,6 @@ function renderSectie4() {
       '<th style="width:100px">Startnr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Brevet (opvolgend)</th><th>Baan</th><th>Betaling</th><th style="width:105px">Actie</th>' +
     '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" class="sub" style="padding:14px">Geen deelnemers gevonden voor ' + esc(jaar) + '.</td></tr>') + '</tbody></table></div>' +
   '</div>';
-}
-
-var jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
-
-function laadSlot() {
-  try {
-    var raw = JSON.parse(localStorage.getItem('nnfc_slot_' + jaar));
-    if (raw && typeof raw === 'object' && typeof raw.vergrendeld === 'boolean') {
-      jaarSlot = {
-        vergrendeld: raw.vergrendeld,
-        datum: raw.datum || '',
-        toelichting: raw.toelichting || ''
-      };
-    } else if (String(jaar) === '2026') {
-      jaarSlot = {
-        vergrendeld: true,
-        datum: 'Afgesloten (2026)',
-        toelichting: 'Jaar 2026 is afgesloten en alleen-lezen.'
-      };
-    } else {
-      jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
-    }
-  } catch (e) {
-    jaarSlot = { vergrendeld: String(jaar) === '2026', datum: '', toelichting: '' };
-  }
-  var badge = document.getElementById('slotStatusBadge');
-  if (badge) {
-    badge.innerHTML = jaarSlot.vergrendeld
-      ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
-      : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
-  }
-  if (db) {
-    try {
-      db.ref('wedstrijd/slot_' + jaar).once('value', function(snap) {
-        var remote = snap.val();
-        if (remote && typeof remote === 'object' && typeof remote.vergrendeld === 'boolean') {
-          jaarSlot = {
-            vergrendeld: remote.vergrendeld,
-            datum: remote.datum || '',
-            toelichting: remote.toelichting || ''
-          };
-          localStorage.setItem('nnfc_slot_' + jaar, JSON.stringify(jaarSlot));
-          var bEl = document.getElementById('slotStatusBadge');
-          if (bEl) {
-            bEl.innerHTML = jaarSlot.vergrendeld
-              ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
-              : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
-          }
-        }
-      });
-    } catch (e) {}
-  }
-}
-
-function isJaarVergrendeld() {
-  return !!(jaarSlot && jaarSlot.vergrendeld);
-}
-
-function waarschuwIndienVergrendeld() {
-  if (isJaarVergrendeld()) {
-    alert('Wedstrijdjaar ' + jaar + ' is vergrendeld en gefinaliseerd. Ontgrendel het jaar eerst in Deel 5 (Back-up & Jaarvergrendeling) als je wijzigingen wilt aanbrengen.');
-    return true;
-  }
-  return false;
 }
 
 function toggleJaarSlot() {
@@ -1054,6 +1067,9 @@ function renderSectie5() {
 }
 
 function render() {
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') {
+    window.NNFCJaarNav.werkLinksBij(jaar);
+  }
   var badge = document.getElementById('slotStatusBadge');
   if (badge) {
     badge.innerHTML = jaarSlot.vergrendeld
@@ -1090,6 +1106,23 @@ function render() {
 }
 
 render();
+
+if (window.NNFCJaarNav && typeof window.NNFCJaarNav.installeerTerugEnSyncListeners === 'function') {
+  window.NNFCJaarNav.installeerTerugEnSyncListeners(function (actueelJaar) {
+    if (actueelJaar && actueelJaar !== jaar) {
+      jaar = actueelJaar;
+      bewaarActiefJaar(jaar, false);
+      if (selJaarEl) selJaarEl.value = jaar;
+      var lbl = document.getElementById('lblJaar');
+      if (lbl) lbl.textContent = jaar;
+      laadSlot();
+      laadData();
+      render();
+    } else if (window.NNFCJaarNav.werkLinksBij) {
+      window.NNFCJaarNav.werkLinksBij(jaar);
+    }
+  }, standaardJaar);
+}
 </script>
 </body>
 </html>
