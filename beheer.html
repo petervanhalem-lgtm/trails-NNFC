@@ -32,7 +32,7 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .bad{border-color:var(--bad)!important;color:var(--bad)!important;min-height:36px;padding:4px 10px}
 .sm{min-height:36px;padding:4px 10px;font-size:15px}
 
-/* Beheer hoofdnavigatie (3 secties) */
+/* Beheer hoofdnavigatie */
 .beheer-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
 @media(max-width:1020px){.beheer-nav{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.beheer-nav{grid-template-columns:1fr}}
@@ -111,7 +111,7 @@ tbody tr:hover{background:var(--soft)}
     </div>
   </div>
 
-  <!-- 4 BEHEERSECTIES (MET IMPORT ALS DEEL 1) -->
+  <!-- 5 BEHEERSECTIES -->
   <div class="beheer-nav" role="navigation" aria-label="Beheer secties" style="grid-template-columns:repeat(5,1fr)">
     <button type="button" id="bhBtn1" class="beheer-btn on" onclick="gaNaarSectie(1)">
       <span class="nr">Deel 1 • Basis</span>
@@ -135,7 +135,7 @@ tbody tr:hover{background:var(--soft)}
     </button>
   </div>
 
-  <!-- VASTE ANKERBALK BIJ SUBPAGINA'S (TERUG & WEDSTRIJDTAFEL) -->
+  <!-- VASTE ANKERBALK BIJ SUBPAGINA'S -->
   <div id="crumbBar" class="crumb-bar" style="display:none">
     <div id="crumbTrail" class="crumb-trail"></div>
     <div class="crumb-acts">
@@ -283,7 +283,7 @@ function syncFirebase() {
     db.ref('wedstrijd/baanindeling_' + jaar).set(baanIndeling);
     var updates = {};
     deelnemers.forEach(function(h) { updates[h.id] = h; });
-    db.ref('wedstrijd/beheer_deelnemers').update(updates);
+    db.ref('wedstrijd/beheer_deelnemers_' + jaar).set(updates);
   } catch (e) {}
 }
 
@@ -511,9 +511,6 @@ function matchZoek(h, q) {
   return woorden.every(function(w) { return tekst.indexOf(w) !== -1; });
 }
 
-// ============================================================
-// SECTIE 1: IMPORTEREN VANUIT EXCEL / CSV (BASISDOCUMENT)
-// ============================================================
 var importVoorbeeldStatus = "";
 
 function normaliseerKlasse(raw) {
@@ -705,9 +702,6 @@ function renderSectie1() {
   '</div>';
 }
 
-// ============================================================
-// SECTIE 2: NIEUWE INSCHRIJVING TOEVOEGEN
-// ============================================================
 function renderSectie2() {
   var volgendNr = volgendeStartnummer();
   return '<div class="box">' +
@@ -750,9 +744,6 @@ function renderSectie2() {
   '</div>';
 }
 
-// ============================================================
-// SECTIE 3: BAANINDELING & 3 BIJLAGEN
-// ============================================================
 function renderSectie3() {
   var baanKaarten = ['1','2','3','4','5'].map(function(b) {
     var gekoppeld = baanIndeling.banen[b] || [];
@@ -791,9 +782,6 @@ function renderSectie3() {
   '</div>';
 }
 
-// ============================================================
-// SECTIE 4: DEELNEMERSLIJST & BANEN
-// ============================================================
 function renderSectie4() {
   var lijst = deelnemers
     .filter(function(h) {
@@ -845,7 +833,6 @@ function renderSectie4() {
     '</tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="sub" style="padding:14px">Geen deelnemers gevonden voor ' + esc(jaar) + '.</td></tr>') + '</tbody></table></div>' +
   '</div>';
 }
-
 
 var jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
 
@@ -933,7 +920,7 @@ function synchroniseerNaarTafel() {
       db.ref('wedstrijd/kcm_selecties_' + jaar).set(kcmMap);
       var updates = {};
       deelnemers.forEach(function(h) { updates[h.id] = h; });
-      db.ref('wedstrijd/beheer_deelnemers').update(updates);
+      db.ref('wedstrijd/beheer_deelnemers_' + jaar).set(updates);
     } catch (e) {}
   }
   toonToast('Gesynchroniseerd met Wedstrijdtafel (' + jaar + ')');
