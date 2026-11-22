@@ -124,11 +124,24 @@ h2{font-size:19px;margin:0;font-weight:700}
   </div>
 </div>
 
+<script src="config.js"></script>
+<script src="nnfc-jaar-nav.js"></script>
 <script>
+var db = null;
+try {
+  if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  }
+} catch (e) {}
+
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function isJaar(y){return /^20\d{2}$/.test(String(y||'').trim());}
 
 function leesJaar(){
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.bepaalStartJaar === 'function') {
+    return window.NNFCJaarNav.bepaalStartJaar('2026');
+  }
   try{
     var u=new URLSearchParams(location.search||'');
     var q=u.get('jaar');
@@ -143,9 +156,14 @@ function leesJaar(){
 
 var gekozenJaar=leesJaar();
 var toonAlle=false;
+var remoteSlots={};
 
 function slaJaarOp(y){
   if(!isJaar(y)) return;
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.zetActiefJaar === 'function') {
+    window.NNFCJaarNav.zetActiefJaar(y, { persist: true, updateUrl: true });
+    return;
+  }
   try{
     localStorage.setItem('nnfc_jaar',y);
     localStorage.setItem('nnfc_actief_jaar',y);
@@ -157,11 +175,15 @@ function getInfo(y){
   try{d=JSON.parse(localStorage.getItem('nnfc_deelnemers_'+s))||[];}catch(e){d=[];}
   var n=Array.isArray(d)?d.length:0;
   var slot=false;
-  try{
-    var raw=JSON.parse(localStorage.getItem('nnfc_slot_'+s));
-    if(raw && typeof raw.vergrendeld==='boolean') slot=raw.vergrendeld;
-    else if(s==='2026') slot=true;
-  }catch(e){if(s==='2026') slot=true;}
+  if (typeof remoteSlots[s] === 'boolean') {
+    slot = remoteSlots[s];
+  } else {
+    try{
+      var raw=JSON.parse(localStorage.getItem('nnfc_slot_'+s));
+      if(raw && typeof raw.vergrendeld==='boolean') slot=raw.vergrendeld;
+      else if(s==='2026') slot=true;
+    }catch(e){if(s==='2026') slot=true;}
+  }
   return {jaar:s, aantal:n, heeftData:n>0, vergrendeld:slot};
 }
 
@@ -176,6 +198,22 @@ function jarenLijst(){
     }
   }catch(e){}
   return Object.keys(set).sort();
+}
+
+function syncSlotsVanFirebase(jaren){
+  if (!db) return;
+  (jaren || []).forEach(function(y){
+    try{
+      db.ref('wedstrijd/slot_' + y).on('value', function(snap){
+        var val = snap.val();
+        if (val && typeof val.vergrendeld === 'boolean') {
+          remoteSlots[y] = val.vergrendeld;
+          try { localStorage.setItem('nnfc_slot_' + y, JSON.stringify(val)); } catch (e) {}
+          render();
+        }
+      });
+    }catch(e){}
+  });
 }
 
 function kiesJaar(y){
@@ -195,14 +233,17 @@ function werkLinksBij(){
   document.getElementById('klokkerBaanLinks').innerHTML=['1','2','3','4','5'].map(function(b){
     return '<a href="klokker.html?baan='+b+'&jaar='+encodeURIComponent(gekozenJaar)+'" class="btn-sm">Klokker B'+b+'</a>';
   }).join('');
+  if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') {
+    window.NNFCJaarNav.werkLinksBij(gekozenJaar);
+  }
 }
 
 function render(){
-  slaJaarOp(gekozenJaar);
   document.getElementById('huidigJaarBadge').innerHTML='Actief jaar: <b>'+esc(gekozenJaar)+'</b>';
   werkLinksBij();
 
-  var alle=jarenLijst().map(getInfo);
+  var alleNamen=jarenLijst();
+  var alle=alleNamen.map(getInfo);
   var metData=alle.filter(function(x){return x.heeftData;});
   var zichtbaar=toonAlle?alle:alle.filter(function(x){
     return x.heeftData || x.jaar==='2026' || x.jaar==='2027' || x.jaar==='2028' || x.jaar===gekozenJaar;
@@ -226,6 +267,7 @@ function render(){
     '<span>Geselecteerd <b>'+esc(gekozenJaar)+'</b>: '+(act.vergrendeld?'🔒 Gefinaliseerd':(act.heeftData?act.aantal+' deelnemers • Open':'Nog geen data ingevuld • Open'))+'</span>';
 }
 
+syncSlotsVanFirebase(jarenLijst());
 window.addEventListener('pageshow',function(){gekozenJaar=leesJaar();render();});
 render();
 </script>
