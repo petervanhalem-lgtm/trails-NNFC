@@ -197,7 +197,7 @@ function parseTijdNaarCs(str) {
   if (str == null) return null;
   var clean = String(str).trim();
   if (!clean || clean === '—') return null;
-  if (/weigering/i.test(clean)) return 60000;
+  if (/weigering/i.test(clean) || /^w$/i.test(clean)) return 60000;
   var mMatch = clean.match(/^(\d+):(\d{1,2})[,.](\d{1,2})$/);
   if (mMatch) {
     return parseInt(mMatch[1], 10) * 6000 + parseInt(mMatch[2], 10) * 100 + parseInt((mMatch[3] + '0').slice(0, 2), 10);
@@ -242,6 +242,25 @@ var nav = {
   baanFilter: 'ALLE',
   klasseFilter: 'ALLE'
 };
+
+function isJaarVergrendeldTafel() {
+  try {
+    var raw = localStorage.getItem('nnfc_slot_' + jaar);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.vergrendeld === 'boolean') return parsed.vergrendeld;
+    }
+  } catch (e) {}
+  return String(jaar) === '2026';
+}
+
+function waarschuwVergrendeldTafel() {
+  if (isJaarVergrendeldTafel()) {
+    alert('Wedstrijdjaar ' + jaar + ' is afgesloten en vergrendeld (alleen-lezen). Open Beheer / Admin om het jaar te ontgrendelen indien nodig.');
+    return true;
+  }
+  return false;
+}
 
 function maakStandaardTafelRecord() {
   return {
@@ -793,7 +812,7 @@ function renderStap1() {
       '<span>Betaald: <b style="color:var(--ok)">' + betaaldCnt + '</b></span>' +
     '</div>' +
     '<div class="toolbar"><div class="search-wrap">' +
-      '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, roepnaam, eigenaar, lidnr of baan...">' +
+      '<input type="search" value="' + esc(nav.zoek) + '" onchange="nav.zoek=this.value;render()" placeholder="Zoek op startnr, roepnaam, eigenaar, lidnr of baan...">' +
       '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
     '</div></div>' +
     '<div class="table-wrap"><table><thead><tr>' +
@@ -866,7 +885,7 @@ function renderStap2() {
       '</div>' +
       melBanner +
       '<div class="toolbar"><div class="search-wrap">' +
-        '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond of eigenaar op baan ' + esc(bNr) + '...">' +
+        '<input type="search" value="' + esc(nav.zoek) + '" onchange="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond of eigenaar op baan ' + esc(bNr) + '...">' +
         '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
       '</div></div>' +
       '<div class="table-wrap"><table><thead><tr>' +
@@ -943,7 +962,7 @@ function renderStap3() {
       '</div>' +
     '</div>' +
     '<div class="toolbar"><div class="search-wrap">' +
-      '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar of brevet...">' +
+      '<input type="search" value="' + esc(nav.zoek) + '" onchange="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar of brevet...">' +
       '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
     '</div></div>' +
     '<div class="table-wrap"><table><thead><tr>' +
@@ -989,7 +1008,7 @@ function renderStap4() {
       '</div>' +
     '</div>' +
     '<div class="toolbar"><div class="search-wrap">' +
-      '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op hond, eigenaar of startnummer...">' +
+      '<input type="search" value="' + esc(nav.zoek) + '" onchange="nav.zoek=this.value;render()" placeholder="Zoek op hond, eigenaar of startnummer...">' +
       '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
     '</div></div>' +
     '<div class="table-wrap"><table><thead><tr>' +
@@ -1165,25 +1184,6 @@ function renderStap5() {
         '<th style="width:90px">Startnr</th><th>Hond & Eigenaar</th><th>Klasse</th><th>Beker / Titel</th>' +
       '</tr></thead><tbody>' + (bekerRows || '<tr><td colspan="4" class="sub" style="padding:14px">Nog geen bekers of Beste Reu/Teef-titels toegekend.</td></tr>') + '</tbody></table></div>' +
     '</div>' : '');
-}
-
-function isJaarVergrendeldTafel() {
-  try {
-    var raw = localStorage.getItem('nnfc_slot_' + jaar);
-    if (raw) {
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed.vergrendeld === 'boolean') return parsed.vergrendeld;
-    }
-  } catch (e) {}
-  return String(jaar) === '2026';
-}
-
-function waarschuwVergrendeldTafel() {
-  if (isJaarVergrendeldTafel()) {
-    alert('Wedstrijdjaar ' + jaar + ' is afgesloten en vergrendeld (alleen-lezen). Open Beheer / Admin om het jaar te ontgrendelen indien nodig.');
-    return true;
-  }
-  return false;
 }
 
 function leesInkomendeKlokkerData() {
