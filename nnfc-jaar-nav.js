@@ -1,12 +1,12 @@
 (function (global) {
   'use strict';
 
-  var JAAAR_REGEX = /^20\d{2}$/;
+  var JAAR_REGEX = /^20\d{2}$/;
   var STORAGE_KEYS = ['nnfc_jaar', 'nnfc_actief_jaar'];
   var URL_PARAMS = ['jaar', 'y', 'year'];
 
   function isGeldigJaar(val) {
-    return JAAAR_REGEX.test(String(val == null ? '' : val).trim());
+    return JAAR_REGEX.test(String(val == null ? '' : val).trim());
   }
 
   function normaliseerJaar(val) {
