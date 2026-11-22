@@ -32,7 +32,7 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .bad{border-color:var(--bad)!important;color:var(--bad)!important;min-height:34px;padding:3px 9px}
 .sm{min-height:34px;padding:3px 9px;font-size:15px}
 
-/* Chronologische 5-stappen balk (zonder slotjes) */
+/* Chronologische 5-stappen balk */
 .dag-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
 @media(max-width:1080px){.dag-nav{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:640px){.dag-nav{grid-template-columns:1fr}}
@@ -51,9 +51,10 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .box-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 @media(max-width:1100px){.grid5{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
+@media(max-width:860px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
 @media(max-width:620px){.grid5{grid-template-columns:1fr}}
 
 .kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:12px}
@@ -85,6 +86,7 @@ tbody tr:hover{background:var(--soft)}
 .chk{width:22px;height:22px;accent-color:var(--ok);cursor:pointer;margin:0}
 .hond-main{font-weight:700;font-size:16px}
 .hond-sub{color:var(--mut);font-size:13px}
+.tijd-mono{font-variant-numeric:tabular-nums;font-weight:700}
 
 /* Print / PDF weergave */
 @media print{
@@ -112,13 +114,13 @@ tbody tr:hover{background:var(--soft)}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="selJaar" onchange="wisselJaar()" style="width:auto;margin:0;font-weight:700" aria-label="Selecteer wedstrijdjaar"></select>
-      <a href="banen.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link">Banen / Klokkers →</a>
-      <a href="beheer.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link">Beheer / Admin →</a>
-      <a href="index.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link">← Startscherm</a>
+      <a href="banen.html" class="btn-link">Banen / Klokkers →</a>
+      <a href="beheer.html" class="btn-link">Beheer / Admin →</a>
+      <a href="index.html" class="btn-link">← Startscherm</a>
     </div>
   </div>
 
-  <!-- 5 CHRONOLOGISCHE DAGSTAPPEN (ALTIJD VRIJ KLIKBAAR) -->
+  <!-- 5 CHRONOLOGISCHE DAGSTAPPEN -->
   <div class="dag-nav" role="navigation" aria-label="Dagverloop Wedstrijdtafel">
     <button type="button" id="stepBtn1" class="dag-btn on" onclick="gaNaarStap(1)">
       <span class="nr">Stap 1 • Ochtend</span>
@@ -126,7 +128,7 @@ tbody tr:hover{background:var(--soft)}
     </button>
     <button type="button" id="stepBtn2" class="dag-btn" onclick="gaNaarStap(2)">
       <span class="nr">Stap 2 • Ochtend / Middag</span>
-      <span class="ttl">2. Basis oefeningen</span>
+      <span class="ttl">2. Basis oefeningen & Tijden</span>
     </button>
     <button type="button" id="stepBtn3" class="dag-btn" onclick="gaNaarStap(3)">
       <span class="nr">Stap 3 • Middag</span>
@@ -142,7 +144,7 @@ tbody tr:hover{background:var(--soft)}
     </button>
   </div>
 
-  <!-- VASTE NAVIGATIEBALK VOOR SUB- EN SUB-SUBPAGINA'S (TERUG & WEDSTRIJDTAFEL) -->
+  <!-- VASTE NAVIGATIEBALK VOOR SUB- EN SUB-SUBPAGINA'S -->
   <div id="crumbBar" class="crumb-bar" style="display:none">
     <div id="crumbTrail" class="crumb-trail"></div>
     <div class="crumb-acts">
@@ -151,7 +153,7 @@ tbody tr:hover{background:var(--soft)}
     </div>
   </div>
 
-  <!-- HOOFDINHOUD WORDT DYNAMISCH GERENDERD OP BASIS VAN STAP + SUB + SUB-SUB -->
+  <!-- HOOFDINHOUD -->
   <div id="appContent"></div>
 </div>
 
@@ -162,7 +164,7 @@ var db = null;
 var KCM_PUNTEN = {"GEEN":0,"BOB":75,"CAC":70,"Res. CAC":65,"U1":55,"U2":50,"U3":45,"U4":40,"U":35,"ZG":25,"G":15,"M":10,"S":5};
 var STAP_NAMEN = {
   1: "1. Aanmelden & Startnummer",
-  2: "2. Basis oefeningen",
+  2: "2. Basis oefeningen & Tijden",
   3: "3. Brevetten",
   4: "4. Beste Reu & Beste Teef",
   5: "5. Uitslagen, Brevetten & Bekers"
@@ -180,6 +182,32 @@ initFirebase();
 
 function esc(str) {
   return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function fmtCs(cs) {
+  if (cs == null || isNaN(cs)) return '—';
+  var v = Math.round(Number(cs));
+  var m = Math.floor(v / 6000);
+  var s = Math.floor((v % 6000) / 100);
+  var c = v % 100;
+  var pad2 = function(n) { return n < 10 ? '0' + n : '' + n; };
+  return m ? (m + ':' + pad2(s) + ',' + pad2(c)) : (s + ',' + pad2(c));
+}
+
+function parseTijdNaarCs(str) {
+  if (str == null) return null;
+  var clean = String(str).trim();
+  if (!clean || clean === '—') return null;
+  if (/weigering/i.test(clean)) return 60000; // Reglement art. 4.1-4.3: 10 min = 600,00 sec
+  var mMatch = clean.match(/^(\d+):(\d{1,2})[,.](\d{1,2})$/);
+  if (mMatch) {
+    return parseInt(mMatch[1], 10) * 6000 + parseInt(mMatch[2], 10) * 100 + parseInt((mMatch[3] + '0').slice(0, 2), 10);
+  }
+  var sMatch = clean.match(/^(\d+)[,.](\d{1,2})$/);
+  if (sMatch) {
+    return parseInt(sMatch[1], 10) * 100 + parseInt((sMatch[2] + '0').slice(0, 2), 10);
+  }
+  return null;
 }
 
 var selJaarEl = document.getElementById('selJaar');
@@ -201,20 +229,206 @@ document.getElementById('lblJaar').textContent = jaar;
 
 var deelnemers = [];
 var baanIndeling = { banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] }, bijlagen: { b1: "", b2: "", b3: "" } };
-var tafelData = {}; // per deelnemer id: { basisPunten, basisStatus, brevetUitslag, brevetOpmerking, besteReuTeefKandidaat, besteReuTeefPos, bekerTitel }
+var tafelData = {}; // per deelnemer id: { basisPunten, basisStatus, tijdA, tijdB, tijdC, totaalTijdCs, brevetUitslag, brevetOpmerking, rtKandidaat, rtRang, beker }
+var klokkerLogStore = { registraties: {}, meldingen: {}, verwerkt: {} };
+var fbRefsActief = [];
 
-// Navigatie-status: niveau 0 = overzicht van de stap, niveau 1 = subpagina, niveau 2 = sub-subpagina
 var nav = {
   stap: 1,
-  sub: null,      // bijv. 'BAAN_2', 'BREVET_OVERZICHT', 'GROEP_REU', 'PRINT_OVERZICHT'
+  sub: null,
   subLabel: '',
-  subSub: null,   // bijv. deelnemer-id of specifieke uitslagcategorie
+  subSub: null,
   subSubLabel: '',
   zoek: '',
   baanFilter: 'ALLE',
   klasseFilter: 'ALLE',
   printOnderdeel: 'ALLES'
 };
+
+function maakStandaardTafelRecord() {
+  return {
+    basisPunten: '',
+    basisStatus: 'Open',
+    tijdA: null, // { cs, tekst, weigering, bronId }
+    tijdB: null,
+    tijdC: null,
+    totaalTijdCs: null,
+    brevetUitslag: (isJaarVergrendeldTafel() ? 'Afgesloten' : 'Nog niet gezwommen'),
+    brevetOpmerking: '',
+    rtKandidaat: false,
+    rtRang: '',
+    beker: ''
+  };
+}
+
+function herberekenHondTotaalTijd(td) {
+  if (!td) return;
+  var a = td.tijdA && typeof td.tijdA.cs === 'number' ? td.tijdA.cs : null;
+  var b = td.tijdB && typeof td.tijdB.cs === 'number' ? td.tijdB.cs : null;
+  var c = td.tijdC && typeof td.tijdC.cs === 'number' ? td.tijdC.cs : null;
+  if (a !== null && b !== null && c !== null) {
+    td.totaalTijdCs = a + b + c;
+    if (td.basisStatus === 'Open') td.basisStatus = 'Klaar';
+  } else if (a !== null || b !== null || c !== null) {
+    td.totaalTijdCs = (a || 0) + (b || 0) + (c || 0);
+    if (td.basisStatus === 'Open') td.basisStatus = 'Bezig';
+  } else {
+    td.totaalTijdCs = null;
+  }
+}
+
+function verwerkKlokkerRegistratieInTafel(reg) {
+  if (!reg) return false;
+  var nr = parseInt(reg.startnummer, 10);
+  if (!nr) return false;
+  var hond = deelnemers.find(function(x) { return Number(x.startnummer) === nr; });
+  if (!hond) return false;
+  if (!tafelData[hond.id]) tafelData[hond.id] = maakStandaardTafelRecord();
+  var td = tafelData[hond.id];
+  var oef = String(reg.oefening || '').toUpperCase();
+  var cs = typeof reg.tijdCs === 'number' ? reg.tijdCs : parseTijdNaarCs(reg.tijdTekst);
+  var isWeig = reg.type === 'WEIGERING' || /weigering/i.test(String(reg.tijdTekst || ''));
+
+  if (oef === 'A' || oef === 'B' || oef === 'C') {
+    var veld = 'tijd' + oef;
+    var nieuwCs = cs != null ? cs : (isWeig ? 60000 : null);
+    if (nieuwCs != null) {
+      var bestaand = td[veld];
+      if (!bestaand || bestaand.bronId !== reg.id) {
+        td[veld] = {
+          cs: nieuwCs,
+          tekst: isWeig ? 'Weigering (600,00s)' : fmtCs(nieuwCs),
+          weigering: isWeig,
+          bronId: reg.id || ('REG_' + oef + '_' + nr)
+        };
+        herberekenHondTotaalTijd(td);
+        return true;
+      }
+    }
+  } else if (oef === 'BREVET') {
+    var nieuwBrevet = (reg.type === 'BREVET_OK' || /uitgevoerd/i.test(String(reg.tijdTekst || '')))
+      ? 'Geslaagd'
+      : (isWeig ? 'Niet geslaagd' : null);
+    if (nieuwBrevet && td.brevetBronId !== reg.id) {
+      td.brevetUitslag = nieuwBrevet;
+      td.brevetBronId = reg.id || ('REG_BR_' + nr);
+      return true;
+    }
+  }
+  return false;
+}
+
+function synchroniseerAlleKlokkerBronnen(ookBewaren) {
+  var gewijzigd = false;
+  // 1. Lees lokale outbox & state van de 5 banen
+  ['1','2','3','4','5'].forEach(function(bNr) {
+    try {
+      var rawBox = JSON.parse(localStorage.getItem('nnfc_klokker_outbox_' + jaar + '_' + bNr)) || [];
+      rawBox.forEach(function(item) {
+        if (!item || !item.data) return;
+        if (item.pad === 'registraties' && item.data.id) {
+          klokkerLogStore.registraties[item.data.id] = item.data;
+        }
+        if (item.pad === 'meldingen' && item.data.id) {
+          klokkerLogStore.meldingen[item.data.id] = item.data;
+        }
+      });
+    } catch (e) {}
+
+    try {
+      var rawState = JSON.parse(localStorage.getItem('nnfc_klokker_state_' + jaar + '_' + bNr));
+      if (rawState && rawState.ox) {
+        ['A','B','C','BREVET'].forEach(function(exKey) {
+          var resMap = (rawState.ox[exKey] && rawState.ox[exKey].res) || {};
+          Object.keys(resMap).forEach(function(hId) {
+            var r = resMap[hId];
+            var nr = parseInt(hId, 10);
+            var hObj = deelnemers.find(function(x) { return Number(x.startnummer) === nr; });
+            var isBasis = (exKey === 'A' || exKey === 'B' || exKey === 'C');
+            var cs = r.t === 'tijd' ? r.cs : (r.t === 'weigering' && isBasis ? 60000 : null);
+            var tijdTxt = r.t === 'tijd' ? fmtCs(r.cs) : (r.t === 'ok' ? 'UITGEVOERD' : (isBasis ? 'WEIGERING (600,00s)' : 'WEIGERING'));
+            var recId = 'STATE_' + jaar + '_B' + bNr + '_' + exKey + '_' + hId;
+            if (!klokkerLogStore.registraties[recId]) {
+              klokkerLogStore.registraties[recId] = {
+                id: recId,
+                jaar: jaar,
+                baan: bNr,
+                oefening: exKey,
+                startnummer: nr || hId,
+                roepnaam: hObj ? hObj.roepnaam : '',
+                type: r.t === 'tijd' ? 'TIJD' : (r.t === 'ok' ? 'BREVET_OK' : 'WEIGERING'),
+                tijdTekst: tijdTxt,
+                tijdCs: cs,
+                bron: 'klokker_state'
+              };
+            }
+          });
+        });
+      }
+    } catch (e) {}
+  });
+
+  // 2. Verwerk alle verzamelde registraties in tafelData
+  Object.keys(klokkerLogStore.registraties).forEach(function(id) {
+    var reg = klokkerLogStore.registraties[id];
+    if (reg && (!reg.jaar || String(reg.jaar) === String(jaar))) {
+      if (verwerkKlokkerRegistratieInTafel(reg)) gewijzigd = true;
+    }
+  });
+
+  localStorage.setItem('nnfc_tafel_klokkerlog_' + jaar, JSON.stringify(klokkerLogStore));
+  if (gewijzigd && ookBewaren && !isJaarVergrendeldTafel()) {
+    localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
+    if (db) {
+      try {
+        db.ref('wedstrijd/tafel_status_' + jaar).set(tafelData);
+        db.ref('wedstrijd/tafel_klokkerlog_' + jaar).set(klokkerLogStore);
+      } catch (e) {}
+    }
+  }
+}
+
+function koppelFirebaseListeners() {
+  if (!db) return;
+  fbRefsActief.forEach(function(r) { try { r.off(); } catch (e) {} });
+  fbRefsActief = [];
+
+  var refReg = db.ref('wedstrijd/registraties');
+  refReg.on('value', function(snap) {
+    var val = snap.val() || {};
+    var nieuw = false;
+    Object.keys(val).forEach(function(k) {
+      var item = val[k];
+      if (!item) return;
+      if (!item.jaar || String(item.jaar) === String(jaar)) {
+        klokkerLogStore.registraties[item.id || k] = item;
+        if (verwerkKlokkerRegistratieInTafel(item)) nieuw = true;
+      }
+    });
+    localStorage.setItem('nnfc_tafel_klokkerlog_' + jaar, JSON.stringify(klokkerLogStore));
+    if (nieuw && !isJaarVergrendeldTafel()) {
+      localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
+      try { db.ref('wedstrijd/tafel_status_' + jaar).set(tafelData); } catch (e) {}
+    }
+    render();
+  });
+  fbRefsActief.push(refReg);
+
+  var refMel = db.ref('wedstrijd/meldingen');
+  refMel.on('value', function(snap) {
+    var val = snap.val() || {};
+    Object.keys(val).forEach(function(k) {
+      var item = val[k];
+      if (!item) return;
+      if (!item.jaar || String(item.jaar) === String(jaar)) {
+        klokkerLogStore.meldingen[item.id || k] = item;
+      }
+    });
+    localStorage.setItem('nnfc_tafel_klokkerlog_' + jaar, JSON.stringify(klokkerLogStore));
+    render();
+  });
+  fbRefsActief.push(refMel);
+}
 
 function laadData() {
   try { deelnemers = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || []; } catch (e) { deelnemers = []; }
@@ -223,35 +437,99 @@ function laadData() {
     if (b && b.banen) baanIndeling = b;
   } catch (e) {}
   try { tafelData = JSON.parse(localStorage.getItem('nnfc_tafel_' + jaar)) || {}; } catch (e) { tafelData = {}; }
+  try {
+    var kl = JSON.parse(localStorage.getItem('nnfc_tafel_klokkerlog_' + jaar));
+    if (kl && kl.registraties) klokkerLogStore = kl;
+    else klokkerLogStore = { registraties: {}, meldingen: {}, verwerkt: {} };
+  } catch (e) { klokkerLogStore = { registraties: {}, meldingen: {}, verwerkt: {} }; }
 
   deelnemers.forEach(function(h) {
     if (!tafelData[h.id]) {
-      tafelData[h.id] = {
-        basisPunten: '',
-        basisStatus: 'Open', // Open, Bezig, Klaar
-        brevetUitslag: (isJaarVergrendeldTafel() ? 'Afgesloten' : 'Nog niet gezwommen'), // Nog niet gezwommen, Geslaagd, Niet geslaagd
-        brevetOpmerking: '',
-        rtKandidaat: false,
-        rtRang: '',
-        beker: ''
-      };
+      tafelData[h.id] = maakStandaardTafelRecord();
+    } else {
+      herberekenHondTotaalTijd(tafelData[h.id]);
     }
   });
+  synchroniseerAlleKlokkerBronnen(true);
+  koppelFirebaseListeners();
 }
 laadData();
 
 function bewaarAlles() {
   localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
   localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
+  localStorage.setItem('nnfc_tafel_klokkerlog_' + jaar, JSON.stringify(klokkerLogStore));
   if (db) {
     try {
       db.ref('wedstrijd/tafel_status_' + jaar).set(tafelData);
+      db.ref('wedstrijd/tafel_klokkerlog_' + jaar).set(klokkerLogStore);
       var updates = {};
       deelnemers.forEach(function(h) { updates[h.id] = h; });
       db.ref('wedstrijd/beheer_deelnemers').update(updates);
     } catch (e) {}
   }
   render();
+}
+
+// Reglement art. 2.15: Eindtijden van de 3 basisoefeningen optellen per klasse;
+// snelste hond krijgt 250 pnt, nr 2 = 245 pnt, nr 3 = 240 pnt, elke plek lager -5 pnt.
+// Open klasse wordt apart geklasseerd voor Reuen en Teven (art. 2.14.2).
+function berekenPuntenUitTijden() {
+  if (waarschuwVergrendeldTafel()) return;
+  var groepen = {};
+  deelnemers.forEach(function(h) {
+    if (h.buitenMededinging) return;
+    var td = tafelData[h.id];
+    if (!td || td.totaalTijdCs == null || td.totaalTijdCs <= 0) return;
+    var kl = (h.klasse || 'Overig').trim();
+    var groepSleutel = kl.toLowerCase() === 'open'
+      ? ('Open_' + (h.geslacht || 'Onbekend'))
+      : kl;
+    if (!groepen[groepSleutel]) groepen[groepSleutel] = [];
+    groepen[groepSleutel].push({ hond: h, td: td, tijd: td.totaalTijdCs });
+  });
+
+  var aantalBerekend = 0;
+  Object.keys(groepen).forEach(function(gKey) {
+    var lijst = groepen[gKey].slice().sort(function(a, b) { return a.tijd - b.tijd; });
+    lijst.forEach(function(item, idx) {
+      var pnt = Math.max(0, 250 - (idx * 5));
+      item.td.basisPunten = pnt;
+      item.td.basisStatus = 'Klaar';
+      aantalBerekend++;
+    });
+  });
+
+  bewaarAlles();
+  alert('Punten volgens Reglement art. 2.15 berekend voor ' + aantalBerekend + ' deelnemers op basis van de gezwommen tijden (250 / 245 / 240 ...).');
+}
+
+function pasKlokkerCorrectieToe(melId) {
+  if (waarschuwVergrendeldTafel()) return;
+  var m = klokkerLogStore.meldingen[melId];
+  if (!m) return;
+  if (m.soort === 'CORRECTIE' && m.startnummer && m.oefening) {
+    var cs = typeof m.nieuweTijdCs === 'number' ? m.nieuweTijdCs : parseTijdNaarCs(m.nieuweTijd);
+    var syntheticReg = {
+      id: 'CORR_APPLIED_' + melId,
+      jaar: jaar,
+      baan: m.baan,
+      oefening: m.oefening,
+      startnummer: m.startnummer,
+      roepnaam: m.roepnaam || '',
+      type: 'TIJD',
+      tijdTekst: m.nieuweTijd || fmtCs(cs),
+      tijdCs: cs
+    };
+    klokkerLogStore.registraties[syntheticReg.id] = syntheticReg;
+    verwerkKlokkerRegistratieInTafel(syntheticReg);
+  }
+  m.status = 'AFGEHANDELD';
+  klokkerLogStore.verwerkt[melId] = true;
+  if (db) {
+    try { db.ref('wedstrijd/meldingen/' + melId + '/status').set('AFGEHANDELD'); } catch (e) {}
+  }
+  bewaarAlles();
 }
 
 function wisselJaar() {
@@ -269,7 +547,6 @@ function wisselJaar() {
   }
 }
 
-// Navigatiefuncties: 1 niveau terug ("Terug") en terug naar hoofdniveau ("Wedstrijdtafel")
 function gaNaarStap(stapNr) {
   nav.stap = stapNr;
   nav.sub = null;
@@ -347,7 +624,6 @@ function matchZoek(h, q) {
   return woorden.every(function(w) { return tekst.indexOf(w) !== -1; });
 }
 
-// Acties op deelnemers
 function toggleAanwezig(id) {
   if (waarschuwVergrendeldTafel()) return;
   var h = deelnemers.find(function(x) { return x.id === id; });
@@ -374,6 +650,34 @@ function wijzigBaan(id, b) {
   if (waarschuwVergrendeldTafel()) return;
   var h = deelnemers.find(function(x) { return x.id === id; });
   if (h) { h.baan = b; bewaarAlles(); }
+}
+function wijzigOefeningTijdTafel(id, oef, invoer) {
+  if (waarschuwVergrendeldTafel()) return;
+  var td = tafelData[id];
+  if (!td) return;
+  var veld = 'tijd' + oef;
+  var clean = String(invoer || '').trim();
+  if (!clean) {
+    td[veld] = null;
+    herberekenHondTotaalTijd(td);
+    bewaarAlles();
+    return;
+  }
+  var cs = parseTijdNaarCs(clean);
+  if (cs == null) {
+    alert('Ongeldige tijd. Gebruik bijv. 45,20 of 1:12,35 of W voor weigering (600,00s).');
+    render();
+    return;
+  }
+  var isWeig = /^w/i.test(clean) || cs === 60000;
+  td[veld] = {
+    cs: cs,
+    tekst: isWeig ? 'Weigering (600,00s)' : fmtCs(cs),
+    weigering: isWeig,
+    bronId: 'TAFEL_HAND_' + oef + '_' + Date.now()
+  };
+  herberekenHondTotaalTijd(td);
+  bewaarAlles();
 }
 function setBasisPunten(id, p) {
   if (waarschuwVergrendeldTafel()) return;
@@ -509,18 +813,26 @@ function renderStap1() {
 }
 
 // ============================================================
-// RENDER STAP 2: BASIS OEFENINGEN (MET BAAN-SUBPAGINA & HOND-SUB-SUBPAGINA)
+// RENDER STAP 2: BASIS OEFENINGEN & KLOKKERTIJDEN
 // ============================================================
 function renderStap2() {
-  // Sub-subpagina: detail invoer voor 1 hond op een baan
   if (nav.sub && nav.subSub) {
     var h = deelnemers.find(function(x) { return x.id === nav.subSub; });
     if (!h) { gaTerug(); return ''; }
     var td = tafelData[h.id] || {};
+    var valA = td.tijdA ? (td.tijdA.weigering ? 'Weigering' : fmtCs(td.tijdA.cs)) : '';
+    var valB = td.tijdB ? (td.tijdB.weigering ? 'Weigering' : fmtCs(td.tijdB.cs)) : '';
+    var valC = td.tijdC ? (td.tijdC.weigering ? 'Weigering' : fmtCs(td.tijdC.cs)) : '';
     return '<div class="box">' +
-      '<div class="box-head"><div><h2>Basis oefeningen: #' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '</h2><div class="sub">' + esc(h.stamboom) + ' • Baan ' + esc(h.baan) + ' • ' + esc(h.klasse) + '</div></div></div>' +
+      '<div class="box-head"><div><h2>Basis oefeningen & Tijden: #' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '</h2><div class="sub">' + esc(h.stamboom) + ' • Baan ' + esc(h.baan) + ' • ' + esc(h.klasse) + '</div></div></div>' +
+      '<div class="grid4" style="margin-bottom:12px">' +
+        '<div class="kaart"><label>Oefening A (Object)</label><input type="text" value="' + esc(valA) + '" placeholder="bijv. 42,15 of W" onchange="wijzigOefeningTijdTafel(\'' + esc(h.id) + '\',\'A\',this.value)"></div>' +
+        '<div class="kaart"><label>Oefening B (Pop)</label><input type="text" value="' + esc(valB) + '" placeholder="bijv. 51,80 of W" onchange="wijzigOefeningTijdTafel(\'' + esc(h.id) + '\',\'B\',this.value)"></div>' +
+        '<div class="kaart"><label>Oefening C (Boot)</label><input type="text" value="' + esc(valC) + '" placeholder="bijv. 38,90 of W" onchange="wijzigOefeningTijdTafel(\'' + esc(h.id) + '\',\'C\',this.value)"></div>' +
+        '<div class="kaart"><label>Eindtijd A + B + C</label><div class="tijd-mono" style="font-size:22px;padding-top:6px">' + (td.totaalTijdCs != null ? fmtCs(td.totaalTijdCs) : '—') + '</div></div>' +
+      '</div>' +
       '<div class="grid3">' +
-        '<div class="kaart"><label>Punten basis oefeningen</label><input type="number" step="0.5" value="' + esc(td.basisPunten) + '" placeholder="bijv. 85" onchange="setBasisPunten(\'' + esc(h.id) + '\',this.value)"></div>' +
+        '<div class="kaart"><label>Trials-punten (art. 2.15)</label><input type="number" step="5" value="' + esc(td.basisPunten) + '" placeholder="bijv. 250" onchange="setBasisPunten(\'' + esc(h.id) + '\',this.value)"></div>' +
         '<div class="kaart"><label>Status basis ronde</label><select onchange="setBasisStatus(\'' + esc(h.id) + '\',this.value)">' +
           ['Open','Bezig','Klaar'].map(function(st){ return '<option value="'+st+'" '+(td.basisStatus===st?'selected':'')+'>'+st+'</option>'; }).join('') +
         '</select></div>' +
@@ -529,37 +841,43 @@ function renderStap2() {
     '</div>';
   }
 
-  // Subpagina: 1 specifieke baan (bijv. BAAN_1)
   if (nav.sub && nav.sub.indexOf('BAAN_') === 0) {
     var bNr = nav.sub.replace('BAAN_', '');
     var baanLijst = deelnemers.filter(function(x) { return String(x.baan) === bNr && matchZoek(x, nav.zoek); });
     var rows = baanLijst.map(function(h) {
       var td = tafelData[h.id] || {};
+      var tA = td.tijdA ? (td.tijdA.weigering ? '<span class="chip-warn">W (600s)</span>' : fmtCs(td.tijdA.cs)) : '—';
+      var tB = td.tijdB ? (td.tijdB.weigering ? '<span class="chip-warn">W (600s)</span>' : fmtCs(td.tijdB.cs)) : '—';
+      var tC = td.tijdC ? (td.tijdC.weigering ? '<span class="chip-warn">W (600s)</span>' : fmtCs(td.tijdC.cs)) : '—';
+      var tTot = td.totaalTijdCs != null ? fmtCs(td.totaalTijdCs) : '—';
       return '<tr>' +
         '<td><b>#' + esc(h.startnummer) + '</b></td>' +
         '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.eigenaar) + '</div></td>' +
         '<td><span class="chip">' + esc(h.klasse) + '</span> ' + (h.aanwezig ? '<span class="chip-ok">Aanwezig</span>' : '<span class="chip-warn">Niet gemeld</span>') + '</td>' +
-        '<td><input type="number" step="0.5" value="' + esc(td.basisPunten) + '" placeholder="Punten" style="width:105px;margin:0;min-height:34px" onchange="setBasisPunten(\'' + esc(h.id) + '\',this.value)"></td>' +
-        '<td><select style="width:auto;margin:0;min-height:34px" onchange="setBasisStatus(\'' + esc(h.id) + '\',this.value)">' +
-          ['Open','Bezig','Klaar'].map(function(st){ return '<option value="'+st+'" '+(td.basisStatus===st?'selected':'')+'>'+st+'</option>'; }).join('') +
-        '</select></td>' +
+        '<td class="tijd-mono">' + tA + '</td>' +
+        '<td class="tijd-mono">' + tB + '</td>' +
+        '<td class="tijd-mono">' + tC + '</td>' +
+        '<td class="tijd-mono" style="color:var(--ac)">' + tTot + '</td>' +
+        '<td><input type="number" step="5" value="' + esc(td.basisPunten) + '" placeholder="Punten" style="width:95px;margin:0;min-height:34px" onchange="setBasisPunten(\'' + esc(h.id) + '\',this.value)"></td>' +
         '<td><button type="button" class="sm" onclick="openSubSub(\'' + esc(h.id) + '\',\'#' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '\')">Open hond →</button></td>' +
       '</tr>';
     }).join('');
 
     return '<div class="box">' +
-      '<div class="box-head"><div><h2>Baan ' + esc(bNr) + ' – Basis oefeningen</h2><div class="sub">Klik op een hond voor sub-subdetail of vul direct punten en status in</div></div></div>' +
+      '<div class="box-head">' +
+        '<div><h2>Baan ' + esc(bNr) + ' – Basis oefeningen & Klokkertijden</h2><div class="sub">Klokkertijden (A, B, C) stromen hier direct binnen • Weigering = 600,00 sec (art. 4.1–4.3)</div></div>' +
+        '<button type="button" class="pri sm" onclick="berekenPuntenUitTijden()">Bereken punten uit tijden (art. 2.15)</button>' +
+      '</div>' +
       '<div class="toolbar"><div class="search-wrap">' +
         '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond of eigenaar op baan ' + esc(bNr) + '...">' +
         '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
       '</div></div>' +
       '<div class="table-wrap"><table><thead><tr>' +
-        '<th style="width:80px">Nr</th><th>Hond & Eigenaar</th><th>Klasse & Aanwezigheid</th><th style="width:130px">Punten</th><th style="width:130px">Status</th><th style="width:120px">Detail</th>' +
-      '</tr></thead><tbody>' + (rows || '<tr><td colspan="6" class="sub" style="padding:14px">Geen honden op baan ' + esc(bNr) + '.</td></tr>') + '</tbody></table></div>' +
+        '<th style="width:70px">Nr</th><th>Hond & Eigenaar</th><th>Klasse & Aanwezigheid</th><th>Oef. A</th><th>Oef. B</th><th>Oef. C</th><th>Totaal (A+B+C)</th><th style="width:110px">Punten</th><th style="width:115px">Detail</th>' +
+      '</tr></thead><tbody>' + (rows || '<tr><td colspan="9" class="sub" style="padding:14px">Geen honden op baan ' + esc(bNr) + '.</td></tr>') + '</tbody></table></div>' +
     '</div>';
   }
 
-  // Hoofdniveau stap 2: overzicht van de 5 banen
   var kaarten = ['1','2','3','4','5'].map(function(b) {
     var bl = deelnemers.filter(function(x) { return String(x.baan) === b; });
     var klaar = bl.filter(function(x) { return (tafelData[x.id] || {}).basisStatus === 'Klaar'; }).length;
@@ -572,7 +890,10 @@ function renderStap2() {
   }).join('');
 
   return '<div class="box">' +
-    '<div class="box-head"><div><h2>2. Basis oefeningen – Kies een baan</h2><div class="sub">Klik op een baan om naar de subpagina te gaan (en daarbinnen naar een individuele hond)</div></div></div>' +
+    '<div class="box-head">' +
+      '<div><h2>2. Basis oefeningen & Tijden – Kies een baan</h2><div class="sub">Klik op een baan voor klokkertijden (A, B, C) of bereken direct de Trials-punten per klasse</div></div>' +
+      '<button type="button" class="pri sm" onclick="berekenPuntenUitTijden()">Bereken punten uit tijden (art. 2.15)</button>' +
+    '</div>' +
     '<div class="grid5">' + kaarten + '</div>' +
   '</div>';
 }
@@ -652,13 +973,14 @@ function renderStap4() {
   var rows = lijstRt.map(function(h) {
     var td = tafelData[h.id] || {};
     var kcmBadge = (h.kcm && h.kcm !== 'GEEN') ? '<span class="chip-kcm">KCM: ' + esc(h.kcm) + '</span>' : '<span class="sub">—</span>';
+    var tijdInfo = td.totaalTijdCs != null ? (' • Tijd: ' + fmtCs(td.totaalTijdCs)) : '';
     return '<tr>' +
       '<td style="text-align:center"><input type="checkbox" class="chk" ' + (td.rtKandidaat ? 'checked' : '') + ' onchange="toggleRtKandidaat(\'' + esc(h.id) + '\')"></td>' +
       '<td><b>#' + esc(h.startnummer) + '</b></td>' +
       '<td><div class="hond-main">' + esc(h.roepnaam) + ' <span class="chip">' + esc(h.geslacht) + '</span></div><div class="hond-sub">' + esc(h.stamboom) + '</div></td>' +
       '<td>' + esc(h.eigenaar) + '</td>' +
       '<td>' + kcmBadge + '</td>' +
-      '<td><b>' + totaalPunten(h) + ' pnt</b> <span class="hond-sub">(Basis: ' + (td.basisPunten || 0) + ')</span></td>' +
+      '<td><b>' + totaalPunten(h) + ' pnt</b> <span class="hond-sub">(Basis: ' + (td.basisPunten || 0) + esc(tijdInfo) + ')</span></td>' +
       '<td><select style="width:auto;margin:0;min-height:34px" onchange="setRtRang(\'' + esc(h.id) + '\',this.value)">' +
         ['','Beste Reu','Res. Beste Reu','Beste Teef','Res. Beste Teef'].map(function(r){ return '<option value="'+r+'" '+(td.rtRang===r?'selected':'')+'>'+(r || '— Geen titel —')+'</option>'; }).join('') +
       '</select></td>' +
@@ -695,9 +1017,14 @@ function printOverzicht(onderdeel) {
 
 function renderStap5() {
   var geslaagdeBrevetten = deelnemers.filter(function(h) { return (tafelData[h.id] || {}).brevetUitslag === 'Geslaagd'; });
-  var eindLijst = deelnemers.slice().sort(function(a, b) { return totaalPunten(b) - totaalPunten(a); });
+  var eindLijst = deelnemers.slice().sort(function(a, b) {
+    var diffPnt = totaalPunten(b) - totaalPunten(a);
+    if (diffPnt !== 0) return diffPnt;
+    var tA = (tafelData[a.id] && tafelData[a.id].totaalTijdCs != null) ? tafelData[a.id].totaalTijdCs : 9999999;
+    var tB = (tafelData[b.id] && tafelData[b.id].totaalTijdCs != null) ? tafelData[b.id].totaalTijdCs : 9999999;
+    return tA - tB;
+  });
 
-  // Verzamel alle gebruikte klassen (standaard + wat in deelnemers staat)
   var standaardKlassen = ['Jeugd', 'Open', 'Veteranen', 'Stamboomloos', 'Specials'];
   var alleKlassen = standaardKlassen.slice();
   deelnemers.forEach(function(h) {
@@ -712,12 +1039,14 @@ function renderStap5() {
   function bouwUitslagRijen(lijst) {
     return lijst.map(function(h, idx) {
       var td = tafelData[h.id] || {};
+      var tijdStr = td.totaalTijdCs != null ? fmtCs(td.totaalTijdCs) : '—';
       return '<tr>' +
         '<td><b>' + (idx + 1) + '.</b></td>' +
         '<td><b>#' + esc(h.startnummer) + '</b></td>' +
         '<td><b>' + esc(h.roepnaam) + '</b> <span class="hond-sub">(' + esc(h.stamboom) + ')</span>' + (h.buitenMededinging ? ' <span class="chip">* Buiten med.</span>' : '') + '</td>' +
         '<td>' + esc(h.eigenaar) + '</td>' +
         '<td><span class="chip">' + esc(h.klasse || '—') + '</span></td>' +
+        '<td class="tijd-mono">' + tijdStr + '</td>' +
         '<td>' + (td.basisPunten || 0) + '</td>' +
         '<td>' + (KCM_PUNTEN[h.kcm || 'GEEN'] || 0) + '</td>' +
         '<td><b>' + totaalPunten(h) + '</b></td>' +
@@ -740,25 +1069,23 @@ function renderStap5() {
   var uitslagenHtml = '';
   if (toonUitslagen) {
     if (nav.sub === 'PER_KLASSE') {
-      // Per klasse een eigen klassementstabel (1e, 2e, 3e per klasse)
       var blokken = alleKlassen.map(function(kl) {
         var klLijst = eindLijst.filter(function(h) { return (h.klasse || '').toLowerCase() === kl.toLowerCase(); });
         if (!klLijst.length) return '';
         return '<div class="box">' +
           '<div class="box-head"><h2>Einduitslag Klasse: ' + esc(kl) + ' (' + klLijst.length + ')</h2></div>' +
           '<div class="table-wrap"><table><thead><tr>' +
-            '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Basis</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
+            '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Eindtijd</th><th>Trials</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
           '</tr></thead><tbody>' + bouwUitslagRijen(klLijst) + '</tbody></table></div>' +
         '</div>';
       }).filter(Boolean).join('');
 
-      // Eventuele honden zonder ingevulde klasse
       var zonderKlasse = eindLijst.filter(function(h) { return !(h.klasse || '').trim(); });
       if (zonderKlasse.length) {
         blokken += '<div class="box">' +
           '<div class="box-head"><h2>Overig / Geen klasse (' + zonderKlasse.length + ')</h2></div>' +
           '<div class="table-wrap"><table><thead><tr>' +
-            '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Basis</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
+            '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Eindtijd</th><th>Trials</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
           '</tr></thead><tbody>' + bouwUitslagRijen(zonderKlasse) + '</tbody></table></div>' +
         '</div>';
       }
@@ -775,8 +1102,8 @@ function renderStap5() {
         '<div class="box-head"><h2>Einduitslag & Puntentelling – ' + esc(titelSuffix) + ' (' + esc(jaar) + ')</h2></div>' +
         klassePills +
         '<div class="table-wrap"><table><thead><tr>' +
-          '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Basis</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
-        '</tr></thead><tbody>' + (bouwUitslagRijen(gefilterdeEindLijst) || '<tr><td colspan="10" class="sub" style="padding:14px">Nog geen uitslagen beschikbaar voor deze selectie.</td></tr>') + '</tbody></table></div>' +
+          '<th>Pos</th><th>Nr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Eindtijd</th><th>Trials</th><th>KCM</th><th>Totaal</th><th>Brevet</th><th>Beker / Prijs</th>' +
+        '</tr></thead><tbody>' + (bouwUitslagRijen(gefilterdeEindLijst) || '<tr><td colspan="11" class="sub" style="padding:14px">Nog geen uitslagen beschikbaar voor deze selectie.</td></tr>') + '</tbody></table></div>' +
       '</div>';
     }
   }
@@ -819,6 +1146,7 @@ function renderStap5() {
           '<button type="button" class="sm ' + (nav.sub === 'PER_KLASSE' ? 'pri' : '') + '" onclick="openSub(\'PER_KLASSE\',\'Uitslagen per klasse\')">Per klasse</button>' +
           '<button type="button" class="sm ' + (nav.sub === 'BREVETTEN_LIJST' ? 'pri' : '') + '" onclick="openSub(\'BREVETTEN_LIJST\',\'Geslaagde Brevetten\')">Brevetten (' + geslaagdeBrevetten.length + ')</button>' +
           '<button type="button" class="sm ' + (nav.sub === 'BEKERS' ? 'pri' : '') + '" onclick="openSub(\'BEKERS\',\'Bekers & Titels\')">Bekers (' + bekerLijst.length + ')</button>' +
+          '<button type="button" class="pri sm" onclick="berekenPuntenUitTijden()">Punten herberekenen</button>' +
           '<button type="button" class="ok" onclick="printOverzicht(\'ALLES\')">Print / Opslaan als PDF</button>' +
         '</div>' +
       '</div>' +
@@ -841,7 +1169,6 @@ function renderStap5() {
     '</div>' : '');
 }
 
-
 function isJaarVergrendeldTafel() {
   try {
     var raw = localStorage.getItem('nnfc_slot_' + jaar);
@@ -861,40 +1188,12 @@ function waarschuwVergrendeldTafel() {
   return false;
 }
 
-
 function leesInkomendeKlokkerData() {
-  var registraties = [];
-  var meldingen = [];
-  ['1','2','3','4','5'].forEach(function(bNr) {
-    try {
-      var rawBox = JSON.parse(localStorage.getItem('nnfc_klokker_outbox_' + jaar + '_' + bNr)) || [];
-      rawBox.forEach(function(item) {
-        if (!item || !item.data) return;
-        if (item.pad === 'registraties') registraties.push(item.data);
-        if (item.pad === 'meldingen') meldingen.push(item.data);
-      });
-    } catch (e) {}
-    try {
-      var rawState = JSON.parse(localStorage.getItem('nnfc_klokker_state_' + jaar + '_' + bNr));
-      if (rawState && rawState.ox) {
-        ['A','B','C','BREVET'].forEach(function(exKey) {
-          var resMap = (rawState.ox[exKey] && rawState.ox[exKey].res) || {};
-          Object.keys(resMap).forEach(function(hId) {
-            var r = resMap[hId];
-            var tijdTxt = r.t === 'tijd' ? (Math.floor(r.cs/6000) ? (Math.floor(r.cs/6000)+':'+String(Math.floor(r.cs%6000/100)).padStart(2,'0')+','+String(r.cs%100).padStart(2,'0')) : (Math.floor(r.cs/100)+','+String(r.cs%100).padStart(2,'0'))) : (r.t === 'ok' ? 'UITGEVOERD' : 'WEIGERING');
-            registraties.push({
-              id: 'LOC_B' + bNr + '_' + exKey + '_' + hId,
-              baan: bNr,
-              oefening: exKey,
-              startnummer: hId,
-              tijdTekst: tijdTxt,
-              bron: 'klokker_state'
-            });
-          });
-        });
-      }
-    } catch (e) {}
-  });
+  synchroniseerAlleKlokkerBronnen(false);
+  var registraties = Object.keys(klokkerLogStore.registraties).map(function(k) { return klokkerLogStore.registraties[k]; })
+    .filter(function(r) { return r && (!r.jaar || String(r.jaar) === String(jaar)); });
+  var meldingen = Object.keys(klokkerLogStore.meldingen).map(function(k) { return klokkerLogStore.meldingen[k]; })
+    .filter(function(m) { return m && (!m.jaar || String(m.jaar) === String(jaar)); });
   return { registraties: registraties, meldingen: meldingen };
 }
 
@@ -909,7 +1208,6 @@ function render() {
   else if (nav.stap === 5) html = renderStap5();
   document.getElementById('appContent').innerHTML = html;
 
-
   var feed = leesInkomendeKlokkerData();
   var hostFeed = document.getElementById('appContent');
   if (hostFeed && (feed.registraties.length || feed.meldingen.length)) {
@@ -920,13 +1218,24 @@ function render() {
       fBox.className = 'box no-print';
       hostFeed.insertBefore(fBox, hostFeed.firstChild);
     }
-    var melHtml = feed.meldingen.slice(-5).reverse().map(function(m) {
-      return '<li><b>Baan ' + esc(m.baan) + '</b> (' + esc(m.soort || 'MELDING') + '): ' + esc(m.tekst || (m.roepnaam ? ('#' + m.startnummer + ' ' + m.roepnaam + ' ' + m.oudeTijd + ' → ' + m.nieuweTijd + ' (' + (m.reden || '') + ')') : '')) + '</li>';
+    var melHtml = feed.meldingen.slice(-6).reverse().map(function(m) {
+      var melId = esc(m.id || '');
+      var isAfgehandeld = m.status === 'AFGEHANDELD' || (klokkerLogStore.verwerkt && klokkerLogStore.verwerkt[m.id]);
+      var tekst = m.soort === 'CORRECTIE'
+        ? ('#' + esc(m.startnummer) + ' ' + esc(m.roepnaam || '') + ' (Oef. ' + esc(m.oefening || '?') + '): ' + esc(m.oudeTijd) + ' → <b>' + esc(m.nieuweTijd) + '</b> (' + esc(m.reden || '') + ')')
+        : esc(m.tekst || '');
+      var actieBtn = isAfgehandeld
+        ? ' <span class="chip-ok">Verwerkt</span>'
+        : (' <button type="button" class="sm pri" style="min-height:28px;padding:2px 8px;font-size:13px" onclick="pasKlokkerCorrectieToe(\'' + melId + '\')">' + (m.soort === 'CORRECTIE' ? 'Tijd toepassen' : 'Afhandelen') + '</button>');
+      return '<li style="margin-bottom:4px"><b>Baan ' + esc(m.baan) + '</b> (' + esc(m.soort || 'MELDING') + '): ' + tekst + actieBtn + '</li>';
     }).join('');
     var regHtml = feed.registraties.slice(-6).reverse().map(function(r) {
-      return '<li><b>Baan ' + esc(r.baan) + ' • Oef. ' + esc(r.oefening) + '</b>: #' + esc(r.startnummer) + (r.roepnaam ? ' ' + esc(r.roepnaam) : '') + ' → <b>' + esc(r.tijdTekst) + '</b></li>';
+      var nr = parseInt(r.startnummer, 10);
+      var hObj = deelnemers.find(function(x) { return Number(x.startnummer) === nr; });
+      var naam = r.roepnaam || (hObj ? hObj.roepnaam : '');
+      return '<li style="margin-bottom:4px"><b>Baan ' + esc(r.baan) + ' • Oef. ' + esc(r.oefening) + '</b>: #' + esc(r.startnummer) + (naam ? ' ' + esc(naam) : '') + ' → <b>' + esc(r.tijdTekst) + '</b></li>';
     }).join('');
-    fBox.innerHTML = '<div class="box-head"><div><h2>Inkomend van Klokkers (' + feed.registraties.length + ' registraties • ' + feed.meldingen.length + ' meldingen)</h2><div class="sub">Overzicht van klokkertijden, weigeringen, correctie-aanvragen en baanmeldingen</div></div></div>' +
+    fBox.innerHTML = '<div class="box-head"><div><h2>Inkomend &amp; Opgeslagen van Klokkers (' + feed.registraties.length + ' tijden/registraties • ' + feed.meldingen.length + ' meldingen)</h2><div class="sub">Klokkertijden worden direct opgeslagen per deelnemer en meegenomen in de uitslag</div></div></div>' +
       '<div class="grid2">' +
         '<div class="kaart"><h3>Laatste klokker-registraties</h3><ul style="margin:0;padding-left:18px;font-size:14px">' + (regHtml || '<li class="sub">Geen registraties</li>') + '</ul></div>' +
         '<div class="kaart"><h3>Meldingen &amp; correcties voor tafel</h3><ul style="margin:0;padding-left:18px;font-size:14px">' + (melHtml || '<li class="sub">Geen meldingen</li>') + '</ul></div>' +
@@ -940,7 +1249,7 @@ function render() {
       var b = document.createElement('div');
       b.id = 'tafelSlotBanner';
       b.style.cssText = 'background:rgba(255,210,63,0.18);border:1.5px solid rgba(180,83,9,0.45);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap';
-      b.innerHTML = '<div><b>🔒 Wedstrijdjaar ' + esc(jaar) + ' is afgesloten en vergrendeld (alleen-lezen)</b><div style="font-size:14px;opacity:.85">Uitslagen en aanpassingen zijn vergrendeld. Je kunt het overzicht bekijken of afdrukken.</div></div><a href="beheer.html?jaar=' + encodeURIComponent(jaar) + '" class="btn-link sm">Beheer / Admin →</a>';
+      b.innerHTML = '<div><b>🔒 Wedstrijdjaar ' + esc(jaar) + ' is afgesloten en vergrendeld (alleen-lezen)</b><div style="font-size:14px;opacity:.85">Uitslagen en aanpassingen zijn vergrendeld. Je kunt het overzicht bekijken of afdrukken.</div></div><a href="beheer.html" class="btn-link sm">Beheer / Admin →</a>';
       mainHost.insertBefore(b, mainHost.firstChild);
     }
     mainHost.querySelectorAll('input,select,textarea').forEach(function(el) {
@@ -974,7 +1283,6 @@ if (window.NNFCJaarNav && typeof window.NNFCJaarNav.installeerTerugEnSyncListene
     }
   }, fallbackTafelJaar);
 }
-
 </script>
 </body>
 </html>
