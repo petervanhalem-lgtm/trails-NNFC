@@ -41,7 +41,7 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .dag-btn .ttl{font-size:15px;font-weight:700;line-height:1.2}
 .dag-btn.on{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
 
-/* Vaste terug- en ankerbalk voor sub- en sub-subpagina's */
+/* Vaste navigatiebalk voor sub- en sub-subpagina's */
 .crumb-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--sf);border:2px solid var(--ac);border-radius:12px;padding:8px 12px;margin-bottom:12px}
 .crumb-trail{font-size:14px;color:var(--mut);font-weight:600}
 .crumb-trail b{color:var(--ink)}
@@ -88,7 +88,6 @@ tbody tr:hover{background:var(--soft)}
 .hond-sub{color:var(--mut);font-size:13px}
 .tijd-mono{font-variant-numeric:tabular-nums;font-weight:700}
 
-/* Print / PDF weergave */
 @media print{
   body{background:#fff!important;color:#000!important;font-size:12pt}
   .top,.dag-nav,.crumb-bar,.no-print{display:none!important}
@@ -109,7 +108,7 @@ tbody tr:hover{background:var(--soft)}
       <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
       <div>
         <h1>Wedstrijdtafel (<span id="lblJaar">2026</span>)</h1>
-        <div class="sub">Dagverloop zonder slotjes • Direct schakelen per fase</div>
+        <div class="sub">Dagverloop • Direct schakelen per fase</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -140,7 +139,7 @@ tbody tr:hover{background:var(--soft)}
     </button>
     <button type="button" id="stepBtn5" class="dag-btn" onclick="gaNaarStap(5)">
       <span class="nr">Stap 5 • Prijsuitreiking</span>
-      <span class="ttl">5. Uitslagen, Brevetten & Bekers</span>
+      <span class="ttl">5. Tijd/Punten &amp; Export/Print</span>
     </button>
   </div>
 
@@ -153,7 +152,6 @@ tbody tr:hover{background:var(--soft)}
     </div>
   </div>
 
-  <!-- HOOFDINHOUD -->
   <div id="appContent"></div>
 </div>
 
@@ -167,8 +165,9 @@ var STAP_NAMEN = {
   2: "2. Basis oefeningen & Tijden",
   3: "3. Brevetten",
   4: "4. Beste Reu & Beste Teef",
-  5: "5. Uitslagen, Brevetten & Bekers"
+  5: "5. Tijd/Punten & Export/Print"
 };
+var berekeningMelding = "";
 
 function initFirebase() {
   try {
@@ -198,7 +197,7 @@ function parseTijdNaarCs(str) {
   if (str == null) return null;
   var clean = String(str).trim();
   if (!clean || clean === '—') return null;
-  if (/weigering/i.test(clean)) return 60000; // Reglement art. 4.1-4.3: 10 min = 600,00 sec
+  if (/weigering/i.test(clean)) return 60000;
   var mMatch = clean.match(/^(\d+):(\d{1,2})[,.](\d{1,2})$/);
   if (mMatch) {
     return parseInt(mMatch[1], 10) * 6000 + parseInt(mMatch[2], 10) * 100 + parseInt((mMatch[3] + '0').slice(0, 2), 10);
@@ -229,7 +228,7 @@ document.getElementById('lblJaar').textContent = jaar;
 
 var deelnemers = [];
 var baanIndeling = { banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] }, bijlagen: { b1: "", b2: "", b3: "" } };
-var tafelData = {}; // per deelnemer id: { basisPunten, basisStatus, tijdA, tijdB, tijdC, totaalTijdCs, brevetUitslag, brevetOpmerking, rtKandidaat, rtRang, beker }
+var tafelData = {};
 var klokkerLogStore = { registraties: {}, meldingen: {}, verwerkt: {} };
 var fbRefsActief = [];
 
@@ -241,15 +240,14 @@ var nav = {
   subSubLabel: '',
   zoek: '',
   baanFilter: 'ALLE',
-  klasseFilter: 'ALLE',
-  printOnderdeel: 'ALLES'
+  klasseFilter: 'ALLE'
 };
 
 function maakStandaardTafelRecord() {
   return {
     basisPunten: '',
     basisStatus: 'Open',
-    tijdA: null, // { cs, tekst, weigering, bronId }
+    tijdA: null,
     tijdB: null,
     tijdC: null,
     totaalTijdCs: null,
@@ -320,7 +318,6 @@ function verwerkKlokkerRegistratieInTafel(reg) {
 
 function synchroniseerAlleKlokkerBronnen(ookBewaren) {
   var gewijzigd = false;
-  // 1. Lees lokale outbox & state van de 5 banen
   ['1','2','3','4','5'].forEach(function(bNr) {
     try {
       var rawBox = JSON.parse(localStorage.getItem('nnfc_klokker_outbox_' + jaar + '_' + bNr)) || [];
@@ -368,7 +365,6 @@ function synchroniseerAlleKlokkerBronnen(ookBewaren) {
     } catch (e) {}
   });
 
-  // 2. Verwerk alle verzamelde registraties in tafelData
   Object.keys(klokkerLogStore.registraties).forEach(function(id) {
     var reg = klokkerLogStore.registraties[id];
     if (reg && (!reg.jaar || String(reg.jaar) === String(jaar))) {
@@ -393,17 +389,15 @@ function koppelFirebaseListeners() {
   fbRefsActief.forEach(function(r) { try { r.off(); } catch (e) {} });
   fbRefsActief = [];
 
-  var refReg = db.ref('wedstrijd/registraties');
+  var refReg = db.ref('wedstrijd/registraties_' + jaar);
   refReg.on('value', function(snap) {
     var val = snap.val() || {};
     var nieuw = false;
     Object.keys(val).forEach(function(k) {
       var item = val[k];
       if (!item) return;
-      if (!item.jaar || String(item.jaar) === String(jaar)) {
-        klokkerLogStore.registraties[item.id || k] = item;
-        if (verwerkKlokkerRegistratieInTafel(item)) nieuw = true;
-      }
+      klokkerLogStore.registraties[item.id || k] = item;
+      if (verwerkKlokkerRegistratieInTafel(item)) nieuw = true;
     });
     localStorage.setItem('nnfc_tafel_klokkerlog_' + jaar, JSON.stringify(klokkerLogStore));
     if (nieuw && !isJaarVergrendeldTafel()) {
@@ -414,15 +408,13 @@ function koppelFirebaseListeners() {
   });
   fbRefsActief.push(refReg);
 
-  var refMel = db.ref('wedstrijd/meldingen');
+  var refMel = db.ref('wedstrijd/meldingen_' + jaar);
   refMel.on('value', function(snap) {
     var val = snap.val() || {};
     Object.keys(val).forEach(function(k) {
       var item = val[k];
       if (!item) return;
-      if (!item.jaar || String(item.jaar) === String(jaar)) {
-        klokkerLogStore.meldingen[item.id || k] = item;
-      }
+      klokkerLogStore.meldingen[item.id || k] = item;
     });
     localStorage.setItem('nnfc_tafel_klokkerlog_' + jaar, JSON.stringify(klokkerLogStore));
     render();
@@ -465,19 +457,18 @@ function bewaarAlles() {
       db.ref('wedstrijd/tafel_klokkerlog_' + jaar).set(klokkerLogStore);
       var updates = {};
       deelnemers.forEach(function(h) { updates[h.id] = h; });
-      db.ref('wedstrijd/beheer_deelnemers').update(updates);
+      db.ref('wedstrijd/beheer_deelnemers_' + jaar).set(updates);
     } catch (e) {}
   }
   render();
 }
 
-// Reglement art. 2.15: Eindtijden van de 3 basisoefeningen optellen per klasse;
-// snelste hond krijgt 250 pnt, nr 2 = 245 pnt, nr 3 = 240 pnt, elke plek lager -5 pnt.
-// Open klasse wordt apart geklasseerd voor Reuen en Teven (art. 2.14.2).
-function berekenPuntenUitTijden() {
-  if (waarschuwVergrendeldTafel()) return;
+function berekenTijdenEnPunten(stil) {
+  if (!stil && waarschuwVergrendeldTafel()) return 0;
   var groepen = {};
   deelnemers.forEach(function(h) {
+    if (!tafelData[h.id]) tafelData[h.id] = maakStandaardTafelRecord();
+    herberekenHondTotaalTijd(tafelData[h.id]);
     if (h.buitenMededinging) return;
     var td = tafelData[h.id];
     if (!td || td.totaalTijdCs == null || td.totaalTijdCs <= 0) return;
@@ -500,8 +491,15 @@ function berekenPuntenUitTijden() {
     });
   });
 
-  bewaarAlles();
-  alert('Punten volgens Reglement art. 2.15 berekend voor ' + aantalBerekend + ' deelnemers op basis van de gezwommen tijden (250 / 245 / 240 ...).');
+  berekeningMelding = 'Tijden en punten bijgewerkt (art. 2.15) voor ' + aantalBerekend + ' deelnemers.';
+  if (!stil) {
+    bewaarAlles();
+  }
+  return aantalBerekend;
+}
+
+function berekenPuntenUitTijden() {
+  berekenTijdenEnPunten(false);
 }
 
 function pasKlokkerCorrectieToe(melId) {
@@ -527,7 +525,7 @@ function pasKlokkerCorrectieToe(melId) {
   m.status = 'AFGEHANDELD';
   klokkerLogStore.verwerkt[melId] = true;
   if (db) {
-    try { db.ref('wedstrijd/meldingen/' + melId + '/status').set('AFGEHANDELD'); } catch (e) {}
+    try { db.ref('wedstrijd/meldingen_' + jaar + '/' + melId + '/status').set('AFGEHANDELD'); } catch (e) {}
   }
   bewaarAlles();
 }
@@ -540,6 +538,7 @@ function wisselJaar() {
     jaar = gekozen;
   }
   document.getElementById('lblJaar').textContent = jaar;
+  berekeningMelding = '';
   laadData();
   render();
   if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') {
@@ -730,9 +729,6 @@ function totaalPunten(h) {
   return basis + kcm;
 }
 
-// ============================================================
-// RENDER STAP 1: AANMELDEN & STARTNUMMER
-// ============================================================
 function renderStap1() {
   if (nav.sub === 'DEELNEMER_DETAIL' && nav.subSub) {
     var h = deelnemers.find(function(x) { return x.id === nav.subSub; });
@@ -812,10 +808,9 @@ function renderStap1() {
   '</div>';
 }
 
-// ============================================================
-// RENDER STAP 2: BASIS OEFENINGEN & KLOKKERTIJDEN
-// ============================================================
 function renderStap2() {
+  var melBanner = berekeningMelding ? '<div class="chip-ok" style="margin-bottom:10px">' + esc(berekeningMelding) + '</div>' : '';
+
   if (nav.sub && nav.subSub) {
     var h = deelnemers.find(function(x) { return x.id === nav.subSub; });
     if (!h) { gaTerug(); return ''; }
@@ -825,6 +820,7 @@ function renderStap2() {
     var valC = td.tijdC ? (td.tijdC.weigering ? 'Weigering' : fmtCs(td.tijdC.cs)) : '';
     return '<div class="box">' +
       '<div class="box-head"><div><h2>Basis oefeningen & Tijden: #' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '</h2><div class="sub">' + esc(h.stamboom) + ' • Baan ' + esc(h.baan) + ' • ' + esc(h.klasse) + '</div></div></div>' +
+      melBanner +
       '<div class="grid4" style="margin-bottom:12px">' +
         '<div class="kaart"><label>Oefening A (Object)</label><input type="text" value="' + esc(valA) + '" placeholder="bijv. 42,15 of W" onchange="wijzigOefeningTijdTafel(\'' + esc(h.id) + '\',\'A\',this.value)"></div>' +
         '<div class="kaart"><label>Oefening B (Pop)</label><input type="text" value="' + esc(valB) + '" placeholder="bijv. 51,80 of W" onchange="wijzigOefeningTijdTafel(\'' + esc(h.id) + '\',\'B\',this.value)"></div>' +
@@ -868,6 +864,7 @@ function renderStap2() {
         '<div><h2>Baan ' + esc(bNr) + ' – Basis oefeningen & Klokkertijden</h2><div class="sub">Klokkertijden (A, B, C) stromen hier direct binnen • Weigering = 600,00 sec (art. 4.1–4.3)</div></div>' +
         '<button type="button" class="pri sm" onclick="berekenPuntenUitTijden()">Bereken punten uit tijden (art. 2.15)</button>' +
       '</div>' +
+      melBanner +
       '<div class="toolbar"><div class="search-wrap">' +
         '<input type="search" value="' + esc(nav.zoek) + '" oninput="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond of eigenaar op baan ' + esc(bNr) + '...">' +
         '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
@@ -894,13 +891,11 @@ function renderStap2() {
       '<div><h2>2. Basis oefeningen & Tijden – Kies een baan</h2><div class="sub">Klik op een baan voor klokkertijden (A, B, C) of bereken direct de Trials-punten per klasse</div></div>' +
       '<button type="button" class="pri sm" onclick="berekenPuntenUitTijden()">Bereken punten uit tijden (art. 2.15)</button>' +
     '</div>' +
+    melBanner +
     '<div class="grid5">' + kaarten + '</div>' +
   '</div>';
 }
 
-// ============================================================
-// RENDER STAP 3: BREVETTEN
-// ============================================================
 function renderStap3() {
   if (nav.sub === 'BREVET_DETAIL' && nav.subSub) {
     var h = deelnemers.find(function(x) { return x.id === nav.subSub; });
@@ -957,9 +952,6 @@ function renderStap3() {
   '</div>';
 }
 
-// ============================================================
-// RENDER STAP 4: BESTE REU & BESTE TEEF
-// ============================================================
 function renderStap4() {
   var geslachtFilter = nav.sub === 'TEVEN' ? 'Teef' : (nav.sub === 'REUEN' ? 'Reu' : 'ALLE');
   var lijstRt = deelnemers.filter(function(h) {
@@ -1006,11 +998,14 @@ function renderStap4() {
   '</div>';
 }
 
-// ============================================================
-// RENDER STAP 5: UITSLAGEN, BREVETTEN & BEKERS + PRINT / PDF
-// ============================================================
-function printOverzicht(onderdeel) {
-  nav.printOnderdeel = onderdeel || 'ALLES';
+function berekenEnPrintOverzicht() {
+  if (!isJaarVergrendeldTafel()) {
+    berekenTijdenEnPunten(true);
+    localStorage.setItem('nnfc_tafel_' + jaar, JSON.stringify(tafelData));
+    if (db) {
+      try { db.ref('wedstrijd/tafel_status_' + jaar).set(tafelData); } catch (e) {}
+    }
+  }
   render();
   setTimeout(function() { window.print(); }, 80);
 }
@@ -1139,17 +1134,20 @@ function renderStap5() {
   return '<div class="print-kop"><h2>NNFC Waterwerk – Eindoverzicht ' + esc(jaar) + '</h2><div>' + esc(printSubTitel) + '</div></div>' +
     '<div class="box no-print">' +
       '<div class="box-head">' +
-        '<div><h2>5. Uitslagen, Brevetten & Bekers</h2><div class="sub">Eindoverzicht voor de prijsuitreiking • Direct printen of opslaan als PDF</div></div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-          '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="nav.klasseFilter=\'ALLE\';gaNaarStap(5)">Alles op 1 blad</button>' +
-          '<button type="button" class="sm ' + (nav.sub === 'UITSLAGEN' ? 'pri' : '') + '" onclick="openSub(\'UITSLAGEN\',\'Alleen Uitslagen\')">Uitslagen</button>' +
-          '<button type="button" class="sm ' + (nav.sub === 'PER_KLASSE' ? 'pri' : '') + '" onclick="openSub(\'PER_KLASSE\',\'Uitslagen per klasse\')">Per klasse</button>' +
-          '<button type="button" class="sm ' + (nav.sub === 'BREVETTEN_LIJST' ? 'pri' : '') + '" onclick="openSub(\'BREVETTEN_LIJST\',\'Geslaagde Brevetten\')">Brevetten (' + geslaagdeBrevetten.length + ')</button>' +
-          '<button type="button" class="sm ' + (nav.sub === 'BEKERS' ? 'pri' : '') + '" onclick="openSub(\'BEKERS\',\'Bekers & Titels\')">Bekers (' + bekerLijst.length + ')</button>' +
-          '<button type="button" class="pri sm" onclick="berekenPuntenUitTijden()">Punten herberekenen</button>' +
-          '<button type="button" class="ok" onclick="printOverzicht(\'ALLES\')">Print / Opslaan als PDF</button>' +
+        '<div><h2>5. Tijd- & Puntentelling → Export / Print</h2><div class="sub">Eerst tijden en punten berekenen, daarna pas het eindoverzicht printen of als PDF opslaan</div></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+          '<button type="button" class="pri" onclick="berekenPuntenUitTijden()">1. Tijd &amp; punten berekenen</button>' +
+          '<button type="button" class="ok" onclick="berekenEnPrintOverzicht()">2. Export / Print (PDF)</button>' +
         '</div>' +
       '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:' + (berekeningMelding ? '10px' : '0') + '">' +
+        '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="nav.klasseFilter=\'ALLE\';gaNaarStap(5)">Alles op 1 blad</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'UITSLAGEN' ? 'pri' : '') + '" onclick="openSub(\'UITSLAGEN\',\'Alleen Uitslagen\')">Uitslagen</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'PER_KLASSE' ? 'pri' : '') + '" onclick="openSub(\'PER_KLASSE\',\'Uitslagen per klasse\')">Per klasse</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'BREVETTEN_LIJST' ? 'pri' : '') + '" onclick="openSub(\'BREVETTEN_LIJST\',\'Geslaagde Brevetten\')">Brevetten (' + geslaagdeBrevetten.length + ')</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'BEKERS' ? 'pri' : '') + '" onclick="openSub(\'BEKERS\',\'Bekers & Titels\')">Bekers (' + bekerLijst.length + ')</button>' +
+      '</div>' +
+      (berekeningMelding ? '<div class="chip-ok">' + esc(berekeningMelding) + '</div>' : '') +
     '</div>' +
 
     uitslagenHtml +
