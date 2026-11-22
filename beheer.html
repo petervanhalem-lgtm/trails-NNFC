@@ -1,70 +1,171 @@
-// Optioneel wachtwoordslot: staat standaard UIT voor het testen
-const WACHTWOORD_SLOT_ACTIEF = false;
-const BEHEER_WACHTWOORD = ""; // Vul hier pas later een wachtwoord in indien gewenst
+<script>
+(function () {
+  // 1. Optioneel wachtwoordslot (staat standaard UIT voor het testen)
+  const WACHTWOORD_SLOT_ACTIEF = false;
+  const BEHEER_WACHTWOORD = ""; // Vul hier pas later een wachtwoord in als je het slot wilt aanzetten
 
-function controleerWachtwoordIndienActief() {
-  if (!WACHTWOORD_SLOT_ACTIEF) return true;
-  const invoer = prompt("Voer het beheerderswachtwoord in om deze actie uit te voeren:");
-  if (invoer === null || invoer !== BEHEER_WACHTWOORD) {
-    alert("Onjuist wachtwoord of geannuleerd. Actie afgebroken.");
-    return false;
-  }
-  return true;
-}
-
-/**
- * 1. Verwijder één specifieke deelnemersregel uit de lijst van het gekozen jaar
- * @param {string|number} regelId - Uniek ID of index van de regel
- * @param {string|number} jaar - Bijvoorbeeld 2027
- */
-function verwijderDeelnemerRegel(regelId, jaar = 2027) {
-  if (!controleerWachtwoordIndienActief()) return;
-
-  const bevestigRegel = confirm(
-    `Weet je het zeker dat je deze regel uit de lijst van ${jaar} wilt verwijderen?`
-  );
-  if (!bevestigRegel) return;
-
-  // VERVANG DIT DEEL door jouw eigen array/state en opslaglogica:
-  // Bijvoorbeeld:
-  // lijstVanJaar = lijstVanJaar.filter(item => item.id !== regelId);
-  // slaLijstOp(jaar, lijstVanJaar);
-  // renderDeelnemersLijst();
-
-  console.log(`Regel ${regelId} uit jaar ${jaar} verwijderd.`);
-  alert(`Regel ${regelId} uit ${jaar} is verwijderd.`);
-}
-
-/**
- * 2. Verwijder ALLE data van het gekozen jaar (met minimaal 2x "Weet je het zeker?")
- * @param {string|number} jaar - Bijvoorbeeld 2027
- */
-function verwijderAlleDataVanJaar(jaar = 2027) {
-  if (!controleerWachtwoordIndienActief()) return;
-
-  // Vraag 1
-  const eersteKeerZeker = confirm(
-    `Weet je het zeker dat je ALLE data van het jaar ${jaar} wilt verwijderen?`
-  );
-  if (!eersteKeerZeker) {
-    alert("Verwijderen geannuleerd. Er is niets gewist.");
-    return;
+  function magDoorgaanMetWachtwoord() {
+    if (!WACHTWOORD_SLOT_ACTIEF) return true;
+    const invoer = window.prompt("Voer het beheerderswachtwoord in om deze actie uit te voeren:");
+    if (invoer === null || invoer !== BEHEER_WACHTWOORD) {
+      window.alert("Onjuist wachtwoord of geannuleerd. De actie is niet uitgevoerd.");
+      return false;
+    }
+    return true;
   }
 
-  // Vraag 2 (verplichte tweede bevestiging)
-  const tweedeKeerZeker = confirm(
-    `Weet je het écht zeker? Alle inschrijvingen, banen en toptijden van ${jaar} gaan definitief weg.`
-  );
-  if (!tweedeKeerZeker) {
-    alert("Verwijderen geannuleerd bij de tweede controle. Er is niets gewist.");
-    return;
+  // 2. Hulpfunctie om een regel visueel en uit de lijst te verwijderen
+  function verwijderRegelUitDomEnData(knopElement, regelId, jaar) {
+    const rij = knopElement
+      ? knopElement.closest("tr, [data-deelnemer-id], [data-id], .deelnemer-rij, .row, li")
+      : null;
+
+    if (rij) {
+      rij.remove();
+    }
+
+    // Als er een globale lijst of opslag bestaat, probeer deze ook netjes bij te werken
+    try {
+      if (Array.isArray(window.deelnemers2027) && regelId !== undefined && regelId !== null) {
+        window.deelnemers2027 = window.deelnemers2027.filter(
+          (item) => String(item.id ?? item.startnr ?? item.lidnr) !== String(regelId)
+        );
+      }
+      if (typeof window.slaDeelnemersOp === "function") {
+        window.slaDeelnemersOp(jaar, window.deelnemers2027);
+      }
+      if (typeof window.renderDeelnemersLijst === "function") {
+        window.renderDeelnemersLijst(jaar);
+      }
+    } catch (err) {
+      console.error("Fout bij bijwerken van deelnemersdata:", err);
+    }
+
+    bijwerkTellersOpPagina(jaar);
   }
 
-  // VERVANG DIT DEEL door het daadwerkelijk wissen van alle data van `jaar`:
-  // Bijvoorbeeld:
-  // wisAlleJaarDataInOpslag(jaar); // deelnemers, banen, toptijden, importstatus
-  // renderDeelnemersLijst();
+  // 3. Hulpfunctie om ALLE data van een jaar te wissen
+  function wisAlleDataVanJaar(jaar) {
+    // Verwijder alle deelnemersrijen uit de lijst op het scherm
+    document
+      .querySelectorAll("table tbody tr, [data-deelnemer-id], .deelnemer-rij")
+      .forEach((el) => el.remove());
 
-  console.log(`Alle data van het jaar ${jaar} is verwijderd.`);
-  alert(`Alle data van ${jaar} is verwijderd.`);
-}
+    // Wis eventuele opgeslagen data voor het betreffende jaar in localStorage/sessionStorage
+    try {
+      const sleutel = String(jaar || "2027");
+      [window.localStorage, window.sessionStorage].forEach((storage) => {
+        if (!storage) return;
+        Object.keys(storage).forEach((key) => {
+          if (
+            key.toLowerCase().includes(sleutel) ||
+            key.toLowerCase().includes("watertrials") ||
+            key.toLowerCase().includes("deelnemer") ||
+            key.toLowerCase().includes("toptijd")
+          ) {
+            storage.removeItem(key);
+          }
+        });
+      });
+
+      if (Array.isArray(window.deelnemers2027)) {
+        window.deelnemers2027 = [];
+      }
+      if (typeof window.wisJaarData === "function") {
+        window.wisJaarData(jaar);
+      }
+      if (typeof window.renderDeelnemersLijst === "function") {
+        window.renderDeelnemersLijst(jaar);
+      }
+    } catch (err) {
+      console.error("Fout bij wissen van jaardata:", err);
+    }
+
+    bijwerkTellersOpPagina(jaar);
+  }
+
+  // 4. Werk zichtbare tellers (zoals "Totaal: X") bij als ze op de pagina staan
+  function bijwerkTellersOpPagina(jaar) {
+    const resterendeRijen = document.querySelectorAll("table tbody tr").length;
+    document.body.querySelectorAll("*").forEach((el) => {
+      if (el.children.length === 0 && el.textContent && el.textContent.includes("Totaal:")) {
+        el.textContent = el.textContent.replace(/Totaal:\s*\d+/i, `Totaal: ${resterendeRijen}`);
+        el.textContent = el.textContent.replace(/Getoond:\s*\d+/i, `Getoond: ${resterendeRijen}`);
+      }
+    });
+    if (jaar) {
+      console.log(`Actie verwerkt voor jaar ${jaar}. Resterende rijen in tabel: ${resterendeRijen}`);
+    }
+  }
+
+  // 5. Globale functies (ook direct aanroepbaar vanuit knoppen)
+  window.verwijderDeelnemerRegel = function (regelId, jaar = 2027, knopElement = null) {
+    if (!magDoorgaanMetWachtwoord()) return;
+    const ok = window.confirm(
+      `Weet je het zeker dat je deze regel uit de lijst van ${jaar} wilt verwijderen?`
+    );
+    if (!ok) return;
+    verwijderRegelUitDomEnData(knopElement, regelId, jaar);
+  };
+
+  window.verwijderAlleDataVanJaar = function (jaar = 2027) {
+    if (!magDoorgaanMetWachtwoord()) return;
+
+    // Eerste bevestiging: "Weet je het zeker?"
+    const vraag1 = window.confirm(
+      `Weet je het zeker dat je ALLE data van het jaar ${jaar} wilt verwijderen?`
+    );
+    if (!vraag1) {
+      window.alert("Verwijderen geannuleerd. Er is niets gewist.");
+      return;
+    }
+
+    // Tweede bevestiging: "Weet je het zeker?" (versterkt)
+    const vraag2 = window.confirm(
+      `Weet je het écht zeker? Alle inschrijvingen, banen en toptijden van ${jaar} worden nu definitief verwijderd.`
+    );
+    if (!vraag2) {
+      window.alert("Verwijderen geannuleerd bij de tweede bevestiging. Er is niets gewist.");
+      return;
+    }
+
+    wisAlleDataVanJaar(jaar);
+    window.alert(`Alle data van ${jaar} is verwijderd.`);
+  };
+
+  // 6. Automatisch koppelen aan bestaande "Verwijder"-knoppen in de tabel/lijst
+  document.addEventListener("click", function (event) {
+    const knop = event.target.closest("button, a, [role='button']");
+    if (!knop) return;
+
+    const tekst = (knop.textContent || "").trim().toLowerCase();
+    const rij = knop.closest("tr, [data-deelnemer-id], [data-id], .deelnemer-rij");
+    const regelId =
+      knop.dataset.id ||
+      (rij && (rij.dataset.deelnemerId || rij.dataset.id || rij.cells?.[0]?.textContent?.trim())) ||
+      "";
+
+    // Als het een losse "Verwijder"-knop op een regel is (niet "Verwijder alle data...")
+    if (tekst === "verwijder" && rij) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.verwijderDeelnemerRegel(regelId, 2027, knop);
+      return;
+    }
+
+    // Als het een knop is om alle data van het jaar te wissen
+    if (
+      tekst.includes("verwijder alle data") ||
+      tekst.includes("wis alle data") ||
+      tekst.includes("vervang huidige lijst van 2027 volledig")
+    ) {
+      // Alleen bij expliciete verwijder-/wis-knoppen direct de dubbele bevestiging starten
+      if (tekst.includes("verwijder alle data") || tekst.includes("wis alle data")) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        window.verwijderAlleDataVanJaar(2027);
+      }
+    }
+  }, true);
+})();
+</script>
