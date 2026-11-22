@@ -69,7 +69,10 @@ var params = new URLSearchParams(window.location.search);
 var BAAN_NR = String(params.get('baan') || '1').replace(/[^1-5]/g, '') || '1';
 var IS_ADMIN = params.get('admin') === '1';
 var rawJaarParam = params.get('jaar');
-var JAAR = (rawJaarParam && /^20\d{2}$/.test(rawJaarParam)) ? rawJaarParam : '2026';
+var fallbackJaar = (window.NNFCJaarNav && typeof window.NNFCJaarNav.bepaalStartJaar === 'function')
+  ? window.NNFCJaarNav.bepaalStartJaar('2026')
+  : '2026';
+var JAAR = (rawJaarParam && /^20\d{2}$/.test(rawJaarParam.trim())) ? rawJaarParam.trim() : fallbackJaar;
 document.title = 'Baan ' + BAAN_NR + ' (' + JAAR + ') – NNFC Klokkersscherm';
 var LOGO = 'nnfc-logo.png';
 
@@ -80,7 +83,6 @@ function esc(str) {
 }
 
 var db = null;
-var firebaseInitialized = false;
 var KEY_STATE = 'nnfc_klokker_state_' + JAAR + '_' + BAAN_NR;
 var KEY_DOGS = 'nnfc_klokker_dogs_' + JAAR + '_' + BAAN_NR;
 var KEY_OUTBOX = 'nnfc_klokker_outbox_' + JAAR + '_' + BAAN_NR;
@@ -96,6 +98,7 @@ try { S = JSON.parse(localStorage.getItem(KEY_STATE)); } catch (e) {}
 if (!S || !S.ox || !S.ox.BREVET) S = fresh();
 
 var inp = '', conf = null, confStep = 1, corrId = null, msgOpen = false, sending = false;
+var remoteSlot = null;
 
 function save() {
   try {
@@ -120,10 +123,15 @@ function getBrevetLabel(br) {
 function verwerkBaanLijst(nieuw) {
   var geldigeIds = {};
   DOGS = (nieuw || []).map(function(h) {
-    geldigeIds[h.nr] = true;
+    var nrVal = h.nr != null ? h.nr : h.startnummer;
+    geldigeIds[nrVal] = true;
     return {
-      id: h.nr, nr: h.nr, roep: h.roepnaam, stam: h.stamboom || '',
-      klasse: h.klasse, geslacht: h.geslacht || '',
+      id: nrVal,
+      nr: nrVal,
+      roep: h.roepnaam || h.roep || '',
+      stam: h.stamboom || h.stam || '',
+      klasse: h.klasse || '',
+      geslacht: h.geslacht || '',
       opvolgendBrevet: h.opvolgendBrevet || '',
       buitenMededinging: Boolean(h.buitenMededinging)
     };
@@ -146,50 +154,73 @@ function verwerkBaanLijst(nieuw) {
   pushStatus();
 }
 
+function mapBeheerDeelnemersNaarBaan(val) {
+  if (!val) return [];
+  var lijst = Array.isArray(val) ? val : Object.values(val);
+  return lijst.filter(function(h) {
+    return h && String(h.baan) === String(BAAN_NR) && Boolean(h.aanwezig);
+  }).sort(function(a, b) {
+    return (Number(a.startnummer) || 0) - (Number(b.startnummer) || 0);
+  }).map(function(h) {
+    return {
+      nr: h.startnummer,
+      roepnaam: h.roepnaam,
+      stamboom: h.stamboom || '',
+      klasse: h.klasse || '',
+      geslacht: h.geslacht || '',
+      opvolgendBrevet: h.opvolgendBrevet || '',
+      buitenMededinging: Boolean(h.buitenMededinging)
+    };
+  });
+}
+
 function laadLokaleBaanLijstFallback() {
   try {
     var alle = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + JAAR)) || [];
-    var baanHonden = alle.filter(function(h) {
-      return String(h.baan) === String(BAAN_NR) && Boolean(h.aanwezig);
-    }).map(function(h) {
-      return {
-        nr: h.startnummer,
-        roepnaam: h.roepnaam,
-        stamboom: h.stamboom || '',
-        klasse: h.klasse || '',
-        geslacht: h.geslacht || '',
-        opvolgendBrevet: h.opvolgendBrevet || '',
-        buitenMededinging: Boolean(h.buitenMededinging)
-      };
-    });
-    if (baanHonden.length) verwerkBaanLijst(baanHonden);
+    verwerkBaanLijst(mapBeheerDeelnemersNaarBaan(alle));
   } catch (e) {}
 }
 
 function initFirebase() {
-  if (firebaseInitialized) return;
   try {
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.database();
-      firebaseInitialized = true;
-      var jaarPad = 'wedstrijd/baan_lijsten_' + JAAR + '/baan_' + BAAN_NR;
-      var legacyPad = 'wedstrijd/baan_lijsten/baan_' + BAAN_NR;
-      db.ref(jaarPad).on('value', function(snap) {
+
+      var jaarLijstPad = 'wedstrijd/baan_lijsten_' + JAAR + '/baan_' + BAAN_NR;
+      var legacyLijstPad = 'wedstrijd/baan_lijsten/baan_' + BAAN_NR;
+      var deelnemersPad = 'wedstrijd/beheer_deelnemers_' + JAAR;
+
+      db.ref(jaarLijstPad).on('value', function(snap) {
         var val = snap.val();
         if (val) {
-          var nieuw = Array.isArray(val) ? val : Object.values(val);
-          verwerkBaanLijst(nieuw);
+          verwerkBaanLijst(Array.isArray(val) ? val : Object.values(val));
         } else if (String(JAAR) === '2026') {
-          db.ref(legacyPad).once('value', function(legSnap) {
+          db.ref(legacyLijstPad).once('value', function(legSnap) {
             var legVal = legSnap.val();
             if (legVal) {
-              var legNieuw = Array.isArray(legVal) ? legVal : Object.values(legVal);
-              verwerkBaanLijst(legNieuw);
+              verwerkBaanLijst(Array.isArray(legVal) ? legVal : Object.values(legVal));
             }
           });
         }
       });
+
+      db.ref(deelnemersPad).on('value', function(snap) {
+        var val = snap.val();
+        if (val) {
+          verwerkBaanLijst(mapBeheerDeelnemersNaarBaan(val));
+        }
+      });
+
+      db.ref('wedstrijd/slot_' + JAAR).on('value', function(snap) {
+        var sVal = snap.val();
+        if (sVal && typeof sVal.vergrendeld === 'boolean') {
+          remoteSlot = sVal.vergrendeld;
+          try { localStorage.setItem('nnfc_slot_' + JAAR, JSON.stringify(sVal)); } catch (e) {}
+          render();
+        }
+      });
+
       flushOutbox();
     }
   } catch (e) {}
@@ -266,6 +297,7 @@ window.addEventListener('online', flushOutbox);
 setInterval(flushOutbox, 5000);
 
 function isJaarVergrendeld() {
+  if (typeof remoteSlot === 'boolean') return remoteSlot;
   try {
     var raw = localStorage.getItem('nnfc_slot_' + JAAR);
     if (raw) {
@@ -315,7 +347,7 @@ function render() {
   var cd = dog(o.q.slice(0, 1).pop());
   var nd = dog(o.q.slice(1, 2).pop());
   var done = Object.keys(o.res).length;
-  var klassen = Array.from(new Set(DOGS.map(function(d) { return d.klasse; }))).join(', ');
+  var klassen = Array.from(new Set(DOGS.map(function(d) { return d.klasse; }).filter(Boolean))).join(', ');
   var boxLen = 0;
   try { boxLen = (JSON.parse(localStorage.getItem(KEY_OUTBOX)) || []).length; } catch (e) {}
 
@@ -345,132 +377,4 @@ function reg(o, cd, nd) {
     return '<div class="cur"><div><div class="nm">Klaar</div><div class="st">Alle honden hebben oefening ' + esc(S.ex) + ' gedaan. Kies een andere oefening hierboven.</div></div></div>';
   }
 
-  var h = '<div class="cur"><div><small>Nu aan de beurt</small><div class="nm">' + esc(cd.roep) + '</div><div class="st">' + esc(cd.stam) + '</div><div class="br">' + esc(cd.opvolgendBrevet) + '</div></div><div class="nr"><small>nr</small><br>' + esc(cd.nr) + '</div></div>';
-  h += '<div class="nxt"><span>Volgende</span>' + (nd ? '<span><b>' + esc(nd.roep) + '</b> nr ' + esc(nd.nr) + '</span>' : '<span>Laatste hond</span>') + '</div>';
-
-  if (S.ex === 'BREVET') {
-    h += '<div class="disp" style="text-align:left;padding:14px"><div style="font-weight:700;color:var(--ac)">Vervolgoefening zonder tijdmeting</div><div style="font-size:21px;font-weight:700;margin-top:4px">' + esc(getBrevetLabel(cd.opvolgendBrevet)) + '</div></div>';
-    if (conf === 'ok') h += '<div class="conf"><p><b>Uitgevoerd</b> opslaan voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="yes">Ja, opslaan</button><button data-a="no">Terug</button></div></div>';
-    else if (conf === 'w' && confStep === 1) h += '<div class="conf"><p><b>Weigering</b> registreren voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="step2">Doorgaan</button><button data-a="no">Terug</button></div></div>';
-    else if (conf === 'w' && confStep === 2) h += '<div class="conf warn2"><p><b>Zeker weten?</b> Een weigering bij brevet betekent geen brevet. Definitief opslaan voor ' + esc(cd.roep) + '?</p><div class="row"><button class="pri" data-a="yes">Ja, definitief</button><button data-a="no">Terug</button></div></div>';
-    else h += '<div class="acts" style="margin-top:12px"><button class="pri" data-a="cok">Uitgevoerd</button><button class="bad" data-a="cw">Weigering</button></div>';
-  } else {
-    var p = parse(inp), ok = p && p.cs;
-    h += '<div class="disp"><div class="t' + (inp ? '' : ' ph') + '">' + (ok ? fmt(p.cs) : (inp ? '…' : '0,00')) + '</div></div>';
-    h += '<div class="msg' + (p && p.err ? ' err' : '') + '">' + (p && p.err ? esc(p.err) : (inp ? 'Controleer de tijd en sla op.' : 'Voer alleen cijfers in, bijvoorbeeld 1234 voor 12,34.')) + '</div>';
-    h += '<div class="pad">' + '123456789'.split('').map(function(k) { return '<button data-a="k" data-v="' + k + '">' + k + '</button>'; }).join('') + '<button data-a="clr">Wis</button><button data-a="k" data-v="0">0</button><button data-a="del" aria-label="Wissen">⌫</button></div>';
-
-    if (conf === 't' && confStep === 1) {
-      h += '<div class="conf"><p>Tijd <b>' + fmt(p.cs) + '</b> opslaan voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="' + (p.cs < 500 ? 'step2' : 'yes') + '">Ja, opslaan</button><button data-a="no">Terug</button></div></div>';
-    } else if (conf === 't' && confStep === 2) {
-      h += '<div class="conf warn2"><p><b>Let op:</b> <b>' + fmt(p.cs) + '</b> is een zeer snelle tijd (onder 5 sec). Weet je het zeker?</p><div class="row"><button class="pri" data-a="yes">Ja, klopt</button><button data-a="no">Terug</button></div></div>';
-    } else if (conf === 'w' && confStep === 1) {
-      h += '<div class="conf"><p><b>Weigering</b> registreren voor ' + esc(cd.roep) + ' (nr ' + esc(cd.nr) + ')?</p><div class="row"><button class="pri" data-a="step2">Doorgaan</button><button data-a="no">Terug</button></div></div>';
-    } else if (conf === 'w' && confStep === 2) {
-      h += '<div class="conf warn2"><p><b>Zeker weten?</b> Een weigering telt als 600,00 sec (10 min). Definitief opslaan voor ' + esc(cd.roep) + '?</p><div class="row"><button class="pri" data-a="yes">Ja, definitief</button><button data-a="no">Terug</button></div></div>';
-    } else {
-      h += '<div class="acts"><button class="pri" data-a="ct"' + (ok ? '' : ' disabled') + '>Tijd opslaan</button><button class="bad" data-a="cw">Weigering</button></div>';
-    }
-  }
-
-  h += '<button style="width:100%;margin-top:12px" data-a="msgopen">Bericht aan wedstrijdtafel sturen</button>';
-  if (msgOpen) {
-    h += '<div class="box"><label>Kies standaardbericht:</label><select id="msgSel"><option value="Hond nog niet aanwezig bij baan">Hond nog niet aanwezig bij baan</option><option value="Korte pauze / baanonderhoud">Korte pauze / baanonderhoud</option><option value="Vraag voor baancommissaris">Vraag voor baancommissaris</option></select>' +
-      '<input type="text" id="msgTxt" placeholder="Optionele extra toelichting">' +
-      '<div class="row"><button class="pri" data-a="msgsend">Versturen</button><button data-a="msgclose">Annuleren</button></div></div>';
-  }
-  return h;
-}
-
-function lijst(o, relDogs) {
-  var h = '<div class="list">';
-  relDogs.forEach(function(d) {
-    var i = o.q.indexOf(d.id), r = o.res[d.id], cls = 'r', tag = '', btn = '';
-    if (r) {
-      var valTxt = r.t === 'tijd' ? fmt(r.cs) : (r.t === 'ok' ? 'Uitgevoerd' : 'Weigering (600,00s)');
-      if (S.ex === 'BREVET' && r.t === 'weigering') valTxt = 'Weigering';
-      tag = '<span class="tag ' + (r.t === 'weigering' ? 'w' : 'ok') + '">' + valTxt + '</span>';
-      if (S.ex !== 'BREVET') btn = tag + ' <button data-a="corropen" data-v="' + esc(d.id) + '" style="margin-left:6px">Corrigeer</button>';
-    } else if (i === 0) { cls += ' cu'; tag = '<span class="tag" style="color:inherit">Nu</span>'; }
-    else if (i === 1) tag = '<span class="tag">Volgende</span>';
-    else if (i > 1) btn = '<button data-a="mv" data-v="' + esc(d.id) + '">Als volgende</button>';
-
-    if (!r && o.skip[d.id] && !btn && i !== 0) tag += ' <span class="tag">overgeslagen</span>';
-    var sub = (!r && o.skip[d.id] && btn) ? 'Overgeslagen, wacht nog' : (esc(d.stam) + ' • ' + esc(d.opvolgendBrevet));
-    h += '<div class="' + cls + '"><div class="n">' + esc(d.nr) + '</div><div><div class="a">' + esc(d.roep) + '</div><div class="b">' + sub + '</div></div><div>' + (btn || tag) + '</div></div>';
-  });
-  h += '</div>';
-
-  if (corrId) {
-    var cd = dog(corrId), oldR = o.res[corrId];
-    var oldStr = oldR.t === 'tijd' ? fmt(oldR.cs) : 'Weigering (600,00s)';
-    h += '<div class="box"><h2 style="margin-top:0">Correctie aanvragen: #' + esc(cd.nr) + ' ' + esc(cd.roep) + '</h2><div class="m" style="margin-bottom:8px">Huidige waarde: <b>' + oldStr + '</b> (blijft geldig tot de tafel beslist)</div>' +
-      '<input type="tel" id="corrInp" placeholder="Nieuwe tijd in cijfers (bijv. 1234)">' +
-      '<input type="text" id="corrReden" placeholder="Reden (bijv. tikfout)">' +
-      '<div class="row"><button class="pri" data-a="corrsend">Verstuur naar tafel</button><button data-a="corrclose">Annuleren</button></div></div>';
-  }
-
-  h += '<h2>Wijzigingen in de volgorde</h2>';
-  h += S.log.length ? '<ul class="log">' + S.log.slice(-8).reverse().map(function(l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' : '<p class="log" style="padding:0">Nog geen wijzigingen.</p>';
-  return h;
-}
-
-document.getElementById('app').addEventListener('click', function(e) {
-  var b = e.target.closest('button');
-  if (!b) return;
-  var a = b.dataset.a, v = b.dataset.v, o = S.ox[S.ex];
-  var mutatieActies = ['k', 'del', 'clr', 'ct', 'cok', 'cw', 'step2', 'yes', 'mv', 'msgopen', 'msgsend', 'corropen', 'corrsend'];
-  if (mutatieActies.indexOf(a) !== -1 && waarschuwVergrendeld()) {
-    pasKlokkerLockToe();
-    return;
-  }
-
-  if (a === 'ex') { S.ex = v; inp = ''; conf = null; confStep = 1; corrId = null; pushStatus(); }
-  else if (a === 'tab') { S.tab = v; conf = null; confStep = 1; corrId = null; }
-  else if (a === 'k') { if (inp.length < 6) inp += v; }
-  else if (a === 'del') inp = inp.slice(0, -1);
-  else if (a === 'clr') inp = '';
-  else if (a === 'ct') { var p = parse(inp); if (p && p.cs) { conf = 't'; confStep = 1; } }
-  else if (a === 'cok') { conf = 'ok'; confStep = 1; }
-  else if (a === 'cw') { conf = 'w'; confStep = 1; }
-  else if (a === 'step2') { confStep = 2; }
-  else if (a === 'no') { conf = null; confStep = 1; }
-  else if (a === 'yes') {
-    var id = o.q.slice(0, 1).pop(), d = dog(id), p2 = parse(inp);
-    var isBasisOef = (S.ex === 'A' || S.ex === 'B' || S.ex === 'C');
-    var recType = 'WEIGERING', txtVal = isBasisOef ? 'WEIGERING (600,00s)' : 'WEIGERING', csVal = isBasisOef ? 60000 : null, msVal = isBasisOef ? 600000 : null;
-    if (conf === 't' && p2 && p2.cs) {
-      o.res[id] = { t: 'tijd', cs: p2.cs };
-      recType = 'TIJD'; txtVal = fmt(p2.cs); csVal = p2.cs; msVal = p2.ms;
-    } else if (conf === 'ok') {
-      o.res[id] = { t: 'ok' };
-      recType = 'BREVET_OK'; txtVal = 'UITGEVOERD'; csVal = null; msVal = null;
-    } else if (conf === 'w') {
-      o.res[id] = { t: 'weigering', cs: csVal };
-    } else { conf = null; confStep = 1; render(); return; }
-
-    o.q.shift();
-    delete o.skip[id];
-    S.log.push(now() + ' Oef. ' + S.ex + ': #' + d.nr + ' ' + d.roep + ' → ' + txtVal);
-
-    enqueue('registraties', {
-      id: 'B' + BAAN_NR + '_' + S.ex + '_' + d.nr + '_' + Date.now(),
-      jaar: JAAR, baan: BAAN_NR, klasse: d.klasse, oefening: S.ex,
-      startnummer: d.nr, roepnaam: d.roep, geslacht: d.geslacht,
-      buitenMededinging: Boolean(d.buitenMededinging),
-      type: recType, tijdTekst: txtVal, tijdCs: csVal, tijdMs: msVal,
-      timestamp: new Date().toISOString()
-    });
-
-    inp = ''; conf = null; confStep = 1;
-  }
-  else if (a === 'mv') {
-    var mid = +v, i = o.q.indexOf(mid);
-    if (i > 1) {
-      var by = o.q.slice(1, i);
-      by.forEach(function(x) { o.skip[x] = 1; });
-      o.q.splice(i, 1);
-      o.q.splice(1, 0, mid);
-      delete o.skip[mid];
-      var msg = 'Oef. ' + S.ex + ': #' + dog(mid).nr + ' ' + dog(mid).roep + ' als volgende (overgeslagen: ' + by.map(function(x) { return dog(x).roep; }).join(', ') + ')';
-      S.
+  var h = '<div class="cur"><div><small>Nu aan de beurt</small><div class="nm">' + esc(cd.roep) + '</div><div class="st">' + esc(cd.stam) + '</div><div class="br">' + esc(cd.opvolgendBrevet) + '</div></div><div class="nr"><small
