@@ -293,10 +293,24 @@ function normaliseerDeelnemerRecord(h) {
 }
 
 var deelnemers = [];
-var baanIndeling = {
-  banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] },
-  bijlagen: { b1: "", b2: "", b3: "" }
-};
+var STANDAARD_BUFFER_PCT = 10;
+
+function maakStandaardBaanIndeling() {
+  return {
+    banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] },
+    bijlagen: { b1: "", b2: "", b3: "" },
+    startNummersPerKlasse: {
+      "Jeugd": null,
+      "Open": null,
+      "Veteranen": null,
+      "Stamboomloos": null,
+      "Specials": null
+    },
+    bufferPercentage: STANDAARD_BUFFER_PCT
+  };
+}
+
+var baanIndeling = maakStandaardBaanIndeling();
 
 var nav = {
   sectie: 1,
@@ -311,16 +325,16 @@ function laadData() {
     var ruw = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || [];
     deelnemers = ruw.map(normaliseerDeelnemerRecord);
   } catch (e) { deelnemers = []; }
-  baanIndeling = {
-    banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] },
-    bijlagen: { b1: "", b2: "", b3: "" }
-  };
+  baanIndeling = maakStandaardBaanIndeling();
   try {
     var b = JSON.parse(localStorage.getItem('nnfc_baanindeling_' + jaar));
     if (b && b.banen) {
+      var std = maakStandaardBaanIndeling();
       baanIndeling = {
         banen: Object.assign({ "1": [], "2": [], "3": [], "4": [], "5": [] }, b.banen),
-        bijlagen: Object.assign({ b1: "", b2: "", b3: "" }, b.bijlagen || {})
+        bijlagen: Object.assign({ b1: "", b2: "", b3: "" }, b.bijlagen || {}),
+        startNummersPerKlasse: Object.assign(std.startNummersPerKlasse, b.startNummersPerKlasse || {}),
+        bufferPercentage: (typeof b.bufferPercentage === 'number' && !isNaN(b.bufferPercentage) && b.bufferPercentage >= 0) ? b.bufferPercentage : STANDAARD_BUFFER_PCT
       };
     }
   } catch (e) {}
@@ -478,18 +492,112 @@ function herverdeelBanen() {
   bewaarDeelnemers('Banen opnieuw verdeeld op basis van klasse');
 }
 
-function volgendeStartnummer() {
-  var maxNr = 2600;
+function getKlasseStartVanaf(klasse) {
+  if (!klasse || !baanIndeling || !baanIndeling.startNummersPerKlasse) return null;
+  var raw = baanIndeling.startNummersPerKlasse[klasse];
+  var n = parseInt(raw, 10);
+  return (!isNaN(n) && n > 0) ? n : null;
+}
+
+function getBufferPercentage() {
+  var pct = baanIndeling && typeof baanIndeling.bufferPercentage === 'number' ? baanIndeling.bufferPercentage : STANDAARD_BUFFER_PCT;
+  return (!isNaN(pct) && pct >= 0) ? pct : STANDAARD_BUFFER_PCT;
+}
+
+function berekenBufferAantal(aantalInKlasse) {
+  if (!aantalInKlasse || aantalInKlasse <= 0) return 0;
+  var pct = getBufferPercentage();
+  if (pct <= 0) return 0;
+  return Math.max(1, Math.ceil(aantalInKlasse * (pct / 100)));
+}
+
+function wijzigKlasseStartnummer(klasse, waarde) {
+  if (waarschuwIndienVergrendeld()) { render(); return; }
+  if (!baanIndeling.startNummersPerKlasse) {
+    baanIndeling.startNummersPerKlasse = maakStandaardBaanIndeling().startNummersPerKlasse;
+  }
+  var schoon = String(waarde == null ? '' : waarde).trim();
+  if (!schoon) {
+    baanIndeling.startNummersPerKlasse[klasse] = null;
+  } else {
+    var n = parseInt(schoon, 10);
+    if (isNaN(n) || n < 1) {
+      alert('Vul een geldig startnummer in (1 of hoger) of laat het veld leeg.');
+      render();
+      return;
+    }
+    baanIndeling.startNummersPerKlasse[klasse] = n;
+  }
+  bewaarBaanIndeling('Startnummer voor klasse ' + klasse + ' opgeslagen');
+}
+
+function wijzigBufferPercentage(waarde) {
+  if (waarschuwIndienVergrendeld()) { render(); return; }
+  var n = parseInt(waarde, 10);
+  if (isNaN(n) || n < 0 || n > 100) {
+    alert('Vul een bufferpercentage in tussen 0% en 100% (standaard 10%).');
+    render();
+    return;
+  }
+  baanIndeling.bufferPercentage = n;
+  bewaarBaanIndeling('Reservebuffer ingesteld op +' + n + '%');
+}
+
+function volgendeStartnummer(klasse) {
+  var bezet = new Set();
   deelnemers.forEach(function(h) {
     var n = parseInt(h.startnummer, 10);
-    if (!isNaN(n) && n > maxNr) maxNr = n;
+    if (!isNaN(n) && n > 0) bezet.add(n);
   });
-  return maxNr + 1;
+  var startVanaf = getKlasseStartVanaf(klasse);
+  var kandidaat = startVanaf || 1;
+  while (bezet.has(kandidaat)) {
+    kandidaat++;
+  }
+  return kandidaat;
+}
+
+function nummerStartnummersInBlokkenPerKlasse() {
+  if (waarschuwIndienVergrendeld()) return;
+  if (!deelnemers.length) {
+    alert('Er zijn nog geen deelnemers in ' + jaar + ' om door te nummeren.');
+    return;
+  }
+  var pct = getBufferPercentage();
+  if (!confirm('Alle ' + deelnemers.length + ' deelnemers van ' + jaar + ' doornummeren per klasse (incl. +' + pct + '% vrije nummers aan het eind van elke klasserange voor na-/daginschrijving)?')) return;
+
+  var volgordeKlassen = KLASSEN_OPTIES.slice();
+  var lopendNr = 1;
+  var bijgewerkt = [];
+
+  volgordeKlassen.forEach(function(kl) {
+    var groep = deelnemers.filter(function(h) { return h.klasse === kl; });
+    if (!groep.length) return;
+    var ingesteldStart = getKlasseStartVanaf(kl);
+    var startKl = (ingesteldStart && ingesteldStart >= lopendNr) ? ingesteldStart : lopendNr;
+    var nr = startKl;
+    groep.forEach(function(h) {
+      h.startnummer = nr++;
+      bijgewerkt.push(h);
+    });
+    var bufferSpots = berekenBufferAantal(groep.length);
+    lopendNr = nr + bufferSpots;
+  });
+
+  // Eventuele deelnemers met een afwijkende klasse behouden
+  deelnemers.forEach(function(h) {
+    if (volgordeKlassen.indexOf(h.klasse) === -1) {
+      h.startnummer = lopendNr++;
+      bijgewerkt.push(h);
+    }
+  });
+
+  deelnemers = bijgewerkt;
+  bewaarDeelnemers('Startnummers ingedeeld per klasse (incl. +' + pct + '% buffer)');
 }
 
 function laadVoorbeeldData() {
   if (waarschuwIndienVergrendeld()) return;
-  var basisNr = volgendeStartnummer();
   var voorbeelden = [
     { roepnaam: "Bram", stamboom: "Bram van het Waterriet", eigenaar: "Jan de Vries", district: "Noord", lidnr: "1012", geslacht: "Reu", klasse: "Open", huidigBrevet: "Brevet B", opvolgendBrevet: "Brevet C", kcm: "CAC", buitenMededinging: false },
     { roepnaam: "Luna", stamboom: "Luna uit de Rietkraag", eigenaar: "Sanne Bakker", district: "Oost", lidnr: "1045", geslacht: "Teef", klasse: "Jeugd", huidigBrevet: "Geen", opvolgendBrevet: "Jeugdbrevet", kcm: "U1", buitenMededinging: false },
@@ -498,7 +606,7 @@ function laadVoorbeeldData() {
     { roepnaam: "Storm", stamboom: "Storm van het Meer", eigenaar: "Mark Jansen", district: "Midden", lidnr: "1129", geslacht: "Reu", klasse: "Specials", huidigBrevet: "Brevet C", opvolgendBrevet: "Brevet D", kcm: "U2", buitenMededinging: false }
   ];
   voorbeelden.forEach(function(v, idx) {
-    var nr = basisNr + idx;
+    var nr = volgendeStartnummer(v.klasse);
     deelnemers.push({
       id: 'test_' + jaar + '_' + nr + '_' + Math.random().toString(36).slice(2, 6),
       startnummer: nr,
@@ -673,10 +781,7 @@ function verwijderAlleDataVanJaar(doelJaar) {
 
   if (String(yStr) === String(jaar)) {
     deelnemers = [];
-    baanIndeling = {
-      banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] },
-      bijlagen: { b1: "", b2: "", b3: "" }
-    };
+    baanIndeling = maakStandaardBaanIndeling();
     importStatusMelding = 'Alle data van ' + yStr + ' is gewist.';
   }
 
@@ -738,7 +843,6 @@ function verwerkGeimporteerdeRijen(rijen, modus) {
     if (!ok2) return;
     deelnemers = [];
   }
-  var volgendNr = volgendeStartnummer();
   var toegevoegd = 0;
 
   rijen.forEach(function(row) {
@@ -762,8 +866,8 @@ function verwerkGeimporteerdeRijen(rijen, modus) {
     var kleur = pakVeld(row, ['kleur', 'vachtkleur']);
     var email = pakVeld(row, ['e-mail', 'email', 'opgegeven e-mailadres']);
 
-    var nrRaw = parseInt(pakVeld(row, ['startnummer', 'startnr', 'nr', 'nummer']), 10);
-    var startnummer = (!isNaN(nrRaw) && nrRaw > 0 && !deelnemers.some(function(x) { return x.startnummer === nrRaw; })) ? nrRaw : volgendNr++;
+    var nrRaw = parseInt(pakVeld(row, ['startnummer', 'startnr', 'start nr']), 10);
+    var startnummer = (!isNaN(nrRaw) && nrRaw > 0 && !deelnemers.some(function(x) { return x.startnummer === nrRaw; })) ? nrRaw : volgendeStartnummer(klasse);
 
     deelnemers.push({
       id: 'imp_' + jaar + '_' + startnummer + '_' + Math.random().toString(36).slice(2, 6),
@@ -847,7 +951,7 @@ function renderSectie1() {
         '<div style="font-size:14px;line-height:1.5">' +
           '<div>• <b>Hond:</b> Roepnaam hond, Volledige naam van de hond, Geslacht, Klasse, Heeft nu Brevet</div>' +
           '<div>• <b>Eigenaar / Lid:</b> Naam, Lidnr, Traint in Regio / Disctrict, E-mail</div>' +
-          '<div>• <b>Wedstrijd:</b> Startnummer (of automatisch oplopend vanaf #2601) en automatische baanindeling</div>' +
+          '<div>• <b>Wedstrijd:</b> Startnummer (begint bij #1, oplopend of per klasseblok — los van het NNFC-lidnummer)</div>' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -868,7 +972,7 @@ function renderSectie2() {
           '<label>Roepnaam *</label><input id="fRoepnaam" type="text" required placeholder="Bijv. Bram">' +
           '<label>Stamboomnaam</label><input id="fStamboom" type="text" placeholder="Bijv. Bram van het Waterriet">' +
           '<label>Geslacht</label><select id="fGeslacht"><option value="Reu">Reu</option><option value="Teef">Teef</option></select>' +
-          '<label>Klasse</label><select id="fKlasse">' + KLASSEN_OPTIES.map(function(k){ return '<option value="'+k+'">'+k+'</option>'; }).join('') + '</select>' +
+          '<label>Klasse</label><select id="fKlasse" onchange="document.getElementById(\'fStartnr\').value=volgendeStartnummer(this.value)">' + KLASSEN_OPTIES.map(function(k){ return '<option value="'+k+'">'+k+'</option>'; }).join('') + '</select>' +
         '</div>' +
         '<div class="kaart">' +
           '<h3>Eigenaar & Startnummer</h3>' +
@@ -910,12 +1014,51 @@ function renderSectie3() {
     '</div>';
   }).join('');
 
+  var pct = getBufferPercentage();
+  var lopendVoorbeeld = 1;
+  var klasseRangesKaarten = KLASSEN_OPTIES.map(function(kl) {
+    var aant = deelnemers.filter(function(h) { return h.klasse === kl; }).length;
+    var ingesteld = getKlasseStartVanaf(kl);
+    var startNr = (ingesteld && ingesteld >= lopendVoorbeeld) ? ingesteld : (ingesteld || lopendVoorbeeld);
+    var laatsteDeelnemerNr = aant > 0 ? (startNr + aant - 1) : null;
+    var bufferAantal = berekenBufferAantal(aant);
+    var vrijVanaf = aant > 0 ? (laatsteDeelnemerNr + 1) : startNr;
+    var vrijTot = aant > 0 ? (laatsteDeelnemerNr + bufferAantal) : null;
+    lopendVoorbeeld = aant > 0 ? (laatsteDeelnemerNr + bufferAantal + 1) : startNr;
+
+    var indicatieTekst = aant > 0
+      ? ('Deelnemers #' + startNr + '–#' + laatsteDeelnemerNr + (bufferAantal > 0 ? ' • Vrij voor na-/daginschrijving: #' + vrijVanaf + (vrijTot > vrijVanaf ? '–#' + vrijTot : '') + ' (+' + bufferAantal + ')' : ''))
+      : ('Start vanaf #' + startNr + ' (nog geen deelnemers)');
+
+    return '<div class="kaart">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+        '<b>' + esc(kl) + '</b><span class="chip">' + aant + ' honden</span>' +
+      '</div>' +
+      '<label for="startKl_' + esc(kl) + '">Start vanaf nummer</label>' +
+      '<input id="startKl_' + esc(kl) + '" type="number" min="1" value="' + (ingesteld ? esc(ingesteld) : '') + '" placeholder="Auto (vanaf #' + startNr + ')" onchange="wijzigKlasseStartnummer(\'' + esc(kl) + '\',this.value)">' +
+      '<div class="hond-sub">' + esc(indicatieTekst) + '</div>' +
+    '</div>';
+  }).join('');
+
   return '<div class="box">' +
     '<div class="box-head">' +
-      '<div><h2>3. Baanindeling per klasse (' + esc(jaar) + ')</h2><div class="sub">Koppel klassen aan Baan 1–5 en pas de banen van ingeschreven honden aan</div></div>' +
-      '<button type="button" class="pri sm" onclick="herverdeelBanen()">Herverdeel deelnemers op klasse</button>' +
+      '<div><h2>3. Baanindeling &amp; Startnummer-start per klasse (' + esc(jaar) + ')</h2><div class="sub">Koppel klassen aan Baan 1–5 en stel per klasse het startnummer in (standaard +' + esc(pct) + '% vrije nummers aan het eind voor na-/daginschrijving)</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="pri sm" onclick="herverdeelBanen()">Herverdeel deelnemers op klasse</button>' +
+        '<button type="button" class="ok sm" onclick="nummerStartnummersInBlokkenPerKlasse()">Pas startnummers toe (+' + esc(pct) + '% buffer)</button>' +
+      '</div>' +
     '</div>' +
     '<div class="grid5">' + baanKaarten + '</div>' +
+    '<div style="margin-top:14px;padding-top:14px;border-top:1.5px solid var(--ln)">' +
+      '<div class="box-head" style="margin-bottom:8px">' +
+        '<div><h3>Start vanaf-nummer per klasse &amp; vrije reserve aan het einde van de range</h3><div class="sub">Houdt automatisch ruimte vrij aan het einde van een klasserange voor mensen die later of op de dag zelf inschrijven</div></div>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<label for="bufferPctInput" style="margin:0;white-space:nowrap">Vrije buffer (%):</label>' +
+          '<input id="bufferPctInput" type="number" min="0" max="100" value="' + esc(pct) + '" style="width:84px;margin:0;min-height:36px" onchange="wijzigBufferPercentage(this.value)">' +
+        '</div>' +
+      '</div>' +
+      '<div class="grid5">' + klasseRangesKaarten + '</div>' +
+    '</div>' +
   '</div>' +
 
   '<div class="box">' +
@@ -967,6 +1110,7 @@ function renderSectie4() {
     '<div class="box-head">' +
       '<div><h2>4. Deelnemerslijst & Banen (' + esc(jaar) + ')</h2><div class="sub">Pas klasse, brevet, baan of startnummer aan vóór de wedstrijd start</div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="pri sm" onclick="nummerStartnummersInBlokkenPerKlasse()">Nummer in klasseblokken (+10% buffer)</button>' +
         '<button type="button" class="bad" onclick="verwijderAlleDataVanJaar(jaar)">Verwijder alle data van ' + esc(jaar) + '</button>' +
         '<button type="button" class="sm" onclick="gaNaarSectie(2)">+ Nieuwe inschrijving</button>' +
       '</div>' +
