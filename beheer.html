@@ -186,6 +186,12 @@ function initFirebase() {
       db = firebase.database();
     }
   } catch (e) {}
+  var heeftVerouderdeNummers = deelnemers.some(function(h) {
+    return normaliseerStartnummer(h.startnummer) == null;
+  });
+  if (heeftVerouderdeNummers && deelnemers.length > 0 && !isJaarVergrendeld()) {
+    pasKlasseStartnummersToeZonderConfirm();
+  }
 }
 initFirebase();
 
@@ -555,6 +561,38 @@ function volgendeStartnummer(klasse) {
     kandidaat++;
   }
   return kandidaat;
+}
+
+function pasKlasseStartnummersToeZonderConfirm() {
+  var pct = getBufferPercentage();
+  var volgordeKlassen = KLASSEN_OPTIES.slice();
+  var lopendNr = 1;
+  var bijgewerkt = [];
+
+  volgordeKlassen.forEach(function(kl) {
+    var groep = deelnemers.filter(function(h) { return h.klasse === kl; });
+    if (!groep.length) return;
+    var ingesteldStart = getKlasseStartVanaf(kl);
+    var startKl = (ingesteldStart && ingesteldStart >= lopendNr) ? ingesteldStart : lopendNr;
+    var nr = startKl;
+    groep.forEach(function(h) {
+      h.startnummer = nr++;
+      bijgewerkt.push(h);
+    });
+    var bufferSpots = berekenBufferAantal(groep.length);
+    lopendNr = nr + bufferSpots;
+  });
+
+  deelnemers.forEach(function(h) {
+    if (volgordeKlassen.indexOf(h.klasse) === -1) {
+      h.startnummer = lopendNr++;
+      bijgewerkt.push(h);
+    }
+  });
+
+  deelnemers = bijgewerkt;
+  localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
+  syncFirebase();
 }
 
 function nummerStartnummersInBlokkenPerKlasse() {
@@ -1088,7 +1126,7 @@ function renderSectie4() {
     var hb = normaliseerBrevet(h.huidigBrevet);
     var ob = normaliseerBrevet(h.opvolgendBrevet);
     return '<tr>' +
-      '<td><input type="number" value="' + esc(h.startnummer) + '" style="width:86px;margin:0;min-height:34px;font-weight:700" onchange="wijzigHondVeld(\'' + esc(h.id) + '\',\'startnummer\',this.value)"></td>' +
+      '<td><div style="display:flex;align-items:center;gap:6px"><span class="chip" style="min-width:38px;text-align:center">' + esc(formatStartnummer(h.startnummer)) + '</span><input type="number" min="1" max="9999" value="' + esc(normaliseerStartnummer(h.startnummer) || '') + '" style="width:76px;margin:0;min-height:34px;font-weight:700" onchange="wijzigHondVeld(\'' + esc(h.id) + '\',\'startnummer\',this.value)"></div></td>' +
       '<td><div class="hond-main">' + esc(h.roepnaam) + (h.buitenMededinging ? ' <span class="chip">*</span>' : '') + '</div><div class="hond-sub">' + esc(h.stamboom) + '</div></td>' +
       '<td><div>' + esc(h.eigenaar) + '</div><div class="hond-sub">' + esc(h.district || '—') + ' • Lidnr: ' + esc(h.lidnr) + '</div></td>' +
       '<td><select style="width:auto;margin:0;min-height:34px" onchange="wijzigHondVeld(\'' + esc(h.id) + '\',\'klasse\',this.value)">' +
@@ -1111,7 +1149,6 @@ function renderSectie4() {
       '<div><h2>4. Deelnemerslijst & Banen (' + esc(jaar) + ')</h2><div class="sub">Pas klasse, brevet, baan of startnummer aan vóór de wedstrijd start</div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
         '<button type="button" class="pri sm" onclick="nummerStartnummersInBlokkenPerKlasse()">Nummer in klasseblokken (+10% buffer)</button>' +
-        '<button type="button" class="bad" onclick="verwijderAlleDataVanJaar(jaar)">Verwijder alle data van ' + esc(jaar) + '</button>' +
         '<button type="button" class="sm" onclick="gaNaarSectie(2)">+ Nieuwe inschrijving</button>' +
       '</div>' +
     '</div>' +
