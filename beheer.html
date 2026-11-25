@@ -186,12 +186,6 @@ function initFirebase() {
       db = firebase.database();
     }
   } catch (e) {}
-  var heeftVerouderdeNummers = deelnemers.some(function(h) {
-    return normaliseerStartnummer(h.startnummer) == null;
-  });
-  if (heeftVerouderdeNummers && deelnemers.length > 0 && !isJaarVergrendeld()) {
-    pasKlasseStartnummersToeZonderConfirm();
-  }
 }
 initFirebase();
 
@@ -400,6 +394,14 @@ function laadSlot() {
 
 laadSlot();
 laadData();
+if (deelnemers.length > 0 && !isJaarVergrendeld()) {
+  var heeftVerouderdeNummers = deelnemers.some(function(h) {
+    return normaliseerStartnummer(h.startnummer) == null;
+  });
+  if (heeftVerouderdeNummers) {
+    pasKlasseStartnummersToeZonderConfirm();
+  }
+}
 
 function syncFirebase() {
   if (!db) return;
@@ -448,6 +450,14 @@ function wisselJaar() {
   document.getElementById('lblJaar').textContent = jaar;
   laadSlot();
   laadData();
+  if (deelnemers.length > 0 && !isJaarVergrendeld()) {
+    var heeftVerouderdeNummers = deelnemers.some(function(h) {
+      return normaliseerStartnummer(h.startnummer) == null;
+    });
+    if (heeftVerouderdeNummers) {
+      pasKlasseStartnummersToeZonderConfirm();
+    }
+  }
   render();
 }
 
