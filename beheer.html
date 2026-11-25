@@ -508,6 +508,20 @@ function herverdeelBanen() {
   bewaarDeelnemers('Banen opnieuw verdeeld op basis van klasse');
 }
 
+function normaliseerStartnummer(raw) {
+  var str = String(raw == null ? '' : raw).trim();
+  if (!str) return null;
+  var n = parseInt(str, 10);
+  if (isNaN(n) || n < 1) return null;
+  if (n > 9999) return null;
+  return n;
+}
+
+function formatStartnummer(nr) {
+  var n = normaliseerStartnummer(nr);
+  return n != null ? ('#' + n) : '—';
+}
+
 function getKlasseStartVanaf(klasse) {
   if (!klasse || !baanIndeling || !baanIndeling.startNummersPerKlasse) return null;
   var raw = baanIndeling.startNummersPerKlasse[klasse];
@@ -562,8 +576,8 @@ function wijzigBufferPercentage(waarde) {
 function volgendeStartnummer(klasse) {
   var bezet = new Set();
   deelnemers.forEach(function(h) {
-    var n = parseInt(h.startnummer, 10);
-    if (!isNaN(n) && n > 0) bezet.add(n);
+    var n = normaliseerStartnummer(h.startnummer);
+    if (n != null) bezet.add(n);
   });
   var startVanaf = getKlasseStartVanaf(klasse);
   var kandidaat = startVanaf || 1;
@@ -574,7 +588,6 @@ function volgendeStartnummer(klasse) {
 }
 
 function pasKlasseStartnummersToeZonderConfirm() {
-  var pct = getBufferPercentage();
   var volgordeKlassen = KLASSEN_OPTIES.slice();
   var lopendNr = 1;
   var bijgewerkt = [];
@@ -614,33 +627,7 @@ function nummerStartnummersInBlokkenPerKlasse() {
   var pct = getBufferPercentage();
   if (!confirm('Alle ' + deelnemers.length + ' deelnemers van ' + jaar + ' doornummeren per klasse (incl. +' + pct + '% vrije nummers aan het eind van elke klasserange voor na-/daginschrijving)?')) return;
 
-  var volgordeKlassen = KLASSEN_OPTIES.slice();
-  var lopendNr = 1;
-  var bijgewerkt = [];
-
-  volgordeKlassen.forEach(function(kl) {
-    var groep = deelnemers.filter(function(h) { return h.klasse === kl; });
-    if (!groep.length) return;
-    var ingesteldStart = getKlasseStartVanaf(kl);
-    var startKl = (ingesteldStart && ingesteldStart >= lopendNr) ? ingesteldStart : lopendNr;
-    var nr = startKl;
-    groep.forEach(function(h) {
-      h.startnummer = nr++;
-      bijgewerkt.push(h);
-    });
-    var bufferSpots = berekenBufferAantal(groep.length);
-    lopendNr = nr + bufferSpots;
-  });
-
-  // Eventuele deelnemers met een afwijkende klasse behouden
-  deelnemers.forEach(function(h) {
-    if (volgordeKlassen.indexOf(h.klasse) === -1) {
-      h.startnummer = lopendNr++;
-      bijgewerkt.push(h);
-    }
-  });
-
-  deelnemers = bijgewerkt;
+  pasKlasseStartnummersToeZonderConfirm();
   bewaarDeelnemers('Startnummers ingedeeld per klasse (incl. +' + pct + '% buffer)');
 }
 
@@ -653,7 +640,7 @@ function laadVoorbeeldData() {
     { roepnaam: "Noor", stamboom: "Noor (zonder stamboom)", eigenaar: "Lotte Hendriks", district: "Zuid", lidnr: "1103", geslacht: "Teef", klasse: "Stamboomloos", huidigBrevet: "Brevet A", opvolgendBrevet: "Brevet B", kcm: "GEEN", buitenMededinging: true },
     { roepnaam: "Storm", stamboom: "Storm van het Meer", eigenaar: "Mark Jansen", district: "Midden", lidnr: "1129", geslacht: "Reu", klasse: "Specials", huidigBrevet: "Brevet C", opvolgendBrevet: "Brevet D", kcm: "U2", buitenMededinging: false }
   ];
-  voorbeelden.forEach(function(v, idx) {
+  voorbeelden.forEach(function(v) {
     var nr = volgendeStartnummer(v.klasse);
     deelnemers.push({
       id: 'test_' + jaar + '_' + nr + '_' + Math.random().toString(36).slice(2, 6),
@@ -692,14 +679,14 @@ function voegInschrijvingToe(e) {
   var kcm = document.getElementById('fKcm').value;
   var buitenMededinging = document.getElementById('fBuitenMed').checked;
   var betaald = document.getElementById('fBetaald').checked;
-  var startInput = parseInt(document.getElementById('fStartnr').value, 10);
-  var startnummer = (!isNaN(startInput) && startInput > 0) ? startInput : volgendeStartnummer();
+  var startInput = normaliseerStartnummer(document.getElementById('fStartnr').value);
+  var startnummer = startInput != null ? startInput : volgendeStartnummer(klasse);
 
   if (!roepnaam || !eigenaar) {
     alert('Vul in elk geval de roepnaam van de hond en de naam van de eigenaar in.');
     return;
   }
-  if (deelnemers.some(function(h) { return h.startnummer === startnummer; })) {
+  if (deelnemers.some(function(h) { return normaliseerStartnummer(h.startnummer) === startnummer; })) {
     alert('Startnummer #' + startnummer + ' bestaat al in ' + jaar + '. Kies een ander nummer.');
     return;
   }
@@ -752,9 +739,13 @@ function wijzigHondVeld(id, veld, waarde) {
   var h = deelnemers.find(function(x) { return x.id === id; });
   if (!h) return;
   if (veld === 'startnummer') {
-    var nr = parseInt(waarde, 10);
-    if (!nr || nr < 1) return;
-    if (deelnemers.some(function(x) { return x.id !== id && x.startnummer === nr; })) {
+    var nr = normaliseerStartnummer(waarde);
+    if (!nr) {
+      alert('Vul een geldig startnummer in (1 t/m 9999).');
+      render();
+      return;
+    }
+    if (deelnemers.some(function(x) { return x.id !== id && normaliseerStartnummer(x.startnummer) === nr; })) {
       alert('Startnummer #' + nr + ' is al in gebruik.');
       render();
       return;
@@ -781,7 +772,6 @@ function verwijderDeelnemer(id) {
   bewaarDeelnemers('#' + h.startnummer + ' ' + h.roepnaam + ' verwijderd');
 }
 
-/* Verwijder ALLE data van het gekozen jaar met minimaal 2x "Weet je het zeker?" */
 function verwijderAlleDataVanJaar(doelJaar) {
   var yStr = String(doelJaar || jaar || '2027').trim();
   if (String(yStr) === String(jaar) && waarschuwIndienVergrendeld()) return;
@@ -803,7 +793,6 @@ function verwijderAlleDataVanJaar(doelJaar) {
     return;
   }
 
-  // Wis lokale data voor het betreffende jaar
   try {
     localStorage.removeItem('nnfc_deelnemers_' + yStr);
     localStorage.removeItem('nnfc_baanindeling_' + yStr);
@@ -817,7 +806,6 @@ function verwijderAlleDataVanJaar(doelJaar) {
     });
   } catch (e) {}
 
-  // Wis eventueel in Firebase
   if (db) {
     try {
       db.ref('wedstrijd/beheer_deelnemers_' + yStr).remove();
@@ -914,8 +902,8 @@ function verwerkGeimporteerdeRijen(rijen, modus) {
     var kleur = pakVeld(row, ['kleur', 'vachtkleur']);
     var email = pakVeld(row, ['e-mail', 'email', 'opgegeven e-mailadres']);
 
-    var nrRaw = parseInt(pakVeld(row, ['startnummer', 'startnr', 'start nr']), 10);
-    var startnummer = (!isNaN(nrRaw) && nrRaw > 0 && !deelnemers.some(function(x) { return x.startnummer === nrRaw; })) ? nrRaw : volgendeStartnummer(klasse);
+    var nrRaw = normaliseerStartnummer(pakVeld(row, ['startnummer', 'startnr', 'start nr']));
+    var startnummer = (nrRaw != null && !deelnemers.some(function(x) { return normaliseerStartnummer(x.startnummer) === nrRaw; })) ? nrRaw : volgendeStartnummer(klasse);
 
     deelnemers.push({
       id: 'imp_' + jaar + '_' + startnummer + '_' + Math.random().toString(36).slice(2, 6),
@@ -1128,7 +1116,7 @@ function renderSectie4() {
       if (nav.baanFilter !== 'ALLE' && String(h.baan) !== nav.baanFilter) return false;
       return matchZoek(h, nav.zoek);
     })
-    .sort(function(a, b) { return (a.startnummer || 0) - (b.startnummer || 0); });
+    .sort(function(a, b) { return (normaliseerStartnummer(a.startnummer) || 999999) - (normaliseerStartnummer(b.startnummer) || 999999); });
 
   var betaaldCnt = deelnemers.filter(function(h) { return h.betaald; }).length;
 
@@ -1178,7 +1166,7 @@ function renderSectie4() {
       '</select>' +
     '</div>' +
     '<div class="table-wrap"><table><thead><tr>' +
-      '<th style="width:100px">Startnr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Brevet (opvolgend)</th><th>Baan</th><th>Betaling</th><th style="width:105px">Actie</th>' +
+      '<th style="width:136px">Startnr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Brevet (opvolgend)</th><th>Baan</th><th>Betaling</th><th style="width:105px">Actie</th>' +
     '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" class="sub" style="padding:14px">Geen deelnemers gevonden voor ' + esc(jaar) + '.</td></tr>') + '</tbody></table></div>' +
   '</div>';
 }
