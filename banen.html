@@ -25,21 +25,24 @@ h1{font-size:23px;margin:0;font-weight:700;line-height:1.15}
 h2{font-size:19px;margin:0;font-weight:700}
 h3{font-size:16px;margin:0 0 6px;font-weight:700}
 .sub{color:var(--mut);font-size:14px}
-button,.btn-link{font:inherit;color:inherit;border:1.5px solid var(--ln);background:var(--sf);border-radius:10px;min-height:40px;padding:6px 13px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .12s,border-color .12s}
+button,.btn-link{font:inherit;color:inherit;border:1.5px solid var(--ln);background:var(--sf);border-radius:10px;min-height:42px;padding:6px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .12s,border-color .12s}
 button:hover,.btn-link:hover{background:var(--sf2)}
 .pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
 .ok{background:var(--ok)!important;border-color:var(--ok)!important;color:#fff!important}
-.warn{background:var(--warn)!important;border-color:var(--warn)!important;color:#fff!important}
-.sm{min-height:34px;padding:3px 9px;font-size:15px}
+.warn{background:var(--cur)!important;border-color:var(--cur)!important;color:var(--curink)!important}
+.bad{border-color:var(--bad)!important;color:var(--bad)!important;min-height:36px;padding:4px 10px}
+.sm{min-height:36px;padding:4px 10px;font-size:15px}
 
+/* Baankiezer (Alle 5 Banen + Baan 1-5) */
 .baan-nav{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
 @media(max-width:1080px){.baan-nav{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:600px){.baan-nav{grid-template-columns:repeat(2,1fr)}}
-.baan-btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;padding:8px 12px;border-radius:10px;background:var(--sf2);min-height:56px}
+.baan-btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;padding:8px 12px;border-radius:10px;background:var(--sf2);min-height:58px}
 .baan-btn .nr{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.8}
 .baan-btn .ttl{font-size:15px;font-weight:700;line-height:1.2}
 .baan-btn.on{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
 
+/* Vaste terug- en ankerbalk voor sub- en sub-subpagina's */
 .crumb-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--sf);border:2px solid var(--ac);border-radius:12px;padding:8px 12px;margin-bottom:12px}
 .crumb-trail{font-size:14px;color:var(--mut);font-weight:600}
 .crumb-trail b{color:var(--ink)}
@@ -55,15 +58,21 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 @media(max-width:620px){.grid5{grid-template-columns:1fr}}
 
 .kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:12px}
+.kaart-click{cursor:pointer;transition:border-color .12s}
+.kaart-click:hover{border-color:var(--ac)}
+
 label{display:block;font-weight:600;font-size:14px;margin-bottom:3px;color:var(--mut)}
-input,select,textarea{font:inherit;color:var(--ink);background:var(--sf);border:1.5px solid var(--ln);border-radius:10px;padding:7px 10px;width:100%;margin-bottom:9px;min-height:40px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--sf);border:1.5px solid var(--ln);border-radius:10px;padding:7px 10px;width:100%;margin-bottom:9px;min-height:42px}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .search-wrap{flex:1;min-width:240px;display:flex;gap:6px;align-items:center}
 .search-wrap input{margin-bottom:0;border-color:var(--ac)}
 .stats-pill{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:14px;color:var(--mut);background:var(--sf2);padding:8px 12px;border-radius:10px;border:1px solid var(--ln);margin-bottom:12px}
 
-.table-wrap{overflow-x:auto;max-height:68vh;border:1.5px solid var(--ln);border-radius:12px}
+.klok-display{font-variant-numeric:tabular-nums;font-size:38px;font-weight:800;letter-spacing:.03em;padding:8px 14px;border-radius:12px;background:var(--sf);border:2px solid var(--ln);display:inline-block;min-width:170px;text-align:center}
+.klok-running{border-color:var(--ok);color:var(--ok)}
+
+.table-wrap{overflow-x:auto;max-height:66vh;border:1.5px solid var(--ln);border-radius:12px}
 table{width:100%;border-collapse:collapse}
 thead th{position:sticky;top:0;z-index:2;background:var(--sf2);color:var(--mut);font-weight:700;font-size:14px;text-align:left;padding:9px 10px;border-bottom:2px solid var(--ln);white-space:nowrap}
 tbody td{padding:8px 10px;border-bottom:1px solid var(--ln);font-size:15px;vertical-align:middle}
@@ -73,187 +82,12 @@ tbody tr.rij-nu{background:rgba(255,210,63,0.22)!important}
 
 .chip{display:inline-block;background:var(--soft);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
 .chip-ok{display:inline-block;background:rgba(31,122,77,0.15);color:var(--ok);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
-.chip-nu{display:inline-block;background:var(--cur);color:var(--curink);padding:2px 8px;border-radius:6px;font-size:12px;font-weight:800;margin-left:6px}
+.chip-warn{display:inline-block;background:rgba(179,38,30,0.14);color:var(--bad);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700}
+.chip-nu{display:inline-block;background:var(--cur);color:var(--curink);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:800}
 .hond-main{font-weight:700;font-size:16px}
 .hond-sub{color:var(--mut);font-size:13px}
-.toast{position:fixed;right:18px;bottom:18px;z-index:99;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,.22);display:none}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--ok);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.22);z-index:99;display:none}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div class="top-l">
-      <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
-      <div>
-        <h1>Banen / Klokkers (<span id="lblJaar">2026</span>)</h1>
-        <div class="sub">Startvolgorde, baanoverzicht, oefeningen, 3 bijlagen &amp; directe toegang tot het klokkersscherm</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="selJaar" onchange="wisselJaar()" style="width:auto;margin:0;font-weight:700" aria-label="Selecteer wedstrijdjaar"></select>
-      <a href="wedstrijdtafel.html" class="btn-link">Wedstrijdtafel →</a>
-      <a href="beheer.html" class="btn-link">Beheer / Admin →</a>
-      <a href="index.html" class="btn-link">← Startscherm</a>
-    </div>
-  </div>
-
-  <div class="baan-nav" role="navigation" aria-label="Banen en klokkers navigatie">
-    <button type="button" id="baanTab0" class="baan-btn on" onclick="gaNaarOverzicht()">
-      <span class="nr">Totaal</span>
-      <span class="ttl">Alle 5 Banen</span>
-    </button>
-    <button type="button" id="baanTab1" class="baan-btn" onclick="openBaan('1')">
-      <span class="nr">Baan 1</span>
-      <span class="ttl" id="lblBaan1">Open</span>
-    </button>
-    <button type="button" id="baanTab2" class="baan-btn" onclick="openBaan('2')">
-      <span class="nr">Baan 2</span>
-      <span class="ttl" id="lblBaan2">Jeugd</span>
-    </button>
-    <button type="button" id="baanTab3" class="baan-btn" onclick="openBaan('3')">
-      <span class="nr">Baan 3</span>
-      <span class="ttl" id="lblBaan3">Veteranen</span>
-    </button>
-    <button type="button" id="baanTab4" class="baan-btn" onclick="openBaan('4')">
-      <span class="nr">Baan 4</span>
-      <span class="ttl" id="lblBaan4">Stamboomloos</span>
-    </button>
-    <button type="button" id="baanTab5" class="baan-btn" onclick="openBaan('5')">
-      <span class="nr">Baan 5</span>
-      <span class="ttl" id="lblBaan5">Specials</span>
-    </button>
-  </div>
-
-  <div id="crumbBar" class="crumb-bar" style="display:none">
-    <div id="crumbTrail" class="crumb-trail"></div>
-    <div class="crumb-acts">
-      <button type="button" class="sm" onclick="gaTerug()">← Terug</button>
-      <button type="button" class="pri sm" onclick="gaNaarOverzicht()">Alle banen</button>
-    </div>
-  </div>
-
-  <div id="appContent"></div>
-</div>
-<div id="toast" class="toast"></div>
-
-<script src="config.js"></script>
-<script src="nnfc-jaar-nav.js"></script>
-<script>
-var db = null;
-var banenLiveStatus = {};
-var klokkerRegs = [];
-
-function koppelBanenLiveListeners() {
-  if (!db) return;
-  try {
-    db.ref('wedstrijd/banen_status_' + jaar).off();
-    db.ref('wedstrijd/banen_status_' + jaar).on('value', function(snap) {
-      var val = snap.val() || {};
-      var nieuw = {};
-      Object.keys(val).forEach(function(k) {
-        var st = val[k];
-        if (!st) return;
-        var m = String(k).match(/(\d+)$/);
-        var bKey = m ? m[1] : String(st.baan || k);
-        nieuw[bKey] = st;
-      });
-      banenLiveStatus = nieuw;
-      if (typeof render === 'function') render();
-    });
-
-    db.ref('wedstrijd/registraties_' + jaar).off();
-    db.ref('wedstrijd/registraties_' + jaar).on('value', function(snap) {
-      var val = snap.val() || {};
-      klokkerRegs = Object.keys(val).map(function(k) { return val[k]; }).filter(Boolean);
-      if (typeof render === 'function') render();
-    });
-  } catch (e) {}
-}
-
-function initFirebase() {
-  try {
-    if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-      koppelBanenLiveListeners();
-    }
-  } catch (e) {}
-}
-initFirebase();
-
-function esc(str) {
-  return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-var toastTimer = null;
-function toonToast(msg) {
-  var el = document.getElementById('toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.display = 'block';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function() { el.style.display = 'none'; }, 2400);
-}
-
-var selJaarEl = document.getElementById('selJaar');
-var urlJaar = (window.NNFCJaarNav && window.NNFCJaarNav.bepaalStartJaar) ? window.NNFCJaarNav.bepaalStartJaar('2026') : '2026';
-var huidigKalenderJaar = new Date().getFullYear();
-var standaardJaar = (urlJaar && /^20\d{2}$/.test(urlJaar))
-  ? urlJaar
-  : ((huidigKalenderJaar >= 2026 && huidigKalenderJaar <= 2040) ? String(huidigKalenderJaar) : '2026');
-for (var y = 2026; y <= 2040; y++) {
-  var o = document.createElement('option');
-  o.value = String(y);
-  o.textContent = 'Jaar ' + y;
-  if (String(y) === standaardJaar) o.selected = true;
-  selJaarEl.appendChild(o);
-}
-
-var jaar = selJaarEl.value;
-if (window.NNFCJaarNav && typeof window.NNFCJaarNav.zetActiefJaar === 'function') {
-  jaar = window.NNFCJaarNav.zetActiefJaar(jaar, { persist: true, updateUrl: false }) || jaar;
-}
-document.getElementById('lblJaar').textContent = jaar;
-
-var deelnemers = [];
-var baanIndeling = { banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] }, bijlagen: { b1: "", b2: "", b3: "" } };
-var tafelData = {};
-var klokData = {};
-
-var nav = {
-  baan: 'ALLE',
-  sub: null,
-  subLabel: '',
-  subSub: null,
-  subSubLabel: '',
-  zoek: '',
-  alleenAanwezig: false
-};
-
-function laadData() {
-  try { deelnemers = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || []; } catch (e) { deelnemers = []; }
-  baanIndeling = { banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] }, bijlagen: { b1: "", b2: "", b3: "" } };
-  try {
-    var b = JSON.parse(localStorage.getItem('nnfc_baanindeling_' + jaar));
-    if (b && b.banen) {
-      baanIndeling = {
-        banen: b.banen,
-        bijlagen: b.bijlagen || { b1: "", b2: "", b3: "" }
-      };
-    }
-  } catch (e) {}
-  try { tafelData = JSON.parse(localStorage.getItem('nnfc_tafel_' + jaar)) || {}; } catch (e) { tafelData = {}; }
-  try { klokData = JSON.parse(localStorage.getItem('nnfc_klokkers_' + jaar)) || {}; } catch (e) { klokData = {}; }
-
-  deelnemers.forEach(function(h) {
-    if (!tafelData[h.id]) {
-      tafelData[h.id] = { basisPunten: '', basisStatus: 'Open', brevetUitslag: 'Nog niet gezwommen', brevetOpmerking: '', rtKandidaat: false, rtRang: '', beker: '' };
-    }
-    if (!klokData[h.id]) {
-      klokData[h.id] = { tijdStr: '', oef1: '', oef2: '', oef3: '', oef4: '', opmerking: '' };
-    }
-  });
-
-  ['1','2','3','4','5'].forEach(function(b) {
-    var el = document.getElementById('lblBaan' + b);
-    var kl = (baanIndeling.banen && baanIndeling
+<div
