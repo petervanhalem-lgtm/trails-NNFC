@@ -32,9 +32,9 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .bad{border-color:var(--bad)!important;color:var(--bad)!important;min-height:34px;padding:3px 9px}
 .sm{min-height:34px;padding:3px 9px;font-size:15px}
 
-/* Chronologische 5-stappen balk */
-.dag-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
-@media(max-width:1080px){.dag-nav{grid-template-columns:repeat(3,1fr)}}
+/* Chronologische 6-stappen balk */
+.dag-nav{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
+@media(max-width:1180px){.dag-nav{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:640px){.dag-nav{grid-template-columns:1fr}}
 .dag-btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;padding:8px 12px;border-radius:10px;background:var(--sf2);min-height:58px}
 .dag-btn .nr{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.8}
@@ -119,7 +119,7 @@ tbody tr:hover{background:var(--soft)}
     </div>
   </div>
 
-  <!-- 5 CHRONOLOGISCHE DAGSTAPPEN -->
+  <!-- 6 CHRONOLOGISCHE DAGSTAPPEN -->
   <div class="dag-nav" role="navigation" aria-label="Dagverloop Wedstrijdtafel">
     <button type="button" id="stepBtn1" class="dag-btn on" onclick="gaNaarStap(1)">
       <span class="nr">Stap 1 • Ochtend</span>
@@ -140,6 +140,10 @@ tbody tr:hover{background:var(--soft)}
     <button type="button" id="stepBtn5" class="dag-btn" onclick="gaNaarStap(5)">
       <span class="nr">Stap 5 • Prijsuitreiking</span>
       <span class="ttl">5. Tijd/Punten &amp; Export/Print</span>
+    </button>
+    <button type="button" id="stepBtn6" class="dag-btn" onclick="gaNaarStap(6)">
+      <span class="nr">Stap 6 • Trofeeën</span>
+      <span class="ttl">6. Bekers</span>
     </button>
   </div>
 
@@ -165,8 +169,60 @@ var STAP_NAMEN = {
   2: "2. Basis oefeningen & Tijden",
   3: "3. Brevetten",
   4: "4. Beste Reu & Beste Teef",
-  5: "5. Tijd/Punten & Export/Print"
+  5: "5. Tijd/Punten & Export/Print",
+  6: "6. Bekers"
 };
+var BEKER_DEFINITIES = [
+  {
+    id: "NEPTUNUS",
+    naam: "Neptunus-finale",
+    artikel: "Art. 2.16.2, 5.0",
+    waarvoor: "Algehele winnaar van de Trials op een 50 m finale.",
+    opbouw: "Alleen de snelste reu en snelste teef uit Open zwemmen de finale (50 m); de snelste wint. Bij weigering van beiden: uit de boot springen, wie eerst over de lijn komt wint."
+  },
+  {
+    id: "CEASAR",
+    naam: "Ceasar Beker",
+    artikel: "Art. 2.16.1 / 2.14.3",
+    waarvoor: "Beker voor de klasse Veteranen (8 jaar en ouder, 30 m).",
+    opbouw: "Snelste veteraan; in de overdracht wordt aangegeven dat 2.16.1 'alle oefeningen' noemt en 2.14.3 'snelste deelnemende hond' (huidige lezing: A, B en C zonder weigering)."
+  },
+  {
+    id: "JUNIOR_SPETTER",
+    naam: "Junior Spetter",
+    artikel: "Art. 2.16.3, 2.17",
+    waarvoor: "Gecombineerde beker voor de klasse Jeugd (8–20 maanden, 30 m).",
+    opbouw: "Trialspunten (art. 2.15) plus KCM-punten van de laatst gehouden KCM (art. 2.17)."
+  },
+  {
+    id: "SPETTER",
+    naam: "Spetter",
+    artikel: "Art. 2.16.4, 2.17",
+    waarvoor: "Gecombineerde beker voor de klasse Open (20 maanden–8 jaar, 50 m).",
+    opbouw: "Trialspunten (op basis van aparte klassering per geslacht) plus KCM-punten van de laatst gehouden KCM (art. 2.17)."
+  },
+  {
+    id: "OLDEST_COLONYS",
+    naam: "Oldest Colony’s Beker",
+    artikel: "Art. 2.16.5",
+    waarvoor: "Beker uitgereikt op de KCM (na de Trials) aan een brevethouder.",
+    opbouw: "Hoogste score op de KCM na de Trials met een NNFC-trialsbrevet; bij gelijkspel beslist de oudste hond."
+  },
+  {
+    id: "SPECIAL",
+    naam: "Special wisseltrofee",
+    artikel: "Art. 2.16.6",
+    waarvoor: "Wisseltrofee voor de klasse Special (30 m, drijfvest verplicht).",
+    opbouw: "Snelste hond in de klasse Special (zonder medische reden voor drijfvest alleen buiten mededinging)."
+  },
+  {
+    id: "JONGSTE_HONDEN",
+    naam: "Jongste honden",
+    artikel: "Art. 2.16.7",
+    waarvoor: "Beker/onderscheiding binnen de klasse Jeugd.",
+    opbouw: "Snelste hond in de klasse Jeugd."
+  }
+];
 var berekeningMelding = "";
 
 function initFirebase() {
@@ -615,7 +671,7 @@ function setKlasseFilter(kl) {
 }
 
 function updateCrumbBar() {
-  for (var s = 1; s <= 5; s++) {
+  for (var s = 1; s <= 6; s++) {
     document.getElementById('stepBtn' + s).classList.toggle('on', nav.stap === s);
   }
   var bar = document.getElementById('crumbBar');
@@ -1186,6 +1242,78 @@ function renderStap5() {
     '</div>' : '');
 }
 
+function renderStap6() {
+  var bekerKeuzes = [''].concat(BEKER_DEFINITIES.map(function(b) { return b.naam; }));
+
+  var kaartenHtml = '<div class="grid2" style="margin-bottom:14px">' +
+    BEKER_DEFINITIES.map(function(bk) {
+      var toegekend = deelnemers.filter(function(h) {
+        var td = tafelData[h.id] || {};
+        return String(td.beker || '').toLowerCase() === bk.naam.toLowerCase();
+      });
+      var winnaarsTxt = toegekend.length
+        ? toegekend.map(function(h) { return '#' + h.startnummer + ' ' + h.roepnaam; }).join(', ')
+        : 'Nog niet toegekend';
+      return '<div class="kaart">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">' +
+          '<b>' + esc(bk.naam) + '</b>' +
+          '<span class="chip">' + esc(bk.artikel) + '</span>' +
+        '</div>' +
+        '<div style="font-size:14px;margin-bottom:6px"><b>Waarvoor:</b> ' + esc(bk.waarvoor) + '</div>' +
+        '<div class="sub" style="margin-bottom:8px"><b>Opbouw uitslag:</b> ' + esc(bk.opbouw) + '</div>' +
+        '<div style="font-size:14px"><span class="chip-ok">Toegekend: ' + esc(winnaarsTxt) + '</span></div>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+
+  var gefilterd = deelnemers.filter(function(h) {
+    if (nav.sub === 'TOEGEKEND') {
+      var bVal = ((tafelData[h.id] || {}).beker || '').trim();
+      if (!bVal) return false;
+    }
+    return matchZoek(h, nav.zoek);
+  }).slice().sort(function(a, b) {
+    return totaalPunten(b) - totaalPunten(a);
+  });
+
+  var rows = gefilterd.map(function(h) {
+    var td = tafelData[h.id] || {};
+    var kcmBadge = (h.kcm && h.kcm !== 'GEEN')
+      ? '<span class="chip-kcm">' + esc(h.kcm) + ' (+' + (KCM_PUNTEN[h.kcm] || 0) + ')</span>'
+      : '<span class="sub">—</span>';
+    return '<tr>' +
+      '<td><b>#' + esc(h.startnummer) + '</b></td>' +
+      '<td><div class="hond-main">' + esc(h.roepnaam) + ' <span class="sub">(' + esc(h.geslacht) + ')</span></div><div class="hond-sub">' + esc(h.eigenaar) + '</div></td>' +
+      '<td><span class="chip">' + esc(h.klasse || '—') + '</span></td>' +
+      '<td class="tijd-mono">' + (td.totaalTijdCs != null ? fmtCs(td.totaalTijdCs) : '—') + '</td>' +
+      '<td><b>' + (td.basisPunten || 0) + '</b> / ' + kcmBadge + '</td>' +
+      '<td><select style="margin:0;min-height:34px" onchange="setBeker(\'' + esc(h.id) + '\',this.value);render()">' +
+        bekerKeuzes.map(function(opt) {
+          return '<option value="' + esc(opt) + '" ' + ((td.beker || '') === opt ? 'selected' : '') + '>' + (opt || '— Geen beker —') + '</option>';
+        }).join('') +
+      '</select></td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="box">' +
+    '<div class="box-head">' +
+      '<div><h2>6. Bekers</h2><div class="sub">Overzicht per beker (waarvoor het is &amp; hoe de uitslag is opgebouwd) en toekenning per deelnemer</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="sm ' + (!nav.sub ? 'pri' : '') + '" onclick="gaNaarStap(6)">Alle deelnemers (' + deelnemers.length + ')</button>' +
+        '<button type="button" class="sm ' + (nav.sub === 'TOEGEKEND' ? 'pri' : '') + '" onclick="openSub(\'TOEGEKEND\',\'Toegekende bekers\')">Alleen toegekend</button>' +
+      '</div>' +
+    '</div>' +
+    kaartenHtml +
+    '<div class="toolbar"><div class="search-wrap">' +
+      '<input type="search" value="' + esc(nav.zoek) + '" onchange="nav.zoek=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar, klasse of beker...">' +
+      '<button type="button" class="sm" onclick="nav.zoek=\'\';render()">Wis</button>' +
+    '</div></div>' +
+    '<div class="table-wrap"><table><thead><tr>' +
+      '<th style="width:80px">Nr</th><th>Hond & Eigenaar</th><th>Klasse</th><th>Eindtijd</th><th>Trials / KCM</th><th style="width:220px">Beker</th>' +
+    '</tr></thead><tbody>' + (rows || '<tr><td colspan="6" class="sub" style="padding:14px">Geen deelnemers gevonden.</td></tr>') + '</tbody></table></div>' +
+  '</div>';
+}
+
 function leesInkomendeKlokkerData() {
   synchroniseerAlleKlokkerBronnen(false);
   var registraties = Object.keys(klokkerLogStore.registraties).map(function(k) { return klokkerLogStore.registraties[k]; })
@@ -1204,6 +1332,7 @@ function render() {
   else if (nav.stap === 3) html = renderStap3();
   else if (nav.stap === 4) html = renderStap4();
   else if (nav.stap === 5) html = renderStap5();
+  else if (nav.stap === 6) html = renderStap6();
   document.getElementById('appContent').innerHTML = html;
 
   var feed = leesInkomendeKlokkerData();
