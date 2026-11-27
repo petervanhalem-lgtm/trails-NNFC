@@ -145,13 +145,91 @@ tbody tr.rij-nu{background:rgba(255,210,63,0.22)!important}
   </div>
 
   <div id="appContent"></div>
+  <div id="klokkerAppGenerator" class="box" style="margin-top:16px"></div>
 </div>
 
 <div id="toast" class="toast">Opgeslagen</div>
 
-<script src="config.js"></script>
-<script src="nnfc-jaar-nav.js"></script>
+<script src="config.js" onerror="window._cfgErr=1"></script>
+<script src="nnfc-jaar-nav.js" onerror="window._navErr=1"></script>
 <script>
+function nnfcBaanPincode(jaarWaarde, baanNr) {
+  var j = String(jaarWaarde || '2026').trim();
+  var b = String(baanNr || '1').replace(/[^1-5]/g, '') || '1';
+  var invoer = 'NNFC-KLOKKER-' + j + '-BAAN-' + b;
+  var hash = 2166136261;
+  for (var i = 0; i < invoer.length; i++) {
+    hash ^= invoer.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  var vierCijfers = (Math.abs(hash >>> 0) % 9000) + 1000;
+  return String(vierCijfers);
+}
+
+function nnfcMaakKlokkerLink(baanNr, jaarWaarde) {
+  var j = String(jaarWaarde || '2026').trim();
+  var b = String(baanNr || '1').replace(/[^1-5]/g, '') || '1';
+  var pin = nnfcBaanPincode(j, b);
+  var isHttp = /^https?:/i.test(window.location.protocol);
+  var basis = isHttp
+    ? (window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'klokker.html')
+    : 'https://petervanhalem-lgtm.github.io/trails-NNFC/klokker.html';
+  return basis + '?baan=' + encodeURIComponent(b) + '&jaar=' + encodeURIComponent(j) + '&pin=' + encodeURIComponent(pin);
+}
+
+function renderKlokkerAppGenerator() {
+  var host = document.getElementById('klokkerAppGenerator');
+  if (!host) return;
+  var gekozenBaan = (nav && nav.baan && nav.baan !== 'ALLE') ? String(nav.baan) : '1';
+  var pin = nnfcBaanPincode(jaar, gekozenBaan);
+  var link = nnfcMaakKlokkerLink(gekozenBaan, jaar);
+  var bericht = 'NNFC Klokkersscherm – Jaar ' + jaar + ', Baan ' + gekozenBaan + '\nLink: ' + link + '\nPincode: ' + pin;
+  var waUrl = 'https://wa.me/?text=' + encodeURIComponent(bericht);
+
+  host.innerHTML =
+    '<div class="box-head">' +
+      '<div>' +
+        '<h2>Klokker-link &amp; pincode appen (' + esc(jaar) + ')</h2>' +
+        '<div class="sub">Elke baan krijgt elk wedstrijdjaar automatisch een eigen 4-cijferige pincode. De wedstrijdtafel ziet deze codes ook altijd.</div>' +
+      '</div>' +
+      '<span class="chip">Pincode Baan ' + esc(gekozenBaan) + ': ' + esc(pin) + '</span>' +
+    '</div>' +
+    '<div class="grid2" style="align-items:end">' +
+      '<div>' +
+        '<label for="genBaanSel">Kies baan (1–5)</label>' +
+        '<select id="genBaanSel" style="margin-bottom:0" onchange="nav.baan=this.value;render()">' +
+          ['1','2','3','4','5'].map(function(b) {
+            return '<option value="' + b + '" ' + (gekozenBaan === b ? 'selected' : '') + '>Baan ' + b + ' (PIN ' + nnfcBaanPincode(jaar, b) + ')</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+      '<div>' +
+        '<label for="genLinkInput">Klokkerslink voor Baan ' + esc(gekozenBaan) + ' (' + esc(jaar) + ')</label>' +
+        '<input id="genLinkInput" type="text" readonly value="' + esc(link) + '" style="margin-bottom:0">' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' +
+      '<button type="button" class="pri sm" onclick="kopieerKlokkerLink(\'' + esc(gekozenBaan) + '\')">Kopieer link + pincode</button>' +
+      '<a href="' + esc(waUrl) + '" target="_blank" rel="noopener" class="btn-link ok sm">App naar klokker (WhatsApp) →</a>' +
+      '<a href="klokker.html?baan=' + encodeURIComponent(gekozenBaan) + '&jaar=' + encodeURIComponent(jaar) + '&pin=' + encodeURIComponent(pin) + '" class="btn-link sm">Open klokker.html →</a>' +
+    '</div>';
+}
+
+function kopieerKlokkerLink(bNr) {
+  var link = nnfcMaakKlokkerLink(bNr, jaar);
+  var pin = nnfcBaanPincode(jaar, bNr);
+  var tekst = link + ' (Pincode Baan ' + bNr + ' / ' + jaar + ': ' + pin + ')';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(tekst).then(function() {
+      toonToast('Link + pincode Baan ' + bNr + ' gekopieerd');
+    }).catch(function() {
+      prompt('Kopieer link en pincode:', tekst);
+    });
+  } else {
+    prompt('Kopieer link en pincode:', tekst);
+  }
+}
+
 var db = null;
 function koppelBanenLiveListeners() {
   if (!db) return;
@@ -218,7 +296,8 @@ for (var y = 2026; y <= 2040; y++) {
   selJaarEl.appendChild(o);
 }
 
-var jaar = selJaarEl.value;
+if (!selJaarEl.value && selJaarEl.options.length) selJaarEl.value = standaardJaar;
+var jaar = selJaarEl.value || standaardJaar;
 if (window.NNFCJaarNav && typeof window.NNFCJaarNav.zetActiefJaar === 'function') {
   jaar = window.NNFCJaarNav.zetActiefJaar(jaar, { persist: true, updateUrl: false }) || jaar;
 }
@@ -441,7 +520,7 @@ function renderOverzicht() {
       ? st.nuHond
       : (eersteAanwezig ? ('#' + eersteAanwezig.startnummer + ' ' + eersteAanwezig.roepnaam) : 'Geen actieve hond');
     var oefLabel = (st && st.oefening) ? ('Oef. ' + st.oefening) : 'Baanoverzicht';
-    var klokkerUrl = 'klokker.html?baan=' + encodeURIComponent(b) + '&jaar=' + encodeURIComponent(jaar);
+    var klokkerUrl = 'klokker.html?baan=' + encodeURIComponent(b) + '&jaar=' + encodeURIComponent(jaar) + '&pin=' + encodeURIComponent(nnfcBaanPincode(jaar, b));
 
     return '<div class="kaart" style="display:flex;flex-direction:column;justify-content:space-between;gap:8px">' +
       '<div>' +
@@ -502,7 +581,7 @@ function renderBaanDetail(bNr) {
       '<div class="box-head">' +
         '<div><h2>Baan ' + esc(bNr) + ' • #' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '</h2><div class="sub">' + esc(h.stamboom) + ' • Eigenaar: ' + esc(h.eigenaar) + ' • Klasse: ' + esc(h.klasse) + '</div></div>' +
         '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-          '<a href="klokker.html?baan=' + encodeURIComponent(bNr) + '&jaar=' + encodeURIComponent(jaar) + '" class="btn-link pri sm">Open klokkersscherm Baan ' + esc(bNr) + ' &rarr;</a>' +
+          '<a href="klokker.html?baan=' + encodeURIComponent(bNr) + '&jaar=' + encodeURIComponent(jaar) + '&pin=' + encodeURIComponent(nnfcBaanPincode(jaar, bNr)) + '" class="btn-link pri sm">Open klokkersscherm Baan ' + esc(bNr) + ' &rarr;</a>' +
         '</div>' +
       '</div>' +
 
@@ -573,7 +652,7 @@ function renderBaanDetail(bNr) {
     '<div class="box-head">' +
       '<div><h2>Baan ' + esc(bNr) + ' (' + esc(klassenBaan) + ')</h2><div class="sub">' + baanLijst.length + ' deelnemers op deze baan • Klik op "Klok / Scoren" voor tijd en deelpunten</div></div>' +
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<a href="klokker.html?baan=' + encodeURIComponent(bNr) + '&jaar=' + encodeURIComponent(jaar) + '" class="btn-link pri sm">Klokkersscherm Baan ' + esc(bNr) + ' &rarr;</a>' +
+        '<a href="klokker.html?baan=' + encodeURIComponent(bNr) + '&jaar=' + encodeURIComponent(jaar) + '&pin=' + encodeURIComponent(nnfcBaanPincode(jaar, bNr)) + '" class="btn-link pri sm">Klokkersscherm Baan ' + esc(bNr) + ' &rarr;</a>' +
         '<button type="button" class="sm" onclick="openSub(\'BIJLAGEN\',\'3 Bijlagen Waterwerkreglement\')">3 Bijlagen</button>' +
       '</div>' +
     '</div>' +
@@ -627,12 +706,12 @@ function pasBanenLockToe() {
       }
     }
     wrapEl.querySelectorAll('input,select,textarea').forEach(function(el) {
-      if (el.id === 'selJaar') return;
+      if (el.id === 'selJaar' || el.id === 'genBaanSel' || el.id === 'genLinkInput') return;
       el.disabled = true;
     });
     wrapEl.querySelectorAll('button').forEach(function(btn) {
       var t = (btn.textContent || '').trim();
-      if (t.indexOf('Baan ') === 0 || t.indexOf('Bijlage') !== -1 || t.indexOf('Alle') === 0 || t.indexOf('Terug') !== -1) return;
+      if (t.indexOf('Baan ') === 0 || t.indexOf('Bijlage') !== -1 || t.indexOf('Alle') === 0 || t.indexOf('Terug') !== -1 || t.indexOf('Kopieer') !== -1) return;
       btn.disabled = true;
     });
   } else if (exB && exB.parentNode) {
@@ -655,6 +734,7 @@ function render() {
     }
     var appEl = document.getElementById('appContent');
     if (appEl) appEl.innerHTML = html;
+    renderKlokkerAppGenerator();
     pasBanenLockToe();
     if (window.NNFCJaarNav && typeof window.NNFCJaarNav.werkLinksBij === 'function') {
       window.NNFCJaarNav.werkLinksBij(jaar);
