@@ -520,6 +520,7 @@ function renderOverzicht() {
       ? st.nuHond
       : (eersteAanwezig ? ('#' + eersteAanwezig.startnummer + ' ' + eersteAanwezig.roepnaam) : 'Geen actieve hond');
     var oefLabel = (st && st.oefening) ? ('Oef. ' + st.oefening) : 'Baanoverzicht';
+    var klokkerUrl = 'klokker.html?baan=' + encodeURIComponent(b) + '&jaar=' + encodeURIComponent(jaar) + '&pin=' + encodeURIComponent(nnfcBaanPincode(jaar, b));
 
     return '<div class="kaart" style="display:flex;flex-direction:column;justify-content:space-between;gap:8px">' +
       '<div>' +
@@ -537,14 +538,14 @@ function renderOverzicht() {
       '</div>' +
       '<div style="display:grid;gap:6px">' +
         '<button type="button" class="pri sm" style="width:100%" onclick="openBaan(\'' + b + '\')">Open Baan ' + b + ' lijst &rarr;</button>' +
-        '<button type="button" class="btn-link sm" style="width:100%" onclick="openBaan(\'' + b + '\');openSub(\'MEEKIJK\',\'Baan ' + b + ' meekijken (alleen-lezen)\')">Meekijken Baan ' + b + ' (alleen-lezen) &rarr;</button>' +
+        '<a href="' + klokkerUrl + '" class="btn-link sm" style="width:100%">Klokkersscherm Baan ' + b + ' &rarr;</a>' +
       '</div>' +
     '</div>';
   }).join('');
 
   return '<div class="box">' +
     '<div class="box-head">' +
-      '<div><h2>Overzicht alle 5 banen (' + esc(jaar) + ')</h2><div class="sub">Startvolgorde per baan, live klokkerstatus en alleen-lezen meekijkweergave</div></div>' +
+      '<div><h2>Overzicht alle 5 banen (' + esc(jaar) + ')</h2><div class="sub">Startvolgorde per baan, live klokkerstatus en directe link naar het klokkersscherm</div></div>' +
       '<button type="button" class="sm" onclick="openSub(\'BIJLAGEN\',\'3 Bijlagen bij het reglement\')">3 Bijlagen bij het reglement &rarr;</button>' +
     '</div>' +
     '<div class="grid5">' + kaarten + '</div>' +
@@ -580,7 +581,7 @@ function renderBaanDetail(bNr) {
       '<div class="box-head">' +
         '<div><h2>Baan ' + esc(bNr) + ' • #' + esc(h.startnummer) + ' ' + esc(h.roepnaam) + '</h2><div class="sub">' + esc(h.stamboom) + ' • Eigenaar: ' + esc(h.eigenaar) + ' • Klasse: ' + esc(h.klasse) + '</div></div>' +
         '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-          '<button type="button" class="pri sm" onclick="openSub(\'MEEKIJK\',\'Baan ' + esc(bNr) + ' meekijken (alleen-lezen)\')">Meekijken Baan ' + esc(bNr) + ' (alleen-lezen) &rarr;</button>' +
+          '<a href="klokker.html?baan=' + encodeURIComponent(bNr) + '&jaar=' + encodeURIComponent(jaar) + '&pin=' + encodeURIComponent(nnfcBaanPincode(jaar, bNr)) + '" class="btn-link pri sm">Open klokkersscherm Baan ' + esc(bNr) + ' &rarr;</a>' +
         '</div>' +
       '</div>' +
 
@@ -651,7 +652,7 @@ function renderBaanDetail(bNr) {
     '<div class="box-head">' +
       '<div><h2>Baan ' + esc(bNr) + ' (' + esc(klassenBaan) + ')</h2><div class="sub">' + baanLijst.length + ' deelnemers op deze baan • Klik op "Klok / Scoren" voor tijd en deelpunten</div></div>' +
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<button type="button" class="pri sm" onclick="openSub(\'MEEKIJK\',\'Baan ' + esc(bNr) + ' meekijken (alleen-lezen)\')">Meekijken Baan ' + esc(bNr) + ' (alleen-lezen) &rarr;</button>' +
+        '<a href="klokker.html?baan=' + encodeURIComponent(bNr) + '&jaar=' + encodeURIComponent(jaar) + '&pin=' + encodeURIComponent(nnfcBaanPincode(jaar, bNr)) + '" class="btn-link pri sm">Klokkersscherm Baan ' + esc(bNr) + ' &rarr;</a>' +
         '<button type="button" class="sm" onclick="openSub(\'BIJLAGEN\',\'3 Bijlagen Waterwerkreglement\')">3 Bijlagen</button>' +
       '</div>' +
     '</div>' +
@@ -710,61 +711,12 @@ function pasBanenLockToe() {
     });
     wrapEl.querySelectorAll('button').forEach(function(btn) {
       var t = (btn.textContent || '').trim();
-      if (t.indexOf('Baan ') === 0 || t.indexOf('Bijlage') !== -1 || t.indexOf('Alle') === 0 || t.indexOf('Terug') !== -1 || t.indexOf('Kopieer') !== -1 || t.indexOf('Meekijken') !== -1) return;
+      if (t.indexOf('Baan ') === 0 || t.indexOf('Bijlage') !== -1 || t.indexOf('Alle') === 0 || t.indexOf('Terug') !== -1 || t.indexOf('Kopieer') !== -1) return;
       btn.disabled = true;
     });
   } else if (exB && exB.parentNode) {
     exB.parentNode.removeChild(exB);
   }
-}
-
-function renderBaanMeekijk(bNr) {
-  var b = String(bNr || '1');
-  var bl = deelnemers.filter(function(x) { return String(x.baan) === b; }).sort(function(a, c) { return (a.startnummer || 0) - (c.startnummer || 0); });
-  var klassenBaan = ((baanIndeling.banen && baanIndeling.banen[b]) || []).join(', ') || 'Vrij';
-  var st = banenLiveStatus[b] || null;
-  var baanRegs = (klokkerRegs || []).filter(function(r) { return r && String(r.baan || '') === b; });
-  var laatsteReg = baanRegs.length ? baanRegs[baanRegs.length - 1] : null;
-  var eersteAanwezig = bl.find(function(x) { return x.aanwezig; });
-  var nuHond = (st && st.nuHond)
-    ? st.nuHond
-    : (eersteAanwezig ? ('#' + eersteAanwezig.startnummer + ' ' + eersteAanwezig.roepnaam) : 'Geen actieve hond');
-  var oefLabel = (st && st.oefening) ? ('Oef. ' + st.oefening) : 'Baanoverzicht';
-
-  var rijen = bl.map(function(h) {
-    var td = tafelData[h.id] || {};
-    var kd = klokData[h.id] || {};
-    var isNu = td.basisStatus === 'Bezig';
-    return '<tr class="' + (isNu ? 'rij-nu' : '') + '">' +
-      '<td><b>#' + esc(h.startnummer) + '</b></td>' +
-      '<td><div class="hond-main">' + esc(h.roepnaam) + (isNu ? ' <span class="chip-nu">NU OP BAAN</span>' : '') + '</div><div class="hond-sub">' + esc(h.eigenaar) + '</div></td>' +
-      '<td><span class="chip">' + esc(h.klasse) + '</span> ' + (h.aanwezig ? '<span class="chip-ok">Aanwezig</span>' : '<span class="chip-warn">Niet gemeld</span>') + '</td>' +
-      '<td><b>' + esc(kd.tijdStr || '—') + '</b></td>' +
-      '<td><b>' + esc(td.basisPunten || '0') + ' pnt</b></td>' +
-      '<td><span class="chip">' + esc(td.basisStatus || 'Open') + '</span></td>' +
-    '</tr>';
-  }).join('');
-
-  return '<div class="box">' +
-    '<div class="box-head">' +
-      '<div>' +
-        '<h2>Baan ' + esc(b) + ' (' + esc(klassenBaan) + ') – Meekijken (alleen-lezen)</h2>' +
-        '<div class="sub">Alleen-lezen meekijkweergave voor Baan ' + esc(b) + ' (' + esc(jaar) + '). Geen klok- of eigenaarsbediening.</div>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<span class="chip">Alleen-lezen meekijk</span>' +
-        '<button type="button" class="pri sm" onclick="gaNaarOverzicht()">← Terug naar Banen / Klokkers</button>' +
-      '</div>' +
-    '</div>' +
-    '<div class="stats-pill">' +
-      '<span>Nu op baan (' + esc(oefLabel) + '): <b>' + esc(nuHond) + '</b></span>' +
-      '<span>Laatste tijd: <b>' + (laatsteReg ? ('#' + esc(laatsteReg.startnummer) + ' ' + esc(laatsteReg.tijdTekst)) : 'Nog geen tijd') + '</b></span>' +
-      '<span>Deelnemers: <b>' + bl.length + '</b></span>' +
-    '</div>' +
-    '<div class="table-wrap"><table><thead><tr>' +
-      '<th style="width:80px">Nr</th><th>Hond &amp; Eigenaar</th><th>Klasse &amp; Melding</th><th style="width:110px">Tijd</th><th style="width:105px">Punten</th><th style="width:120px">Status</th>' +
-    '</tr></thead><tbody>' + (rijen || '<tr><td colspan="6" class="sub" style="padding:14px">Geen deelnemers op baan ' + esc(b) + '.</td></tr>') + '</tbody></table></div>' +
-  '</div>';
 }
 
 function render() {
@@ -775,8 +727,6 @@ function render() {
     var html = '';
     if (nav.sub === 'BIJLAGEN') {
       html = renderBijlagen();
-    } else if (nav.sub === 'MEEKIJK' && nav.baan !== 'ALLE') {
-      html = renderBaanMeekijk(nav.baan);
     } else if (nav.baan === 'ALLE') {
       html = renderOverzicht();
     } else {
