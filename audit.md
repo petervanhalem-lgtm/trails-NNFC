@@ -1,39 +1,55 @@
-# Audit – NNFC Waterwerk (trails-NNFC)
+# Auditrapport — NNFC Waterwerk
 
-## 1. Huidige opzet & naamgeving
+- **Peildatum:** 27 november 2026
+- **Status jaar 2026:** Vergrendeld (`vergrendeld = true`). Uitslagen staan vast, bekers en brevetten zijn uitgereikt en gepubliceerd.
+- **Volgende operationele cyclus:** Voorbereiding en inrichting van wedstrijdjaar **2027** (en archiefbehoud voor **2026**).
 
-De applicatie is opgebouwd rond een jaarselectie (`nnfc_jaar` / `nnfc_actief_jaar` en `?jaar=`) en aparte schermen per rol:
+---
 
-- `index.html` – **Startscherm**: Keuze van wedstrijdjaar, overzicht van beschikbare data en finalisatie-/slotstatus, en doorlinken naar de onderdelen voor het gekozen jaar.
-- `beheer.html` – **Beheer / Admin**: Voorbereiding en inschrijvingen in 5 delen:
-  1. Importeren vanuit Excel/CSV + testdata-knop (`+ Vul 5 testdeelnemers`).
-  2. Nieuwe inschrijving toevoegen.
-  3. Baanindeling per klasse (Baan 1–5) + 3 bijlagen bij het waterwerkreglement.
-  4. Deelnemerslijst & banen (zoeken, filteren, bewerken, verwijderen).
-  5. JSON-back-up/herstel, synchronisatie met de wedstrijdtafel en jaarvergrendeling.
-- `wedstrijdtafel.html` – **Wedstrijdtafel**: Dagverloop in 5 stappen, waarbij in Stap 5 expliciet eerst de tijd- en puntentelling wordt uitgevoerd (`berekenPuntenUitTijden()`) en daarna de export/print (`berekenEnPrintOverzicht()`) volgt.
-- `banen.html` – **Banen / Klokkers**: Overzicht van Baan 1–5, startvolgorde, tijdmeting, oefenpunten en de 3 reglementsbijlagen.
-- `klokker.html` – **Klokkersscherm**: Baan-gericht scherm (`?baan=1..5`) met tijdregistratie/weigeringen, brevetonderdelen en wachtrij (`outbox`) voor synchronisatie.
-- `nnfc-jaar-nav.js`, `config.js` & `referentie2026.js` – Gedeelde jaarnavigatie, Firebase-configuratie (`nnfc-trails`) en referentiegegevens voor 2026.
+## 1. Managementsamenvatting
 
-## 2. Jaarafsluiting & alleen-lezen stand (2026)
+De applicatie voor het NNFC Waterwerk is ingericht als een set HTML-modules (`index.html`, `beheer.html`, `banen_8.html`, `klokker.html`, `wedstrijdtafel.html`) met ondersteuning voor lokale opslag (`localStorage`), Excel/CSV-import en Firebase Realtime Database (`nnfc-trails`).
 
-- **2026 standaard vergrendeld**: Zolang er in `nnfc_slot_2026` geen expliciete ontgrendeling is opgeslagen, wordt `2026` als afgesloten/vergrendeld behandeld.
-- **Alleen-lezen gedrag**: Bij een vergrendeld jaar verschijnt een waarschuwingsbanner en worden mutatieknoppen, invoervelden en selecties uitgeschakeld/geblokkeerd, terwijl bekijken en exporteren/printen beschikbaar blijven.
-- **Geen actieve "open" teksten bij afsluiting**: Bij een afgesloten jaar worden actieve statussen zoals *"Nog niet gezwommen"* vervangen door *"Afgesloten"*.
+Met de definitieve afronding en vergrendeling van **2026** verschuift het zwaartepunt van het systeem:
+1. **2026** dient als **archief- en referentiejaar** te worden beschermd tegen onbedoelde wijzigingen.
+2. **2027** moet schoon, gecontroleerd en zonder restdata van 2026 worden opgestart.
+3. Enkele technische en operationele aandachtspunten uit de code moeten vóór de livegang van **2027** worden strakgetrokken.
 
-## 3. Aandachtspunten & bevindingen
+---
 
-### Consistentie van datapaden (`localStorage` & Firebase)
+## 2. Bevindingen per domein
 
-- `beheer.html` en `wedstrijdtafel.html` gebruiken jaarafhankelijke `localStorage`-sleutels (`nnfc_deelnemers_<jaar>`, `nnfc_baanindeling_<jaar>`, `nnfc_tafel_<jaar>`, `nnfc_tafel_klokkerlog_<jaar>`, `nnfc_kcm_<jaar>` en `nnfc_slot_<jaar>`) en schrijven bij actieve Firebase-configuratie naar jaarafhankelijke paden (`wedstrijd/beheer_deelnemers_<jaar>`, `wedstrijd/baanindeling_<jaar>`, `wedstrijd/tafel_status_<jaar>`, `wedstrijd/tafel_klokkerlog_<jaar>`, `wedstrijd/registraties_<jaar>`, `wedstrijd/meldingen_<jaar>`, `wedstrijd/kcm_selecties_<jaar>`, `wedstrijd/slot_<jaar>`).
-- `klokker.html` gebruikt baan-/jaargekoppelde opslag (`nnfc_klokker_state_<jaar>_<baan>`, `nnfc_klokker_dogs_<jaar>_<baan>`, `nnfc_klokker_outbox_<jaar>_<baan>`) en synchroniseert met Firebase.
-- **Advies**: Blijf bij live gebruik controleren dat `klokker.html` en `banen.html` exact hetzelfde actieve `<jaar>` en dezelfde slotstatus (`nnfc_slot_<jaar>`) volgen als `beheer.html` en `wedstrijdtafel.html`.
+### A. Jaarvergrendeling & Archivering (2026 vs. 2027)
+- **Bevinding:** In meerdere schermen valt de standaardvergrendeling voor `2026` terug op alleen-lezen (`vergrendeld = true`) wanneer er nog geen expliciete slot-waarde is opgeslagen. Dat sluit goed aan bij de huidige status van 2026.
+- **Risico:** Als tijdens het voorbereiden van **2027** het actieve jaar per ongeluk op `2026` blijft staan of als een JSON-back-up met `2026`-sleutels wordt teruggezet, kan dit tot verwarring of overschrijving leiden.
+- **Advies:**
+  - Leg een definitieve JSON-archiefback-up van **2026** vast buiten de dagelijkse werkmap.
+  - Laat `2026` permanent vergrendeld in de productieomgeving.
+  - Start **2027** expliciet als nieuw jaar zonder `2026`-deelnemers of testdata.
 
-### Controle in `render()` van alle schermen
+### B. Bestandsnamen, Routes & Koppelingen
+- **Bevinding:** In de navigatie (`index.html`, `beheer.html`, `wedstrijdtafel.html`) wordt verwezen naar `banen.html`, terwijl het baanoverzichtsbestand in de set `banen_8.html` heet.
+- **Risico:** Op servers of omgevingen waar exacte bestandsnamen vereist zijn, leidt een mismatch tussen `banen.html` en `banen_8.html` tot een broken link.
+- **Advies:** Harmoniseer de bestandsnaam en de links eenduidig (bijv. hernoem `banen_8.html` naar `banen.html` of pas alle verwijzingen aan naar de definitieve bestandsnaam).
 
-- **Advies**: Houd hulpfuncties en alleen-lezen banners/locks op top-level en pas ze aan het einde van elke `render()`-cyclus toe, zodat dynamisch opgebouwde tabellen, knoppen en velden altijd consistent worden vergrendeld.
+### C. Databronnen, Offline-modus & Synchronisatie
+- **Bevinding:** Het systeem combineert `localStorage` (`nnfc_deelnemers_<jaar>`, `nnfc_klokker_outbox_<jaar>_<baan>`, `nnfc_slot_<jaar>`) met Firebase Realtime Database (`nnfc-trails`) en SheetJS voor Excel/CSV-import.
+- **Risico:** Bij een lege browsercache of zonder actieve databaseverbinding start het systeem leeg tenzij testdeelnemers, Excel/CSV-bestanden of JSON-back-ups worden geladen. Daarnaast kunnen offline klokker-items in de outbox blijven staan totdat ze gesynchroniseerd zijn.
+- **Advies:**
+  - Controleer vóór elke wedstrijddag dat alle klokker-outboxes zijn verwerkt en gesynchroniseerd.
+  - Test de volledige keten (`Beheer` -> `Banen/Klokker` -> `Wedstrijdtafel`) met een kleine proefset in **2027** voordat echte inschrijvingen worden geladen.
 
-### Firebase Database Rules & AVG / persoonsgegevens
+### D. Wedstrijdregels & Administratieve Controle
+- **Bevinding:** De wedstrijdtafel ondersteunt startnummers, klassen met standaard `+10%` vrije buffer, oefeningen `A`, `B`, `C` (inclusief `600,00s` bij weigering), brevetten, Beste Reu / Beste Teef, tijd-/puntentelling (art. 2.15) en live/lokale klokker-meldingen/correcties.
+- **Risico:** Omdat de uitslag, bekers en brevetten voor **2026** al definitief zijn vastgesteld en gepubliceerd, mogen eventuele nacontroles op **2026** uitsluitend nog als lees- en controleactie plaatsvinden, niet als herberekening van de gepubliceerde eindstand.
+- **Advies:** Documenteer de vastgestelde **2026**-eindstand (inclusief brevetten en ereprijzen) als ongewijzigd referentiepunt.
 
-- `config.js` bevat de publieke configuratie voor `nnfc-trails`. Zorg dat de Firebase Realtime Database Rules passen bij de gewenste toegangsrechten en sla echte leden-/deelnemerslijsten (met o.a. lidnummers en e-mailadressen) niet onnodig op in een openbare repository.
+---
+
+## 3. Actiechecklist vóór start seizoen 2027
+
+- [ ] Definitieve export/back-up van **2026** veiligstellen en **2026** vergrendeld houden.
+- [ ] Bestandsnaam van het baanoverzicht (`banen_8.html` vs. `banen.html`) overal gelijk trekken.
+- [ ] Nieuwe deelnemerslijst en baanindeling voor **2027** voorbereiden en controleren op `+10%` startnummerbuffer.
+- [ ] Pincodes en links voor `klokker.html?baan=1..5` voor **2027** genereren en testen.
+- [ ] Offline outbox en synchronisatie tussen `klokker.html`, `wedstrijdtafel.html` en Firebase testen.
