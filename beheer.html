@@ -45,11 +45,9 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 
 .box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:14px}
 .box-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 @media(max-width:1100px){.grid5{grid-template-columns:repeat(3,1fr)}.grid3{grid-template-columns:1fr}}
-@media(max-width:860px){.grid2{grid-template-columns:1fr}}
 @media(max-width:620px){.grid5{grid-template-columns:1fr}}
 .kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:12px}
 
@@ -60,7 +58,6 @@ input:focus,select:focus{outline:none;border-color:var(--ac)}
 .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .search-wrap{flex:1;min-width:240px;display:flex;gap:6px;align-items:center}
 .search-wrap input{margin-bottom:0;border-color:var(--ac)}
-.stats-pill{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:14px;color:var(--mut);background:var(--sf2);padding:8px 12px;border-radius:10px;border:1px solid var(--ln);margin-bottom:12px}
 
 .table-wrap{overflow-x:auto;max-height:66vh;border:1.5px solid var(--ln);border-radius:12px}
 table{width:100%;border-collapse:collapse}
@@ -82,7 +79,6 @@ tbody tr:hover{background:var(--soft)}
 </head>
 <body>
 <div class="wrap">
-  <!-- UNIFORME BOVENSTE BALK -->
   <header class="top">
     <div class="top-l">
       <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
@@ -125,7 +121,7 @@ tbody tr:hover{background:var(--soft)}
 <script>
 var db = null;
 var KLASSEN_OPTIES = ["Jeugd", "Open", "Veteranen", "Stamboomloos", "Specials"];
-var DISTRICTEN_OPTIES = ["", "Noord", "Oost", "West", "Zuid", "Midden", "Buitenland"];
+var DISTRICTEN_OPTIES = ["Betuwe", "Bollenstreek", "Den Haag", "Limburg", "Noord", "Rotterdam"];
 var BREVETTEN_OPTIES = ["Geen", "Jeugdbrevet", "Brevet A", "Brevet B", "Brevet C", "Trialsbrevet"];
 
 var KLASSE_RANGES = {
@@ -276,15 +272,16 @@ function renderSlotBadge() {
   }
 }
 
-function bepaalOpvolgendBrevet(huidig, klasse) {
-  if (klasse === 'Jeugd' && huidig === 'Geen') return 'Jeugdbrevet';
+function bepaalMinimaalVolgendBrevet(huidig, klasse) {
   var volgorde = ["Geen", "Jeugdbrevet", "Brevet A", "Brevet B", "Brevet C", "Trialsbrevet"];
   var idx = volgorde.indexOf(huidig);
-  if (idx >= 0 && idx < volgorde.length - 1) return volgorde[idx + 1];
-  return 'Brevet A';
+  var kandidaat = (idx >= 0 && idx < volgorde.length - 1) ? volgorde[idx + 1] : "Brevet A";
+  if (klasse === "Jeugd" && (huidig === "Geen" || !huidig)) {
+    return "Jeugdbrevet";
+  }
+  return kandidaat;
 }
 
-/* Last-in, first-to-the-back binnen klasse-range en buffer */
 function volgendeStartnummer(klasse) {
   var cfg = KLASSE_RANGES[klasse] || KLASSE_RANGES["Open"];
   var bezet = new Set();
@@ -293,15 +290,12 @@ function volgendeStartnummer(klasse) {
     if (!isNaN(nr)) bezet.add(nr);
   });
 
-  // 1. Zoek eerst beschikbare nummers in hoofdrange
   for (var n = cfg.start; n <= cfg.end; n++) {
     if (!bezet.has(n)) return n;
   }
-  // 2. Zoek in buffer-range
   for (var b = cfg.bufferStart; b <= cfg.bufferEnd; b++) {
     if (!bezet.has(b)) return b;
   }
-  // 3. Fallback achter buffer
   var maxNr = cfg.bufferEnd;
   bezet.forEach(function(x) { if (x > maxNr) maxNr = x; });
   return maxNr + 1;
@@ -321,7 +315,7 @@ function normaliseerDeelnemer(h, fallbackId) {
     geslacht: String(h.geslacht || 'Reu'),
     klasse: String(h.klasse || 'Open'),
     huidigBrevet: String(h.huidigBrevet || 'Geen'),
-    opvolgendBrevet: String(h.opvolgendBrevet || 'Brevet A'),
+    opvolgendBrevet: String(h.opvolgendBrevet || bepaalMinimaalVolgendBrevet(h.huidigBrevet || 'Geen', h.klasse || 'Open')),
     kcm: String(h.kcm || 'GEEN'),
     buitenMededinging: !!h.buitenMededinging,
     baan: String(h.baan || '1'),
@@ -507,7 +501,7 @@ function publiceerActiefJaar() {
 
 function pasKlasseAdviesToe(nieuweKlasse) {
   formState.klasse = nieuweKlasse;
-  formState.opvolgendBrevet = bepaalOpvolgendBrevet(formState.huidigBrevet, nieuweKlasse);
+  formState.opvolgendBrevet = bepaalMinimaalVolgendBrevet(formState.huidigBrevet, nieuweKlasse);
   formState.startnummer = String(volgendeStartnummer(nieuweKlasse));
   var gekoppeldeBaan = ['1','2','3','4','5'].find(function(b) {
     return ((baanIndeling.banen && baanIndeling.banen[b]) || []).indexOf(nieuweKlasse) !== -1;
@@ -538,7 +532,7 @@ function inschrijvenToevoegen(ev) {
     geslacht: formState.geslacht || 'Reu',
     klasse: formState.klasse || 'Open',
     huidigBrevet: formState.huidigBrevet || 'Geen',
-    opvolgendBrevet: formState.opvolgendBrevet || bepaalOpvolgendBrevet(formState.huidigBrevet, formState.klasse),
+    opvolgendBrevet: formState.opvolgendBrevet || bepaalMinimaalVolgendBrevet(formState.huidigBrevet, formState.klasse),
     kcm: 'GEEN',
     buitenMededinging: !!formState.buitenMededinging,
     baan: String(formState.baan || '1'),
@@ -589,14 +583,15 @@ function render() {
     : '';
 
   var inschrijfHtml = '<div class="box">' +
-    '<div class="box-head"><div><h2>Inschrijven nieuwe combinatie (' + esc(jaar) + ')</h2><div class="sub">Advies startnummer volgt klasse-range en buffer (last-in, first-to-the-back)</div></div><span class="chip">Advies startnr: #' + adviesNr + '</span></div>' +
+    '<div class="box-head"><div><h2>Inschrijven nieuwe combinatie (' + esc(jaar) + ')</h2><div class="sub">Klasse bepaalt minimaal volgend brevet en advies startnummer</div></div><span class="chip">Advies startnr: #' + adviesNr + '</span></div>' +
     '<form onsubmit="inschrijvenToevoegen(event)">' +
       '<div class="grid3">' +
         '<div><label>Roepnaam hond *</label><input type="text" value="' + esc(formState.roepnaam) + '" oninput="formState.roepnaam=this.value" placeholder="Bijv. Toby"></div>' +
         '<div><label>Stamboomnaam</label><input type="text" value="' + esc(formState.stamboom) + '" oninput="formState.stamboom=this.value" placeholder="Optioneel"></div>' +
         '<div><label>Eigenaar / Geleider</label><input type="text" value="' + esc(formState.eigenaar) + '" oninput="formState.eigenaar=this.value" placeholder="Naam geleider"></div>' +
         '<div><label>District</label><select onchange="formState.district=this.value">' +
-          DISTRICTEN_OPTIES.map(function(d) { return '<option value="' + esc(d) + '" ' + (formState.district === d ? 'selected' : '') + '>' + (d || '— Kies district —') + '</option>'; }).join('') +
+          '<option value="">— Kies district —</option>' +
+          DISTRICTEN_OPTIES.map(function(d) { return '<option value="' + esc(d) + '" ' + (formState.district === d ? 'selected' : '') + '>' + esc(d) + '</option>'; }).join('') +
         '</select></div>' +
         '<div><label>Lidnummer</label><input type="text" value="' + esc(formState.lidnr) + '" oninput="formState.lidnr=this.value" placeholder="Lidnr"></div>' +
         '<div><label>Geslacht</label><select onchange="formState.geslacht=this.value">' +
@@ -605,10 +600,10 @@ function render() {
         '<div><label>Klasse</label><select onchange="pasKlasseAdviesToe(this.value)">' +
           KLASSEN_OPTIES.map(function(k) { return '<option value="' + k + '" ' + (formState.klasse === k ? 'selected' : '') + '>' + k + '</option>'; }).join('') +
         '</select></div>' +
-        '<div><label>Huidig brevet</label><select onchange="formState.huidigBrevet=this.value;formState.opvolgendBrevet=bepaalOpvolgendBrevet(this.value,formState.klasse);render()">' +
+        '<div><label>Huidig brevet</label><select onchange="formState.huidigBrevet=this.value;formState.opvolgendBrevet=bepaalMinimaalVolgendBrevet(this.value,formState.klasse);render()">' +
           BREVETTEN_OPTIES.map(function(b) { return '<option value="' + b + '" ' + (formState.huidigBrevet === b ? 'selected' : '') + '>' + b + '</option>'; }).join('') +
         '</select></div>' +
-        '<div><label>Opvolgend brevet</label><input type="text" value="' + esc(formState.opvolgendBrevet) + '" onchange="formState.opvolgendBrevet=this.value"></div>' +
+        '<div><label>Minimaal volgend brevet</label><input type="text" value="' + esc(formState.opvolgendBrevet) + '" onchange="formState.opvolgendBrevet=this.value"></div>' +
         '<div><label>Startnummer</label><input type="number" min="1" value="' + esc(formState.startnummer) + '" oninput="formState.startnummer=this.value"></div>' +
         '<div><label>Baan</label><select onchange="formState.baan=this.value">' +
           ['1','2','3','4','5'].map(function(b) { return '<option value="' + b + '" ' + (formState.baan === b ? 'selected' : '') + '>Baan ' + b + '</option>'; }).join('') +
@@ -639,9 +634,9 @@ function render() {
       }).join('') +
     '</div>' +
     '<div class="grid3">' +
-      '<div class="kaart"><label>Bijlage 1</label><input type="text" value="' + esc(baanIndeling.bijlagen.b1 || '') + '" placeholder="Bijv. Oefening 1 / reglement..." onchange="wijzigBijlage(\'b1\',this.value)"></div>' +
-      '<div class="kaart"><label>Bijlage 2</label><input type="text" value="' + esc(baanIndeling.bijlagen.b2 || '') + '" placeholder="Bijv. Bekers / punten..." onchange="wijzigBijlage(\'b2\',this.value)"></div>' +
-      '<div class="kaart"><label>Bijlage 3</label><input type="text" value="' + esc(baanIndeling.bijlagen.b3 || '') + '" placeholder="Bijv. Aanvullende afspraken..." onchange="wijzigBijlage(\'b3\',this.value)"></div>' +
+      '<div class="kaart"><label>Bijlage 1</label><input type="text" value="' + esc(baanIndeling.bijlagen.b1 || '') + '" placeholder="Bijlage 1..." onchange="wijzigBijlage(\'b1\',this.value)"></div>' +
+      '<div class="kaart"><label>Bijlage 2</label><input type="text" value="' + esc(baanIndeling.bijlagen.b2 || '') + '" placeholder="Bijlage 2..." onchange="wijzigBijlage(\'b2\',this.value)"></div>' +
+      '<div class="kaart"><label>Bijlage 3</label><input type="text" value="' + esc(baanIndeling.bijlagen.b3 || '') + '" placeholder="Bijlage 3..." onchange="wijzigBijlage(\'b3\',this.value)"></div>' +
     '</div>' +
   '</div>';
 
@@ -657,7 +652,7 @@ function render() {
     return '<tr>' +
       '<td><span class="chip">' + (h.startnummer != null ? ('#' + esc(h.startnummer)) : '—') + '</span></td>' +
       '<td><div class="hond-main">' + esc(h.roepnaam) + (h.buitenMededinging ? ' <span class="chip">*</span>' : '') + '</div><div class="hond-sub">' + esc(h.stamboom) + ' (' + esc(h.geslacht) + ')</div></td>' +
-      '<td><div>' + esc(h.eigenaar) + '</div><div class="hond-sub">' + esc(h.district || '—') + ' · Lid ' + esc(h.lidnr || '—') + '</div></td>' +
+      '<td><div>' + esc(h.eigenaar) + '</div><div class="hond-sub">' + esc(h.district ? (h.district + ' · ') : '') + 'Lid ' + esc(h.lidnr || '—') + '</div></td>' +
       '<td><span class="chip">' + esc(h.klasse) + '</span></td>' +
       '<td>' + esc(h.huidigBrevet) + ' → <b>' + esc(h.opvolgendBrevet) + '</b></td>' +
       '<td>Baan ' + esc(h.baan) + '</td>' +
