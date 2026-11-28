@@ -157,6 +157,7 @@ tbody tr:hover{background:var(--soft)}
 <script>
 var db = null;
 var KLASSEN_OPTIES = ["Jeugd", "Open", "Veteranen", "Stamboomloos", "Specials"];
+var DISTRICT_OPTIES = ["Noord", "Noord-Oost", "Oost", "Midden", "West", "Zuid", "Zuid-West", "Buitenland"];
 var BREVET_OPTIES = ["Geen", "Jeugdbrevet", "Brevet A", "Brevet B", "Brevet C", "Brevet D", "Brevet E", "Seaman Brevet"];
 var KCM_OPTIES = ["GEEN", "BOB", "CAC", "Res. CAC", "U1", "U2", "U3", "U4", "U", "ZG", "G", "M", "S"];
 
@@ -289,19 +290,62 @@ function normaliseerBrevet(raw) {
   return exact || 'Geen';
 }
 
-function volgendeBrevetNa(huidigBrevet) {
+function getOpvolgendBrevetOpties(klasse) {
+  if (klasse === 'Jeugd') {
+    return BREVET_OPTIES.slice(1);
+  }
+  return BREVET_OPTIES.filter(function(b) { return b !== 'Geen' && b !== 'Jeugdbrevet'; });
+}
+
+function volgendeBrevetNa(huidigBrevet, klasse) {
+  var toegestaan = getOpvolgendBrevetOpties(klasse);
   var genormaliseerd = normaliseerBrevet(huidigBrevet);
+
+  if (klasse === 'Jeugd') {
+    if (genormaliseerd === 'Geen') return 'Jeugdbrevet';
+    var idxJeugd = BREVET_OPTIES.indexOf(genormaliseerd);
+    if (idxJeugd !== -1 && idxJeugd < BREVET_OPTIES.length - 1) {
+      var kandJeugd = BREVET_OPTIES[idxJeugd + 1];
+      if (toegestaan.indexOf(kandJeugd) !== -1) return kandJeugd;
+    }
+    return 'Jeugdbrevet';
+  }
+
+  if (genormaliseerd === 'Geen' || genormaliseerd === 'Jeugdbrevet') {
+    return 'Brevet A';
+  }
   var idx = BREVET_OPTIES.indexOf(genormaliseerd);
-  if (idx === -1 || idx >= BREVET_OPTIES.length - 1) return 'Seaman Brevet';
-  return BREVET_OPTIES[idx + 1];
+  if (idx !== -1 && idx < BREVET_OPTIES.length - 1) {
+    var kand = BREVET_OPTIES[idx + 1];
+    if (toegestaan.indexOf(kand) !== -1) return kand;
+  }
+  return toegestaan[toegestaan.length - 1] || 'Seaman Brevet';
+}
+
+function pasOpvolgendBrevetAanInFormulier() {
+  var klEl = document.getElementById('fKlasse');
+  var hbEl = document.getElementById('fHuidigBrevet');
+  var obEl = document.getElementById('fOpvolgendBrevet');
+  if (!klEl || !hbEl || !obEl) return;
+
+  var klasse = klEl.value;
+  var opties = getOpvolgendBrevetOpties(klasse);
+  var voorstel = volgendeBrevetNa(hbEl.value, klasse);
+
+  obEl.innerHTML = opties.map(function(b) {
+    return '<option value="' + esc(b) + '"' + (b === voorstel ? ' selected' : '') + '>' + esc(b) + '</option>';
+  }).join('');
 }
 
 function normaliseerDeelnemerRecord(h, sleutelId) {
   if (!h || typeof h !== 'object') return h;
   if (!h.id && sleutelId) h.id = String(sleutelId);
   var hb = normaliseerBrevet(h.huidigBrevet);
-  var ob = h.opvolgendBrevet ? normaliseerBrevet(h.opvolgendBrevet) : volgendeBrevetNa(hb);
-  if (hb !== 'Geen' && ob === hb) ob = volgendeBrevetNa(hb);
+  var ob = h.opvolgendBrevet ? normaliseerBrevet(h.opvolgendBrevet) : volgendeBrevetNa(hb, h.klasse);
+  if (h.klasse !== 'Jeugd' && ob === 'Jeugdbrevet') {
+    ob = volgendeBrevetNa(hb, h.klasse);
+  }
+  if (hb !== 'Geen' && ob === hb) ob = volgendeBrevetNa(hb, h.klasse);
   h.huidigBrevet = hb;
   h.opvolgendBrevet = ob;
   return h;
@@ -620,6 +664,33 @@ function berekenBufferAantal(aantalInKlasse) {
   return Math.max(1, Math.ceil(aantalInKlasse * (pct / 100)));
 }
 
+function berekenKlasseRangeMap() {
+  var volgordeKlassen = KLASSEN_OPTIES.slice();
+  var lopendNr = 1;
+  var ranges = {};
+
+  volgordeKlassen.forEach(function(kl) {
+    var aant = deelnemers.filter(function(h) { return h.klasse === kl; }).length;
+    var ingesteld = getKlasseStartVanaf(kl);
+    var startNr = (ingesteld && ingesteld >= lopendNr) ? ingesteld : (ingesteld || lopendNr);
+    var bufferAantal = berekenBufferAantal(aant);
+    var eindInclusiefBuffer = aant > 0 ? (startNr + aant + bufferAantal - 1) : (startNr + Math.max(0, bufferAantal - 1));
+    ranges[kl] = {
+      startNr: startNr,
+      eindInclusiefBuffer: eindInclusiefBuffer,
+      aantal: aant,
+      bufferAantal: bufferAantal
+    };
+    if (aant > 0) {
+      lopendNr = startNr + aant + bufferAantal;
+    } else if (ingesteld) {
+      lopendNr = Math.max(lopendNr, ingesteld);
+    }
+  });
+
+  return ranges;
+}
+
 function wijzigKlasseStartnummer(klasse, waarde) {
   if (waarschuwIndienVergrendeld()) { render(); return; }
   if (!baanIndeling.startNummersPerKlasse) {
@@ -658,6 +729,15 @@ function volgendeStartnummer(klasse) {
     var n = normaliseerStartnummer(h.startnummer);
     if (n != null) bezet.add(n);
   });
+
+  var ranges = berekenKlasseRangeMap();
+  if (klasse && ranges[klasse]) {
+    var r = ranges[klasse];
+    for (var nr = r.startNr; nr <= r.eindInclusiefBuffer; nr++) {
+      if (!bezet.has(nr)) return nr;
+    }
+  }
+
   var startVanaf = getKlasseStartVanaf(klasse);
   var kandidaat = startVanaf || 1;
   while (bezet.has(kandidaat)) {
@@ -755,6 +835,9 @@ function voegInschrijvingToe(e) {
   var klasse = document.getElementById('fKlasse').value;
   var huidigBrevet = normaliseerBrevet(document.getElementById('fHuidigBrevet').value);
   var opvolgendBrevet = normaliseerBrevet(document.getElementById('fOpvolgendBrevet').value);
+  if (klasse !== 'Jeugd' && opvolgendBrevet === 'Jeugdbrevet') {
+    opvolgendBrevet = volgendeBrevetNa(huidigBrevet, klasse);
+  }
   var kcm = document.getElementById('fKcm').value;
   var buitenMededinging = document.getElementById('fBuitenMed').checked;
   var betaald = document.getElementById('fBetaald').checked;
@@ -830,11 +913,22 @@ function wijzigHondVeld(id, veld, waarde) {
       return;
     }
     h.startnummer = nr;
+  } else if (veld === 'klasse') {
+    h.klasse = waarde;
+    if (h.klasse !== 'Jeugd' && h.opvolgendBrevet === 'Jeugdbrevet') {
+      h.opvolgendBrevet = volgendeBrevetNa(h.huidigBrevet, h.klasse);
+    }
   } else if (veld === 'huidigBrevet') {
     h.huidigBrevet = normaliseerBrevet(waarde);
-    h.opvolgendBrevet = volgendeBrevetNa(h.huidigBrevet);
+    h.opvolgendBrevet = volgendeBrevetNa(h.huidigBrevet, h.klasse);
   } else if (veld === 'opvolgendBrevet') {
-    h.opvolgendBrevet = normaliseerBrevet(waarde);
+    var gekozenOb = normaliseerBrevet(waarde);
+    if (h.klasse !== 'Jeugd' && gekozenOb === 'Jeugdbrevet') {
+      alert('Jeugdbrevet is alleen bedoeld voor de klasse Jeugd.');
+      render();
+      return;
+    }
+    h.opvolgendBrevet = gekozenOb;
   } else {
     h[veld] = waarde;
   }
@@ -974,7 +1068,7 @@ function verwerkGeimporteerdeRijen(rijen, modus) {
     var geslacht = normaliseerGeslacht(pakVeld(row, ['geslacht', 'sekse']));
     var klasse = normaliseerKlasse(pakVeld(row, ['klasse', 'deelnameklasse']));
     var huidigBrevet = normaliseerBrevet(pakVeld(row, ['heeft nu brevet', 'huidig brevet', 'brevet', 'nu brevet']));
-    var opvolgendBrevet = volgendeBrevetNa(huidigBrevet);
+    var opvolgendBrevet = volgendeBrevetNa(huidigBrevet, klasse);
     var kcm = pakVeld(row, ['kcm', 'kcm kwalificatie', 'kwalificatie']) || 'GEEN';
     var stamboomnr = pakVeld(row, ['stamboomnummer', 'nhsb', 'stamboomnr']);
     var geboortedatum = pakVeld(row, ['geboortedatum', 'geb. datum', 'geboren']);
@@ -1074,7 +1168,11 @@ function renderSectie1() {
 }
 
 function renderSectie2() {
-  var volgendNr = volgendeStartnummer('Jeugd');
+  var startKlasse = 'Jeugd';
+  var volgendNr = volgendeStartnummer(startKlasse);
+  var startOpvolgend = volgendeBrevetNa('Geen', startKlasse);
+  var opvolgendOpties = getOpvolgendBrevetOpties(startKlasse);
+
   return '<div class="box">' +
     '<div class="box-head">' +
       '<div><h2>2. Nieuwe inschrijving toevoegen (' + esc(jaar) + ')</h2><div class="sub">Voeg een hond en geleider toe voor de waterwerkdag</div></div>' +
@@ -1084,23 +1182,26 @@ function renderSectie2() {
       '<div class="grid3">' +
         '<div class="kaart">' +
           '<h3>Hond & Stamboom</h3>' +
-          '<label>Roepnaam *</label><input id="fRoepnaam" type="text" required placeholder="Bijv. Bram">' +
-          '<label>Stamboomnaam</label><input id="fStamboom" type="text" placeholder="Bijv. Bram van het Waterriet">' +
-          '<label>Geslacht</label><select id="fGeslacht"><option value="Reu">Reu</option><option value="Teef">Teef</option></select>' +
-          '<label>Klasse</label><select id="fKlasse" onchange="document.getElementById(\'fStartnr\').value=volgendeStartnummer(this.value)">' + KLASSEN_OPTIES.map(function(k){ return '<option value="'+k+'">'+k+'</option>'; }).join('') + '</select>' +
+          '<label for="fRoepnaam">Roepnaam *</label><input id="fRoepnaam" type="text" required placeholder="Bijv. Bram">' +
+          '<label for="fStamboom">Stamboomnaam</label><input id="fStamboom" type="text" placeholder="Bijv. Bram van het Waterriet">' +
+          '<label for="fGeslacht">Geslacht</label><select id="fGeslacht"><option value="Reu">Reu</option><option value="Teef">Teef</option></select>' +
+          '<label for="fKlasse">Klasse</label><select id="fKlasse" onchange="document.getElementById(\'fStartnr\').value=volgendeStartnummer(this.value);pasOpvolgendBrevetAanInFormulier()">' + KLASSEN_OPTIES.map(function(k){ return '<option value="'+k+'" '+(k===startKlasse?'selected':'')+'>'+k+'</option>'; }).join('') + '</select>' +
         '</div>' +
         '<div class="kaart">' +
           '<h3>Eigenaar & Startnummer</h3>' +
-          '<label>Naam eigenaar / geleider *</label><input id="fEigenaar" type="text" required placeholder="Bijv. Jan de Vries">' +
-          '<label>District</label><input id="fDistrict" type="text" placeholder="Bijv. Noord / Utrecht">' +
-          '<label>Lidnummer</label><input id="fLidnr" type="text" placeholder="Bijv. 1042">' +
-          '<label>Startnummer (volgend vrij: #' + volgendNr + ')</label><input id="fStartnr" type="number" value="' + volgendNr + '">' +
+          '<label for="fEigenaar">Naam eigenaar / geleider *</label><input id="fEigenaar" type="text" required placeholder="Bijv. Jan de Vries">' +
+          '<label for="fDistrict">District</label><select id="fDistrict">' +
+            '<option value="">— Kies district —</option>' +
+            DISTRICT_OPTIES.map(function(d){ return '<option value="'+esc(d)+'">'+esc(d)+'</option>'; }).join('') +
+          '</select>' +
+          '<label for="fLidnr">Lidnummer</label><input id="fLidnr" type="text" placeholder="Bijv. 1042">' +
+          '<label for="fStartnr">Startnummer (advies bij gekozen klasse)</label><input id="fStartnr" type="number" value="' + volgendNr + '">' +
         '</div>' +
         '<div class="kaart">' +
           '<h3>Brevet, KCM & Status</h3>' +
-          '<label>Huidig brevet</label><select id="fHuidigBrevet" onchange="document.getElementById(\'fOpvolgendBrevet\').value=volgendeBrevetNa(this.value)">' + BREVET_OPTIES.map(function(b){ return '<option value="'+esc(b)+'">'+esc(b)+'</option>'; }).join('') + '</select>' +
-          '<label>Opvolgend brevet</label><select id="fOpvolgendBrevet">' + BREVET_OPTIES.slice(1).map(function(b){ return '<option value="'+esc(b)+'" '+(b==='Jeugdbrevet'?'selected':'')+'>'+esc(b)+'</option>'; }).join('') + '</select>' +
-          '<label>KCM-kwalificatie</label><select id="fKcm">' + KCM_OPTIES.map(function(k){ return '<option value="'+k+'">'+k+'</option>'; }).join('') + '</select>' +
+          '<label for="fHuidigBrevet">Huidig brevet</label><select id="fHuidigBrevet" onchange="pasOpvolgendBrevetAanInFormulier()">' + BREVET_OPTIES.map(function(b){ return '<option value="'+esc(b)+'">'+esc(b)+'</option>'; }).join('') + '</select>' +
+          '<label for="fOpvolgendBrevet">Opvolgend brevet</label><select id="fOpvolgendBrevet">' + opvolgendOpties.map(function(b){ return '<option value="'+esc(b)+'" '+(b===startOpvolgend?'selected':'')+'>'+esc(b)+'</option>'; }).join('') + '</select>' +
+          '<label for="fKcm">KCM-kwalificatie</label><select id="fKcm">' + KCM_OPTIES.map(function(k){ return '<option value="'+k+'">'+k+'</option>'; }).join('') + '</select>' +
           '<div class="row-check"><input id="fBetaald" type="checkbox" checked><label for="fBetaald">Inschrijfgeld betaald</label></div>' +
           '<div class="row-check"><input id="fBuitenMed" type="checkbox"><label for="fBuitenMed">Buiten mededinging (*)</label></div>' +
         '</div>' +
@@ -1202,6 +1303,7 @@ function renderSectie4() {
   var rows = lijst.map(function(h) {
     var hb = normaliseerBrevet(h.huidigBrevet);
     var ob = normaliseerBrevet(h.opvolgendBrevet);
+    var rijObOpties = getOpvolgendBrevetOpties(h.klasse);
     return '<tr>' +
       '<td><div style="display:flex;align-items:center;gap:6px"><span class="chip" style="min-width:38px;text-align:center">' + esc(formatStartnummer(h.startnummer)) + '</span><input type="number" min="1" max="9999" value="' + esc(normaliseerStartnummer(h.startnummer) || '') + '" style="width:76px;margin:0;min-height:34px;font-weight:700" onchange="wijzigHondVeld(\'' + esc(h.id) + '\',\'startnummer\',this.value)"></div></td>' +
       '<td><div class="hond-main">' + esc(h.roepnaam) + (h.buitenMededinging ? ' <span class="chip">*</span>' : '') + '</div><div class="hond-sub">' + esc(h.stamboom) + '</div></td>' +
@@ -1210,8 +1312,8 @@ function renderSectie4() {
         KLASSEN_OPTIES.map(function(k){ return '<option value="'+k+'" '+(h.klasse===k?'selected':'')+'>'+k+'</option>'; }).join('') +
       '</select></td>' +
       '<td><select style="width:auto;margin:0;min-height:34px" onchange="wijzigHondVeld(\'' + esc(h.id) + '\',\'opvolgendBrevet\',this.value)">' +
-        BREVET_OPTIES.map(function(b){ return '<option value="'+esc(b)+'" '+(ob===b?'selected':'')+'>'+esc(b)+'</option>'; }).join('') +
-        (BREVET_OPTIES.indexOf(ob) === -1 ? '<option value="'+esc(ob)+'" selected>'+esc(ob)+'</option>' : '') +
+        rijObOpties.map(function(b){ return '<option value="'+esc(b)+'" '+(ob===b?'selected':'')+'>'+esc(b)+'</option>'; }).join('') +
+        (rijObOpties.indexOf(ob) === -1 ? '<option value="'+esc(ob)+'" selected>'+esc(ob)+'</option>' : '') +
       '</select><div class="hond-sub">Nu: ' + esc(hb) + '</div></td>' +
       '<td><select style="width:auto;margin:0;min-height:34px" onchange="wijzigHondVeld(\'' + esc(h.id) + '\',\'baan\',this.value)">' +
         ['1','2','3','4','5'].map(function(b){ return '<option value="'+b+'" '+(String(h.baan)===b?'selected':'')+'>Baan '+b+'</option>'; }).join('') +
