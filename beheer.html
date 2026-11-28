@@ -44,6 +44,8 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .status-left,.status-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
 .box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:14px}
+.admin-lock-box{background:var(--sf);border:2px solid var(--warn);border-radius:16px;padding:16px;margin-top:22px;margin-bottom:14px}
+.admin-lock-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .box-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
@@ -106,11 +108,23 @@ tbody tr:hover{background:var(--soft)}
     </div>
     <div class="status-right">
       <button type="button" class="sm pri" onclick="publiceerActiefJaar()">Zet <span id="lblJaarActief">2027</span> als actief jaar</button>
-      <button type="button" class="sm" id="btnToggleSlot" onclick="toggleJaarSlot()">Jaar afsluiten / openen</button>
     </div>
   </div>
 
   <div id="appContent"></div>
+
+  <section class="admin-lock-box" aria-label="Jaarvergrendeling Admin">
+    <div class="admin-lock-row">
+      <div>
+        <h2 style="margin-bottom:4px">Admin jaarvergrendeling (<span id="lblJaarSlotSectie">2027</span>)</h2>
+        <div class="sub" id="slotUitlegTekst">Vergrendelen blokkeert verdere aanpassingen voor dit jaar. Ontkoppelen is alleen bedoeld voor admin-correcties.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button type="button" class="bad" id="btnVergrendelJaar" onclick="vraagVergrendelJaar()"></button>
+        <button type="button" class="sm" id="btnOntkoppelJaar" onclick="vraagOntkoppelJaar()"></button>
+      </div>
+    </div>
+  </section>
 </div>
 
 <div id="toast" class="toast">Opgeslagen</div>
@@ -222,6 +236,8 @@ function zetJaarLabels(yStr) {
   document.getElementById('lblJaar').textContent = yStr;
   var actLbl = document.getElementById('lblJaarActief');
   if (actLbl) actLbl.textContent = yStr;
+  var slotSecLbl = document.getElementById('lblJaarSlotSectie');
+  if (slotSecLbl) slotSecLbl.textContent = yStr;
   document.querySelectorAll('a.btn-link').forEach(function(a) {
     var href = a.getAttribute('href') || '';
     if (href.indexOf('index.html') !== -1) return;
@@ -263,12 +279,24 @@ function renderSlotBadge() {
   var el = document.getElementById('slotStatusBadge');
   if (el) {
     el.innerHTML = isVergrendeld()
-      ? '<span class="chip-slot">Jaar ' + esc(jaar) + ' afgesloten</span>'
+      ? '<span class="chip-slot">Jaar ' + esc(jaar) + ' vergrendeld</span>'
       : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
   }
-  var btn = document.getElementById('btnToggleSlot');
-  if (btn) {
-    btn.textContent = isVergrendeld() ? ('Heropen ' + jaar) : ('Sluit ' + jaar + ' af');
+  var btnLock = document.getElementById('btnVergrendelJaar');
+  if (btnLock) {
+    btnLock.textContent = 'Vergrendel ' + jaar;
+    btnLock.disabled = isVergrendeld();
+  }
+  var btnUnlock = document.getElementById('btnOntkoppelJaar');
+  if (btnUnlock) {
+    btnUnlock.textContent = 'Ontkoppel ' + jaar;
+    btnUnlock.disabled = !isVergrendeld();
+  }
+  var uitleg = document.getElementById('slotUitlegTekst');
+  if (uitleg) {
+    uitleg.textContent = isVergrendeld()
+      ? ('Jaar ' + jaar + ' is vergrendeld. Gebruik "Ontkoppel ' + jaar + '" alleen als je de blokkade wilt opheffen.')
+      : ('Jaar ' + jaar + ' is open voor bewerking. Vergrendelen vraagt tweemaal om bevestiging.');
   }
 }
 
@@ -345,7 +373,7 @@ function laadLokaal() {
     if (s && typeof s.vergrendeld === 'boolean') {
       jaarSlot = { vergrendeld: s.vergrendeld, datum: s.datum || '', toelichting: s.toelichting || '' };
     } else if (String(jaar) === '2026') {
-      jaarSlot = { vergrendeld: true, datum: '2026', toelichting: 'Afgesloten' };
+      jaarSlot = { vergrendeld: true, datum: '2026', toelichting: 'Vergrendeld' };
     } else {
       jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
     }
@@ -393,11 +421,11 @@ function bewaarBaanIndeling(toastMsg) {
   if (toastMsg) toonToast(toastMsg);
 }
 
-function toggleJaarSlot() {
+function schrijfSlotStatus(vergrendeld, toelichting) {
   jaarSlot = {
-    vergrendeld: !isVergrendeld(),
+    vergrendeld: !!vergrendeld,
     datum: new Date().toISOString().slice(0, 10),
-    toelichting: !isVergrendeld() ? 'Afgesloten via Beheer' : 'Heropend via Beheer'
+    toelichting: toelichting || ''
   };
   localStorage.setItem('nnfc_slot_' + jaar, JSON.stringify(jaarSlot));
   if (db) {
@@ -405,7 +433,24 @@ function toggleJaarSlot() {
   }
   renderSlotBadge();
   render();
-  toonToast('Jaar ' + jaar + (isVergrendeld() ? ' afgesloten' : ' geopend'));
+}
+
+function vraagVergrendelJaar() {
+  if (isVergrendeld()) return;
+  var stap1 = window.confirm('Weet je het zeker want als je hiermee doorgaat kan je geen data meer aanpassen/veranderen');
+  if (!stap1) return;
+  var stap2 = window.confirm('Je weet het zeker');
+  if (!stap2) return;
+  schrijfSlotStatus(true, 'Vergrendeld via Admin');
+  toonToast('Jaar ' + jaar + ' vergrendeld');
+}
+
+function vraagOntkoppelJaar() {
+  if (!isVergrendeld()) return;
+  var bevestig = window.confirm('Weet je zeker dat je de vergrendeling van ' + jaar + ' wilt ontkoppelen zodat data weer aangepast kan worden?');
+  if (!bevestig) return;
+  schrijfSlotStatus(false, 'Ontkoppeld via Admin');
+  toonToast('Jaar ' + jaar + ' ontkoppeld');
 }
 
 var _refs = [];
@@ -579,7 +624,7 @@ function render() {
   if (!formState.startnummer) formState.startnummer = String(adviesNr);
 
   var banner = isVergrendeld()
-    ? '<div class="warn-box"><b>Wedstrijdjaar ' + esc(jaar) + ' is afgesloten en vergrendeld (alleen-lezen).</b> Wijzigingen zijn geblokkeerd.</div>'
+    ? '<div class="warn-box"><b>Wedstrijdjaar ' + esc(jaar) + ' is vergrendeld (alleen-lezen).</b> Wijzigingen zijn geblokkeerd totdat het jaar onderaan is ontkoppeld.</div>'
     : '';
 
   var inschrijfHtml = '<div class="box">' +
