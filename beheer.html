@@ -320,6 +320,19 @@ var nav = {
   baanFilter: 'ALLE'
 };
 
+function normaliseerBaanIndelingObject(b) {
+  var std = maakStandaardBaanIndeling();
+  if (!b || !b.banen) return std;
+  return {
+    banen: Object.assign({ "1": [], "2": [], "3": [], "4": [], "5": [] }, b.banen),
+    bijlagen: Object.assign({ b1: "", b2: "", b3: "" }, b.bijlagen || {}),
+    startNummersPerKlasse: Object.assign(std.startNummersPerKlasse, b.startNummersPerKlasse || {}),
+    bufferPercentage: (typeof b.bufferPercentage === 'number' && !isNaN(b.bufferPercentage) && b.bufferPercentage >= 0)
+      ? b.bufferPercentage
+      : STANDAARD_BUFFER_PCT
+  };
+}
+
 function laadData() {
   try {
     var ruw = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || [];
@@ -329,18 +342,24 @@ function laadData() {
   try {
     var b = JSON.parse(localStorage.getItem('nnfc_baanindeling_' + jaar));
     if (b && b.banen) {
-      var std = maakStandaardBaanIndeling();
-      baanIndeling = {
-        banen: Object.assign({ "1": [], "2": [], "3": [], "4": [], "5": [] }, b.banen),
-        bijlagen: Object.assign({ b1: "", b2: "", b3: "" }, b.bijlagen || {}),
-        startNummersPerKlasse: Object.assign(std.startNummersPerKlasse, b.startNummersPerKlasse || {}),
-        bufferPercentage: (typeof b.bufferPercentage === 'number' && !isNaN(b.bufferPercentage) && b.bufferPercentage >= 0) ? b.bufferPercentage : STANDAARD_BUFFER_PCT
-      };
+      baanIndeling = normaliseerBaanIndelingObject(b);
     }
   } catch (e) {}
 }
 
 var jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
+var _firebaseSlotRef = null;
+var _firebaseDeelnemersRef = null;
+var _firebaseBaanIndelingRef = null;
+
+function renderSlotBadge() {
+  var badge = document.getElementById('slotStatusBadge');
+  if (badge) {
+    badge.innerHTML = jaarSlot.vergrendeld
+      ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
+      : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
+  }
+}
 
 function laadSlot() {
   try {
@@ -363,33 +382,69 @@ function laadSlot() {
   } catch (e) {
     jaarSlot = { vergrendeld: String(jaar) === '2026', datum: '', toelichting: '' };
   }
-  var badge = document.getElementById('slotStatusBadge');
-  if (badge) {
-    badge.innerHTML = jaarSlot.vergrendeld
-      ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
-      : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
+  renderSlotBadge();
+}
+
+function luisterFirebaseJaar() {
+  if (!db || !jaar) return;
+
+  if (_firebaseSlotRef) {
+    _firebaseSlotRef.off();
+    _firebaseSlotRef = null;
   }
-  if (db) {
-    try {
-      db.ref('wedstrijd/slot_' + jaar).once('value', function(snap) {
-        var remote = snap.val();
-        if (remote && typeof remote === 'object' && typeof remote.vergrendeld === 'boolean') {
-          jaarSlot = {
-            vergrendeld: remote.vergrendeld,
-            datum: remote.datum || '',
-            toelichting: remote.toelichting || ''
-          };
+  if (_firebaseDeelnemersRef) {
+    _firebaseDeelnemersRef.off();
+    _firebaseDeelnemersRef = null;
+  }
+  if (_firebaseBaanIndelingRef) {
+    _firebaseBaanIndelingRef.off();
+    _firebaseBaanIndelingRef = null;
+  }
+
+  try {
+    _firebaseSlotRef = db.ref('wedstrijd/slot_' + jaar);
+    _firebaseSlotRef.on('value', function(snap) {
+      var remote = snap.val();
+      if (remote && typeof remote === 'object' && typeof remote.vergrendeld === 'boolean') {
+        var nieuwSlot = {
+          vergrendeld: remote.vergrendeld,
+          datum: remote.datum || '',
+          toelichting: remote.toelichting || ''
+        };
+        if (JSON.stringify(nieuwSlot) !== JSON.stringify(jaarSlot)) {
+          jaarSlot = nieuwSlot;
           localStorage.setItem('nnfc_slot_' + jaar, JSON.stringify(jaarSlot));
-          var bEl = document.getElementById('slotStatusBadge');
-          if (bEl) {
-            bEl.innerHTML = jaarSlot.vergrendeld
-              ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
-              : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
-          }
+          renderSlotBadge();
+          render();
         }
-      });
-    } catch (e) {}
-  }
+      }
+    });
+
+    _firebaseDeelnemersRef = db.ref('wedstrijd/beheer_deelnemers_' + jaar);
+    _firebaseDeelnemersRef.on('value', function(snap) {
+      var val = snap.val();
+      if (!val) return;
+      var lijst = Array.isArray(val) ? val : Object.keys(val).map(function(k) { return val[k]; });
+      var genormaliseerd = lijst.filter(Boolean).map(normaliseerDeelnemerRecord);
+      if (JSON.stringify(genormaliseerd) !== JSON.stringify(deelnemers)) {
+        deelnemers = genormaliseerd;
+        localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
+        render();
+      }
+    });
+
+    _firebaseBaanIndelingRef = db.ref('wedstrijd/baanindeling_' + jaar);
+    _firebaseBaanIndelingRef.on('value', function(snap) {
+      var b = snap.val();
+      if (!b || !b.banen) return;
+      var genormaliseerdBaan = normaliseerBaanIndelingObject(b);
+      if (JSON.stringify(genormaliseerdBaan) !== JSON.stringify(baanIndeling)) {
+        baanIndeling = genormaliseerdBaan;
+        localStorage.setItem('nnfc_baanindeling_' + jaar, JSON.stringify(baanIndeling));
+        render();
+      }
+    });
+  } catch (e) {}
 }
 
 laadSlot();
@@ -402,6 +457,7 @@ if (deelnemers.length > 0 && !isJaarVergrendeld()) {
     pasKlasseStartnummersToeZonderConfirm();
   }
 }
+luisterFirebaseJaar();
 
 function syncFirebase() {
   if (!db) return;
@@ -458,6 +514,7 @@ function wisselJaar() {
       pasKlasseStartnummersToeZonderConfirm();
     }
   }
+  luisterFirebaseJaar();
   render();
 }
 
@@ -1264,10 +1321,7 @@ function importJSON(inputEl) {
       }
       deelnemers = data.deelnemers.map(normaliseerDeelnemerRecord);
       if (data.baanIndeling && data.baanIndeling.banen) {
-        baanIndeling = {
-          banen: Object.assign({ "1": [], "2": [], "3": [], "4": [], "5": [] }, data.baanIndeling.banen),
-          bijlagen: Object.assign({ b1: "", b2: "", b3: "" }, data.baanIndeling.bijlagen || {})
-        };
+        baanIndeling = normaliseerBaanIndelingObject(data.baanIndeling);
         localStorage.setItem('nnfc_baanindeling_' + jaar, JSON.stringify(baanIndeling));
       }
       bewaarDeelnemers('JSON-back-up hersteld (' + deelnemers.length + ' deelnemers)');
@@ -1316,12 +1370,7 @@ function renderSectie5() {
 }
 
 function render() {
-  var badge = document.getElementById('slotStatusBadge');
-  if (badge) {
-    badge.innerHTML = jaarSlot.vergrendeld
-      ? '<span class="chip-slot">🔒 Jaar ' + esc(jaar) + ' afgesloten (alleen-lezen)</span>'
-      : '<span class="chip">Jaar ' + esc(jaar) + ' open</span>';
-  }
+  renderSlotBadge();
   updateCrumbBar();
   var html = '';
   if (nav.sectie === 1) html = renderSectie1();
