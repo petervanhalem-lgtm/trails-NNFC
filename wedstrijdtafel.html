@@ -63,6 +63,17 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 @media(max-width:620px){.grid5{grid-template-columns:1fr}}
 .kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:12px}
 
+.beker-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:860px){.beker-grid{grid-template-columns:1fr}}
+.beker-card{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+.beker-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.beker-titel{font-size:17px;font-weight:700;margin:0}
+.beker-art{display:inline-block;background:var(--soft);color:var(--ink);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;white-space:nowrap}
+.beker-meta{font-size:14px;line-height:1.4;color:var(--ink)}
+.beker-meta b{color:var(--ink)}
+.beker-status{display:inline-block;padding:3px 9px;border-radius:6px;font-size:12px;font-weight:700;background:var(--sf);border:1px solid var(--ln);color:var(--mut);align-self:flex-start}
+.beker-status.toegekend{background:rgba(31,122,77,0.15);border-color:rgba(31,122,77,0.35);color:var(--ok)}
+
 label{display:block;font-weight:600;font-size:14px;margin-bottom:3px;color:var(--mut)}
 input,select{font:inherit;color:var(--ink);background:var(--sf);border:1.5px solid var(--ln);border-radius:10px;padding:7px 10px;width:100%;margin-bottom:9px;min-height:40px}
 input:focus,select:focus{outline:none;border-color:var(--ac)}
@@ -116,7 +127,7 @@ tbody tr:hover{background:var(--soft)}
     </div>
   </header>
 
-  <!-- 6-STAPPEN DAGVERLOOPBALK (BIJLAGE 2) -->
+  <!-- 6-STAPPEN DAGVERLOOPBALK -->
   <nav class="steps-bar" aria-label="Dagverloop stappen">
     <button type="button" id="stepBtn1" class="step-btn on" onclick="kiesStap(1)">
       <span class="fase">STAP 1 · OCHTEND</span>
@@ -167,6 +178,58 @@ tbody tr:hover{background:var(--soft)}
 var db = null;
 var KLASSEN_OPTIES = ["Jeugd", "Open", "Veteranen", "Stamboomloos", "Specials"];
 var KCM_OPTIES = ["GEEN", "BOB", "CAC", "Res. CAC", "U1", "U2", "U3", "U4", "U", "ZG", "G", "M", "S"];
+
+var BEKERS_DEF = [
+  {
+    id: "neptunus",
+    naam: "Neptunus-finale",
+    art: "Art. 2.16.2, 5.0",
+    waarvoor: "Algehele winnaar van de Trials op een 50 m finale.",
+    opbouw: "Alleen de snelste reu en snelste teef uit Open zwemmen de finale (50 m); de snelste wint. Bij weigering van beiden: uit de boot springen, wie eerst over de lijn komt wint."
+  },
+  {
+    id: "ceasar",
+    naam: "Ceasar Beker",
+    art: "Art. 2.16.1 / 2.14.3",
+    waarvoor: "Beker voor de klasse Veteranen (8 jaar en ouder, 30 m).",
+    opbouw: "Snelste veteraan; in de overdracht wordt aangegeven dat 2.16.1 'alle oefeningen' noemt en 2.14.3 'snelste deelnemende hond' (huidige lezing: A, B en C zonder weigering)."
+  },
+  {
+    id: "junior_spetter",
+    naam: "Junior Spetter",
+    art: "Art. 2.16.3, 2.17",
+    waarvoor: "Gecombineerde beker voor de klasse Jeugd (8–20 maanden, 30 m).",
+    opbouw: "Trialspunten (art. 2.15) plus KCM-punten van de laatst gehouden KCM (art. 2.17)."
+  },
+  {
+    id: "spetter",
+    naam: "Spetter",
+    art: "Art. 2.16.4, 2.17",
+    waarvoor: "Gecombineerde beker voor de klasse Open (20 maanden–8 jaar, 50 m).",
+    opbouw: "Trialspunten (op basis van aparte klassering per geslacht) plus KCM-punten van de laatst gehouden KCM (art. 2.17)."
+  },
+  {
+    id: "oldest_colony",
+    naam: "Oldest Colony's Beker",
+    art: "Art. 2.16.5",
+    waarvoor: "Beker uitgereikt op de KCM (na de Trials) aan een brevethouder.",
+    opbouw: "Hoogste score op de KCM na de Trials met een NNFC-trialsbrevet; bij gelijkspel beslist de oudste hond."
+  },
+  {
+    id: "special_wissel",
+    naam: "Special wisseltrofee",
+    art: "Art. 2.16.6",
+    waarvoor: "Wisseltrofee voor de klasse Special (30 m, drijfvest verplicht).",
+    opbouw: "Snelste hond in de klasse Special (zonder medische reden voor drijfvest alleen buiten mededinging)."
+  },
+  {
+    id: "jongste_honden",
+    naam: "Jongste honden",
+    art: "Art. 2.16.7",
+    waarvoor: "Beker/onderscheiding binnen de klasse Jeugd.",
+    opbouw: "Snelste hond in de klasse Jeugd."
+  }
+];
 
 function esc(str) {
   return String(str == null ? '' : str)
@@ -270,13 +333,14 @@ zetJaarLabels(jaar);
 var actieveStap = 1;
 var zoekTekst = '';
 var baanFilter = 'ALLE';
+var bekerFilter = 'ALLE'; // 'ALLE' of 'TOEGEKEND'
 var deelnemers = [];
 var baanIndeling = {
   banen: { "1": ["Open"], "2": ["Jeugd"], "3": ["Veteranen"], "4": ["Stamboomloos"], "5": ["Specials"] },
   bijlagen: { b1: "", b2: "", b3: "" }
 };
 var uitslagen = {};
-var bekersData = { besteReu: '', besteTeef: '', wisselbekers: '' };
+var bekerToekenningen = {}; // deelnemerId -> bekerNaam
 var jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
 
 function isVergrendeld() {
@@ -310,7 +374,8 @@ function normaliseerDeelnemer(h, fallbackId) {
     buitenMededinging: !!h.buitenMededinging,
     baan: String(h.baan || '1'),
     aanwezig: !!h.aanwezig,
-    betaald: h.betaald !== false
+    betaald: h.betaald !== false,
+    beker: String(h.beker || '')
   };
 }
 
@@ -336,9 +401,18 @@ function laadLokaal() {
   } catch (e) { uitslagen = {}; }
 
   try {
-    var bk = JSON.parse(localStorage.getItem('nnfc_bekers_' + jaar));
-    bekersData = (bk && typeof bk === 'object') ? Object.assign({ besteReu: '', besteTeef: '', wisselbekers: '' }, bk) : { besteReu: '', besteTeef: '', wisselbekers: '' };
-  } catch (e) { bekersData = { besteReu: '', besteTeef: '', wisselbekers: '' }; }
+    var bt = JSON.parse(localStorage.getItem('nnfc_beker_toekenningen_' + jaar)) || {};
+    bekerToekenningen = (bt && typeof bt === 'object') ? bt : {};
+  } catch (e) { bekerToekenningen = {}; }
+
+  // Combineer eventuele opgeslagen beker op deelnemer-object met bekerToekenningen
+  deelnemers.forEach(function(h) {
+    if (bekerToekenningen[h.id]) {
+      h.beker = bekerToekenningen[h.id];
+    } else if (h.beker) {
+      bekerToekenningen[h.id] = h.beker;
+    }
+  });
 
   try {
     var s = JSON.parse(localStorage.getItem('nnfc_slot_' + jaar));
@@ -358,7 +432,7 @@ function laadLokaal() {
 function bewaarAlles(toastMsg) {
   localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
   localStorage.setItem('nnfc_uitslagen_' + jaar, JSON.stringify(uitslagen));
-  localStorage.setItem('nnfc_bekers_' + jaar, JSON.stringify(bekersData));
+  localStorage.setItem('nnfc_beker_toekenningen_' + jaar, JSON.stringify(bekerToekenningen));
   if (db) {
     try {
       var updates = {};
@@ -384,7 +458,7 @@ function bewaarAlles(toastMsg) {
       db.ref('wedstrijd/baan_lijsten_' + jaar).set(baanLijsten);
       db.ref('wedstrijd/kcm_selecties_' + jaar).set(kcmMap);
       db.ref('wedstrijd/uitslagen_' + jaar).set(uitslagen);
-      db.ref('wedstrijd/bekers_' + jaar).set(bekersData);
+      db.ref('wedstrijd/beker_toekenningen_' + jaar).set(bekerToekenningen);
     } catch (e) {}
   }
   render();
@@ -412,7 +486,10 @@ function startFirebaseListeners() {
       var lijst = Array.isArray(val)
         ? val.map(function(x, i) { return normaliseerDeelnemer(x, 'fb_' + i); })
         : Object.keys(val).map(function(k) { return normaliseerDeelnemer(val[k], k); });
-      var schoon = lijst.filter(Boolean);
+      var schoon = lijst.filter(Boolean).map(function(h) {
+        if (bekerToekenningen[h.id]) h.beker = bekerToekenningen[h.id];
+        return h;
+      });
       if (JSON.stringify(schoon) !== JSON.stringify(deelnemers)) {
         deelnemers = schoon;
         localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
@@ -453,15 +530,17 @@ function startFirebaseListeners() {
     });
     _refs.push(rUitslagen);
 
-    var rBekers = db.ref('wedstrijd/bekers_' + jaar);
+    var rBekers = db.ref('wedstrijd/beker_toekenningen_' + jaar);
     rBekers.on('value', function(snap) {
       updateFbBadge(true);
-      var bk = snap.val();
-      if (bk && typeof bk === 'object') {
-        var nieuwBk = Object.assign({ besteReu: '', besteTeef: '', wisselbekers: '' }, bk);
-        if (JSON.stringify(nieuwBk) !== JSON.stringify(bekersData)) {
-          bekersData = nieuwBk;
-          localStorage.setItem('nnfc_bekers_' + jaar, JSON.stringify(bekersData));
+      var bt = snap.val();
+      if (bt && typeof bt === 'object') {
+        if (JSON.stringify(bt) !== JSON.stringify(bekerToekenningen)) {
+          bekerToekenningen = bt;
+          localStorage.setItem('nnfc_beker_toekenningen_' + jaar, JSON.stringify(bekerToekenningen));
+          deelnemers.forEach(function(h) {
+            h.beker = bekerToekenningen[h.id] || '';
+          });
           render();
         }
       }
@@ -558,17 +637,28 @@ function wijzigUitslag(id, veld, waarde) {
   bewaarAlles('Opgeslagen');
 }
 
-function wijzigBeker(veld, waarde) {
+function wijzigBekerToekenning(id, bekerNaam) {
   if (isVergrendeld()) return;
-  bekersData[veld] = waarde;
-  bewaarAlles('Trofee-gegevens opgeslagen');
+  var h = deelnemers.find(function(x) { return x.id === id; });
+  if (!h) return;
+  var schoon = String(bekerNaam || '').trim();
+  if (schoon) {
+    bekerToekenningen[id] = schoon;
+    h.beker = schoon;
+    bewaarAlles(schoon + ' toegekend aan ' + h.roepnaam);
+  } else {
+    delete bekerToekenningen[id];
+    h.beker = '';
+    bewaarAlles('Beker verwijderd bij ' + h.roepnaam);
+  }
 }
 
 function matchFilter(h) {
   if (baanFilter !== 'ALLE' && String(h.baan) !== baanFilter) return false;
   if (!zoekTekst) return true;
   var woorden = zoekTekst.toLowerCase().trim().split(/\s+/);
-  var hay = [h.startnummer, '#' + h.startnummer, h.roepnaam, h.stamboom, h.eigenaar, h.klasse, h.geslacht, 'baan ' + h.baan].join(' ').toLowerCase();
+  var bekerNaam = bekerToekenningen[h.id] || h.beker || '';
+  var hay = [h.startnummer, '#' + h.startnummer, h.roepnaam, h.stamboom, h.eigenaar, h.klasse, h.geslacht, bekerNaam, 'baan ' + h.baan].join(' ').toLowerCase();
   return woorden.every(function(w) { return hay.indexOf(w) !== -1; });
 }
 
@@ -709,22 +799,98 @@ function renderStap5() {
     '</tbody></table></div></div>';
 }
 
-/* STAP 6: Bekers */
+/* STAP 6: 7 Bekers & Deelnemerslijst met bekerkeuze */
 function renderStap6() {
+  var toegekendeNamen = new Set();
+  deelnemers.forEach(function(h) {
+    var bNaam = bekerToekenningen[h.id] || h.beker || '';
+    if (bNaam) toegekendeNamen.add(bNaam);
+  });
+
+  var bekerKaartenHtml = BEKERS_DEF.map(function(bk) {
+    var isToegekend = toegekendeNamen.has(bk.naam);
+    var winnaars = deelnemers.filter(function(h) {
+      return (bekerToekenningen[h.id] || h.beker || '') === bk.naam;
+    }).map(function(h) {
+      return (h.startnummer != null ? ('#' + h.startnummer + ' ') : '') + h.roepnaam;
+    });
+
+    return '<div class="beker-card">' +
+      '<div>' +
+        '<div class="beker-top">' +
+          '<h3 class="beker-titel">' + esc(bk.naam) + '</h3>' +
+          '<span class="beker-art">' + esc(bk.art) + '</span>' +
+        '</div>' +
+        '<div class="beker-meta" style="margin-bottom:6px"><b>Waarvoor:</b> ' + esc(bk.waarvoor) + '</div>' +
+        '<div class="beker-meta"><b>Opbouw uitslag:</b> ' + esc(bk.opbouw) + '</div>' +
+      '</div>' +
+      '<div class="beker-status ' + (isToegekend ? 'toegekend' : '') + '">' +
+        (isToegekend ? ('Toegekend: ' + esc(winnaars.join(', '))) : 'Toegekend: Nog niet toegekend') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var lijst = deelnemers
+    .filter(function(h) {
+      if (bekerFilter === 'TOEGEKEND') {
+        var bNaam = bekerToekenningen[h.id] || h.beker || '';
+        if (!bNaam) return false;
+      }
+      if (!zoekTekst) return true;
+      var woorden = zoekTekst.toLowerCase().trim().split(/\s+/);
+      var bNaamZoek = bekerToekenningen[h.id] || h.beker || '';
+      var hay = [h.startnummer, '#' + h.startnummer, h.roepnaam, h.stamboom, h.eigenaar, h.klasse, h.geslacht, bNaamZoek].join(' ').toLowerCase();
+      return woorden.every(function(w) { return hay.indexOf(w) !== -1; });
+    })
+    .sort(function(a, b) { return (a.startnummer || 999999) - (b.startnummer || 999999); });
+
+  var rows = lijst.map(function(h) {
+    var u = uitslagen[h.id] || {};
+    var huidigeBeker = bekerToekenningen[h.id] || h.beker || '';
+    var puntenTekst = (u.punten != null && String(u.punten).trim() !== '') ? String(u.punten).trim() : '0';
+    var kcmBadge = h.kcm && h.kcm !== 'GEEN'
+      ? ' <span class="chip-slot">' + esc(h.kcm) + '</span>'
+      : ' <span class="chip">GEEN</span>';
+
+    return '<tr>' +
+      '<td><span class="chip">' + (h.startnummer != null ? ('#' + esc(h.startnummer)) : '—') + '</span></td>' +
+      '<td><div class="hond-main">' + esc(h.roepnaam) + ' (' + esc(h.geslacht) + ')</div><div class="hond-sub">' + esc(h.eigenaar) + '</div></td>' +
+      '<td><span class="chip">' + esc(h.klasse) + '</span></td>' +
+      '<td>' + esc(u.tijd || '—') + '</td>' +
+      '<td><b>' + esc(puntenTekst) + '</b> /' + kcmBadge + '</td>' +
+      '<td><select style="min-width:170px;margin:0;min-height:34px" onchange="wijzigBekerToekenning(\'' + esc(h.id) + '\',this.value)">' +
+        '<option value="" ' + (!huidigeBeker ? 'selected' : '') + '>— Geen beker —</option>' +
+        BEKERS_DEF.map(function(bk) {
+          return '<option value="' + esc(bk.naam) + '" ' + (huidigeBeker === bk.naam ? 'selected' : '') + '>' + esc(bk.naam) + '</option>';
+        }).join('') +
+      '</select></td>' +
+    '</tr>';
+  }).join('');
+
   return '<div class="box">' +
-    '<div class="box-head"><div><h2>6. Bekers (' + esc(jaar) + ')</h2><div class="sub">Vastleggen van ereprijzen, Beste Reu, Beste Teef en wisselbekers</div></div></div>' +
-    '<div class="grid2">' +
-      '<div class="kaart">' +
-        '<label for="bekerReu">Beste Reu</label>' +
-        '<input id="bekerReu" type="text" value="' + esc(bekersData.besteReu || '') + '" placeholder="Bijv. #17 Bram – Jan de Vries" onchange="wijzigBeker(\'besteReu\',this.value)">' +
-        '<label for="bekerTeef">Beste Teef</label>' +
-        '<input id="bekerTeef" type="text" value="' + esc(bekersData.besteTeef || '') + '" placeholder="Bijv. #4 Luna – Sanne Bakker" onchange="wijzigBeker(\'besteTeef\',this.value)">' +
+    '<div class="box-head">' +
+      '<div>' +
+        '<h2>6. Bekers</h2>' +
+        '<div class="sub">Overzicht per beker (waarvoor het is &amp; hoe de uitslag is opgebouwd) en toekenning per deelnemer</div>' +
       '</div>' +
-      '<div class="kaart">' +
-        '<label for="bekerWissel">Wisselbekers / Bijzondere trofeeën</label>' +
-        '<input id="bekerWissel" type="text" value="' + esc(bekersData.wisselbekers || '') + '" placeholder="Noteer wisselbekers en winnaars..." onchange="wijzigBeker(\'wisselbekers\',this.value)">' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="sm ' + (bekerFilter === 'ALLE' ? 'pri' : '') + '" onclick="bekerFilter=\'ALLE\';render()">Alle deelnemers (' + deelnemers.length + ')</button>' +
+        '<button type="button" class="sm ' + (bekerFilter === 'TOEGEKEND' ? 'pri' : '') + '" onclick="bekerFilter=\'TOEGEKEND\';render()">Alleen toegekend</button>' +
       '</div>' +
-    '</div></div>';
+    '</div>' +
+    '<div class="beker-grid">' + bekerKaartenHtml + '</div>' +
+    '<div class="toolbar">' +
+      '<div class="search-wrap">' +
+        '<input type="search" value="' + esc(zoekTekst) + '" oninput="zoekTekst=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar, klasse of beker...">' +
+        '<button type="button" class="sm" onclick="zoekTekst=\'\';render()">Wis</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="table-wrap"><table><thead><tr>' +
+      '<th>Nr</th><th>Hond &amp; Eigenaar</th><th>Klasse</th><th>Eindtijd</th><th>Trials / KCM</th><th>Beker</th>' +
+    '</tr></thead><tbody>' +
+    (rows || '<tr><td colspan="6" class="sub" style="padding:14px">Geen deelnemers gevonden voor dit filter.</td></tr>') +
+    '</tbody></table></div>' +
+  '</div>';
 }
 
 function render() {
