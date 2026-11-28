@@ -725,21 +725,43 @@ function wijzigBufferPercentage(waarde) {
 
 function volgendeStartnummer(klasse) {
   var bezet = new Set();
+  var hoogsteBezetGlobaal = 0;
+  var hoogsteInKlasse = 0;
+
   deelnemers.forEach(function(h) {
     var n = normaliseerStartnummer(h.startnummer);
-    if (n != null) bezet.add(n);
+    if (n != null) {
+      bezet.add(n);
+      if (n > hoogsteBezetGlobaal) hoogsteBezetGlobaal = n;
+      if (klasse && h.klasse === klasse && n > hoogsteInKlasse) {
+        hoogsteInKlasse = n;
+      }
+    }
   });
 
   var ranges = berekenKlasseRangeMap();
-  if (klasse && ranges[klasse]) {
+  var startVanaf = getKlasseStartVanaf(klasse);
+
+  // 1. Als er voor deze klasse al deelnemers zijn, sluit achteraan aan (eerst in de eigen klasserange/buffer, anders achteraan de lijst)
+  if (klasse && hoogsteInKlasse > 0) {
     var r = ranges[klasse];
-    for (var nr = r.startNr; nr <= r.eindInclusiefBuffer; nr++) {
-      if (!bezet.has(nr)) return nr;
+    if (r) {
+      for (var nr = hoogsteInKlasse + 1; nr <= r.eindInclusiefBuffer; nr++) {
+        if (!bezet.has(nr)) return nr;
+      }
     }
+    var achterKlasse = Math.max(hoogsteInKlasse + 1, hoogsteBezetGlobaal + 1);
+    while (bezet.has(achterKlasse)) {
+      achterKlasse++;
+    }
+    return achterKlasse;
   }
 
-  var startVanaf = getKlasseStartVanaf(klasse);
-  var kandidaat = startVanaf || 1;
+  // 2. Als er nog geen deelnemers in deze klasse zitten, begin bij ingesteld startnummer of het einde van de berekende klasserange
+  var kandidaat = startVanaf || (ranges[klasse] ? ranges[klasse].startNr : 1);
+  if (kandidaat <= hoogsteBezetGlobaal) {
+    kandidaat = hoogsteBezetGlobaal + 1;
+  }
   while (bezet.has(kandidaat)) {
     kandidaat++;
   }
