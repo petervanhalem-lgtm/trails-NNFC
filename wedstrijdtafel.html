@@ -41,18 +41,25 @@ button:hover,.btn-link:hover{background:var(--sf2)}
 .bad{border-color:var(--bad)!important;color:var(--bad)!important;min-height:36px;padding:4px 10px}
 .sm{min-height:36px;padding:4px 10px;font-size:15px}
 
+/* 6-STAPPEN DAGVERLOOPBALK */
+.steps-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:10px}
+@media(max-width:1120px){.steps-bar{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:620px){.steps-bar{grid-template-columns:repeat(2,1fr)}}
+.step-btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;text-align:left;padding:10px 12px;border-radius:11px;background:var(--sf2);border:1.5px solid var(--ln);min-height:76px;height:auto;line-height:1.2}
+.step-btn .fase{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-bottom:4px}
+.step-btn .naam{font-size:15px;font-weight:700;color:var(--ink)}
+.step-btn.on{background:var(--ac)!important;border-color:var(--ac)!important}
+.step-btn.on .fase,.step-btn.on .naam{color:var(--acink)!important}
+
 .status-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--sf);border:1.5px solid var(--ln);border-radius:12px;padding:8px 14px;margin-bottom:12px}
 .status-left,.status-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;background:var(--sf);border:2px solid var(--ln);border-radius:14px;padding:8px}
-@media(max-width:720px){.tabs{grid-template-columns:1fr}}
-.tab-btn{min-height:44px;background:var(--sf2)}
-.tab-btn.on{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
-
 .box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:14px}
 .box-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 @media(max-width:1100px){.grid5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}}
 @media(max-width:620px){.grid5{grid-template-columns:1fr}}
 .kaart{background:var(--sf2);border:1.5px solid var(--ln);border-radius:12px;padding:12px}
 
@@ -81,17 +88,21 @@ tbody tr:hover{background:var(--soft)}
 .hond-sub{color:var(--mut);font-size:13px}
 
 .toast{position:fixed;bottom:18px;right:18px;background:var(--ok);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.22);z-index:99;display:none}
+@media print{
+  .top,.steps-bar,.status-strip,.toolbar,.toast{display:none!important}
+  .box{border:none;padding:0}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <!-- UNIFORME BOVENSTE BALK (ZONDER PIJLTJES, VASTE VOLGORDE & GELIJKE HOOGTE) -->
+  <!-- UNIFORME BOVENSTE BALK -->
   <header class="top">
     <div class="top-l">
       <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
       <div>
         <h1>Wedstrijdtafel (<span id="lblJaar">2027</span>)</h1>
-        <div class="sub">Dagverloop, aanwezigheid, KCM-kwalificaties &amp; uitslagen</div>
+        <div class="sub">Dagverloop · Direct schakelen per fase</div>
       </div>
     </div>
     <div class="top-r" role="navigation" aria-label="Hoofdnavigatie">
@@ -105,21 +116,43 @@ tbody tr:hover{background:var(--soft)}
     </div>
   </header>
 
+  <!-- 6-STAPPEN DAGVERLOOPBALK (BIJLAGE 2) -->
+  <nav class="steps-bar" aria-label="Dagverloop stappen">
+    <button type="button" id="stepBtn1" class="step-btn on" onclick="kiesStap(1)">
+      <span class="fase">STAP 1 · OCHTEND</span>
+      <span class="naam">1. Aanmelden &amp; Startnummer</span>
+    </button>
+    <button type="button" id="stepBtn2" class="step-btn" onclick="kiesStap(2)">
+      <span class="fase">STAP 2 · OCHTEND / MIDDAG</span>
+      <span class="naam">2. Basis oefeningen &amp; Tijden</span>
+    </button>
+    <button type="button" id="stepBtn3" class="step-btn" onclick="kiesStap(3)">
+      <span class="fase">STAP 3 · MIDDAG</span>
+      <span class="naam">3. Brevetten</span>
+    </button>
+    <button type="button" id="stepBtn4" class="step-btn" onclick="kiesStap(4)">
+      <span class="fase">STAP 4 · FINALE</span>
+      <span class="naam">4. Beste Reu &amp; Beste Teef</span>
+    </button>
+    <button type="button" id="stepBtn5" class="step-btn" onclick="kiesStap(5)">
+      <span class="fase">STAP 5 · PRIJSUITREIKING</span>
+      <span class="naam">5. Tijd/Punten &amp; Export/Print</span>
+    </button>
+    <button type="button" id="stepBtn6" class="step-btn" onclick="kiesStap(6)">
+      <span class="fase">STAP 6 · TROFEEËN</span>
+      <span class="naam">6. Bekers</span>
+    </button>
+  </nav>
+
   <div class="status-strip">
     <div class="status-left">
       <span id="fbStatusBadge"></span>
       <span id="slotStatusBadge"></span>
-      <span id="syncInfo" class="sub">Live gesynchroniseerd met Beheer &amp; Banen</span>
+      <span class="sub">Live gesynchroniseerd met Beheer &amp; Banen</span>
     </div>
     <div class="status-right">
       <button type="button" class="sm pri" onclick="publiceerActiefJaar()">Zet <span id="lblJaarActief">2027</span> als actief jaar</button>
     </div>
-  </div>
-
-  <div class="tabs" role="tablist" aria-label="Wedstrijdtafel onderdelen">
-    <button type="button" id="tab1" class="tab-btn on" onclick="kiesTab(1)">1. Aanwezigheid &amp; Startlijst</button>
-    <button type="button" id="tab2" class="tab-btn" onclick="kiesTab(2)">2. Banen &amp; KCM</button>
-    <button type="button" id="tab3" class="tab-btn" onclick="kiesTab(3)">3. Tijden &amp; Uitslagen</button>
   </div>
 
   <div id="appContent"></div>
@@ -234,7 +267,7 @@ function zetJaarLabels(yStr) {
 }
 zetJaarLabels(jaar);
 
-var actieveTab = 1;
+var actieveStap = 1;
 var zoekTekst = '';
 var baanFilter = 'ALLE';
 var deelnemers = [];
@@ -243,6 +276,7 @@ var baanIndeling = {
   bijlagen: { b1: "", b2: "", b3: "" }
 };
 var uitslagen = {};
+var bekersData = { besteReu: '', besteTeef: '', wisselbekers: '' };
 var jaarSlot = { vergrendeld: false, datum: '', toelichting: '' };
 
 function isVergrendeld() {
@@ -302,6 +336,11 @@ function laadLokaal() {
   } catch (e) { uitslagen = {}; }
 
   try {
+    var bk = JSON.parse(localStorage.getItem('nnfc_bekers_' + jaar));
+    bekersData = (bk && typeof bk === 'object') ? Object.assign({ besteReu: '', besteTeef: '', wisselbekers: '' }, bk) : { besteReu: '', besteTeef: '', wisselbekers: '' };
+  } catch (e) { bekersData = { besteReu: '', besteTeef: '', wisselbekers: '' }; }
+
+  try {
     var s = JSON.parse(localStorage.getItem('nnfc_slot_' + jaar));
     if (s && typeof s.vergrendeld === 'boolean') {
       jaarSlot = { vergrendeld: s.vergrendeld, datum: s.datum || '', toelichting: s.toelichting || '' };
@@ -319,6 +358,7 @@ function laadLokaal() {
 function bewaarAlles(toastMsg) {
   localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
   localStorage.setItem('nnfc_uitslagen_' + jaar, JSON.stringify(uitslagen));
+  localStorage.setItem('nnfc_bekers_' + jaar, JSON.stringify(bekersData));
   if (db) {
     try {
       var updates = {};
@@ -344,6 +384,7 @@ function bewaarAlles(toastMsg) {
       db.ref('wedstrijd/baan_lijsten_' + jaar).set(baanLijsten);
       db.ref('wedstrijd/kcm_selecties_' + jaar).set(kcmMap);
       db.ref('wedstrijd/uitslagen_' + jaar).set(uitslagen);
+      db.ref('wedstrijd/bekers_' + jaar).set(bekersData);
     } catch (e) {}
   }
   render();
@@ -412,6 +453,21 @@ function startFirebaseListeners() {
     });
     _refs.push(rUitslagen);
 
+    var rBekers = db.ref('wedstrijd/bekers_' + jaar);
+    rBekers.on('value', function(snap) {
+      updateFbBadge(true);
+      var bk = snap.val();
+      if (bk && typeof bk === 'object') {
+        var nieuwBk = Object.assign({ besteReu: '', besteTeef: '', wisselbekers: '' }, bk);
+        if (JSON.stringify(nieuwBk) !== JSON.stringify(bekersData)) {
+          bekersData = nieuwBk;
+          localStorage.setItem('nnfc_bekers_' + jaar, JSON.stringify(bekersData));
+          render();
+        }
+      }
+    });
+    _refs.push(rBekers);
+
     var rSlot = db.ref('wedstrijd/slot_' + jaar);
     rSlot.on('value', function(snap) {
       updateFbBadge(true);
@@ -456,10 +512,10 @@ function publiceerActiefJaar() {
   toonToast('Actief jaar ingesteld op ' + jaar);
 }
 
-function kiesTab(nr) {
-  actieveTab = nr;
-  for (var i = 1; i <= 3; i++) {
-    document.getElementById('tab' + i).classList.toggle('on', actieveTab === i);
+function kiesStap(nr) {
+  actieveStap = nr;
+  for (var i = 1; i <= 6; i++) {
+    document.getElementById('stepBtn' + i).classList.toggle('on', actieveStap === i);
   }
   render();
 }
@@ -472,6 +528,15 @@ function toggleAanwezig(id) {
   bewaarAlles(h.roepnaam + (h.aanwezig ? ' aangemeld' : ' afgemeld'));
 }
 
+function wijzigStartnr(id, waarde) {
+  if (isVergrendeld()) return;
+  var h = deelnemers.find(function(x) { return x.id === id; });
+  if (!h) return;
+  var nr = parseInt(waarde, 10);
+  h.startnummer = (!isNaN(nr) && nr > 0) ? nr : null;
+  bewaarAlles('Startnummer bijgewerkt');
+}
+
 function wijzigKcm(id, waarde) {
   if (isVergrendeld()) return;
   var h = deelnemers.find(function(x) { return x.id === id; });
@@ -480,44 +545,59 @@ function wijzigKcm(id, waarde) {
   bewaarAlles('KCM bijgewerkt');
 }
 
-function wijzigBaan(id, waarde) {
-  if (isVergrendeld()) return;
-  var h = deelnemers.find(function(x) { return x.id === id; });
-  if (!h) return;
-  h.baan = waarde;
-  bewaarAlles('Baan bijgewerkt');
-}
-
 function wijzigUitslag(id, veld, waarde) {
   if (isVergrendeld()) return;
   if (!uitslagen[id] || typeof uitslagen[id] !== 'object') {
-    uitslagen[id] = { tijd: '', plaatsing: '', opmerking: '', geslaagd: false };
+    uitslagen[id] = { tijd: '', punten: '', plaatsing: '', opmerking: '', geslaagd: false };
   }
   if (veld === 'geslaagd') {
     uitslagen[id].geslaagd = !!waarde;
   } else {
     uitslagen[id][veld] = waarde;
   }
-  bewaarAlles('Uitslag opgeslagen');
+  bewaarAlles('Opgeslagen');
+}
+
+function wijzigBeker(veld, waarde) {
+  if (isVergrendeld()) return;
+  bekersData[veld] = waarde;
+  bewaarAlles('Trofee-gegevens opgeslagen');
 }
 
 function matchFilter(h) {
   if (baanFilter !== 'ALLE' && String(h.baan) !== baanFilter) return false;
   if (!zoekTekst) return true;
   var woorden = zoekTekst.toLowerCase().trim().split(/\s+/);
-  var hay = [h.startnummer, '#' + h.startnummer, h.roepnaam, h.stamboom, h.eigenaar, h.klasse, 'baan ' + h.baan].join(' ').toLowerCase();
+  var hay = [h.startnummer, '#' + h.startnummer, h.roepnaam, h.stamboom, h.eigenaar, h.klasse, h.geslacht, 'baan ' + h.baan].join(' ').toLowerCase();
   return woorden.every(function(w) { return hay.indexOf(w) !== -1; });
 }
 
-function renderTab1() {
-  var lijst = deelnemers
+function gesorteerdeLijst() {
+  return deelnemers
     .filter(matchFilter)
     .sort(function(a, b) { return (a.startnummer || 999999) - (b.startnummer || 999999); });
-  var aanwezigCnt = deelnemers.filter(function(h) { return h.aanwezig; }).length;
+}
 
+function zoekFilterBalk() {
+  return '<div class="toolbar">' +
+    '<div class="search-wrap">' +
+      '<input type="search" value="' + esc(zoekTekst) + '" oninput="zoekTekst=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar, klasse of geslacht...">' +
+      '<button type="button" class="sm" onclick="zoekTekst=\'\';render()">Wis</button>' +
+    '</div>' +
+    '<select style="width:auto;margin:0;min-height:36px" onchange="baanFilter=this.value;render()">' +
+      '<option value="ALLE" ' + (baanFilter === 'ALLE' ? 'selected' : '') + '>Alle banen</option>' +
+      ['1','2','3','4','5'].map(function(b) { return '<option value="' + b + '" ' + (baanFilter === b ? 'selected' : '') + '>Baan ' + b + '</option>'; }).join('') +
+    '</select>' +
+  '</div>';
+}
+
+/* STAP 1: Aanmelden & Startnummer */
+function renderStap1() {
+  var lijst = gesorteerdeLijst();
+  var aanwezigCnt = deelnemers.filter(function(h) { return h.aanwezig; }).length;
   var rows = lijst.map(function(h) {
     return '<tr>' +
-      '<td><span class="chip">' + (h.startnummer != null ? ('#' + esc(h.startnummer)) : '—') + '</span></td>' +
+      '<td><input type="number" min="1" value="' + esc(h.startnummer != null ? h.startnummer : '') + '" style="width:82px;margin:0;min-height:34px;font-weight:700" onchange="wijzigStartnr(\'' + esc(h.id) + '\',this.value)"></td>' +
       '<td><div class="hond-main">' + esc(h.roepnaam) + (h.buitenMededinging ? ' <span class="chip">*</span>' : '') + '</div><div class="hond-sub">' + esc(h.stamboom) + '</div></td>' +
       '<td><div>' + esc(h.eigenaar) + '</div><div class="hond-sub">' + esc(h.district || '—') + '</div></td>' +
       '<td><span class="chip">' + esc(h.klasse) + '</span></td>' +
@@ -528,50 +608,67 @@ function renderTab1() {
   }).join('');
 
   return '<div class="box">' +
-    '<div class="box-head"><div><h2>Aanwezigheid &amp; Startlijst (' + esc(jaar) + ')</h2><div class="sub">Meld honden aan voor de wedstrijddag</div></div></div>' +
-    '<div class="stats-pill">' +
-      '<span>Totaal: <b>' + deelnemers.length + '</b></span>' +
-      '<span>Aanwezig: <b style="color:var(--ok)">' + aanwezigCnt + '</b></span>' +
-      '<span>Getoond: <b>' + lijst.length + '</b></span>' +
-    '</div>' +
-    '<div class="toolbar">' +
-      '<div class="search-wrap">' +
-        '<input type="search" value="' + esc(zoekTekst) + '" oninput="zoekTekst=this.value;render()" placeholder="Zoek op startnr, hond, eigenaar of klasse...">' +
-        '<button type="button" class="sm" onclick="zoekTekst=\'\';render()">Wis</button>' +
-      '</div>' +
-      '<select style="width:auto;margin:0;min-height:36px" onchange="baanFilter=this.value;render()">' +
-        '<option value="ALLE" ' + (baanFilter === 'ALLE' ? 'selected' : '') + '>Alle banen</option>' +
-        ['1','2','3','4','5'].map(function(b) { return '<option value="' + b + '" ' + (baanFilter === b ? 'selected' : '') + '>Baan ' + b + '</option>'; }).join('') +
-      '</select>' +
-    '</div>' +
-    '<div class="table-wrap"><table><thead><tr>' +
-      '<th>Startnr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Baan</th><th>Status</th><th>Actie</th>' +
-    '</tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="sub" style="padding:14px">Geen deelnemers gevonden voor ' + esc(jaar) + '.</td></tr>') + '</tbody></table></div>' +
-  '</div>';
+    '<div class="box-head"><div><h2>1. Aanmelden &amp; Startnummer (' + esc(jaar) + ')</h2><div class="sub">Controleer startnummers en meld honden aan op de wedstrijddag</div></div></div>' +
+    '<div class="stats-pill"><span>Totaal: <b>' + deelnemers.length + '</b></span><span>Aanwezig: <b style="color:var(--ok)">' + aanwezigCnt + '</b></span><span>Getoond: <b>' + lijst.length + '</b></span></div>' +
+    zoekFilterBalk() +
+    '<div class="table-wrap"><table><thead><tr><th>Startnr</th><th>Hond</th><th>Eigenaar</th><th>Klasse</th><th>Baan</th><th>Status</th><th>Actie</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="7" class="sub" style="padding:14px">Geen deelnemers gevonden voor ' + esc(jaar) + '.</td></tr>') +
+    '</tbody></table></div></div>';
 }
 
-function renderTab2() {
-  var baanKaarten = ['1','2','3','4','5'].map(function(b) {
-    var klLijst = (baanIndeling.banen && baanIndeling.banen[b]) || [];
-    var aant = deelnemers.filter(function(h) { return String(h.baan) === b; }).length;
-    var aanw = deelnemers.filter(function(h) { return String(h.baan) === b && h.aanwezig; }).length;
-    return '<div class="kaart">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>Baan ' + b + '</b><span class="chip">' + aanw + '/' + aant + ' aanwezig</span></div>' +
-      '<div class="hond-sub">Klassen: ' + esc(klLijst.length ? klLijst.join(', ') : 'Geen gekoppeld') + '</div>' +
-    '</div>';
+/* STAP 2: Basis oefeningen & Tijden */
+function renderStap2() {
+  var lijst = gesorteerdeLijst();
+  var rows = lijst.map(function(h) {
+    var u = uitslagen[h.id] || {};
+    return '<tr>' +
+      '<td><span class="chip">' + (h.startnummer != null ? ('#' + esc(h.startnummer)) : '—') + '</span></td>' +
+      '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.klasse) + ' · Baan ' + esc(h.baan) + '</div></td>' +
+      '<td><input type="text" value="' + esc(u.tijd || '') + '" placeholder="Bijv. 01:24.5" style="width:115px;margin:0;min-height:34px" onchange="wijzigUitslag(\'' + esc(h.id) + '\',\'tijd\',this.value)"></td>' +
+      '<td><input type="text" value="' + esc(u.punten || '') + '" placeholder="Punten..." style="width:105px;margin:0;min-height:34px" onchange="wijzigUitslag(\'' + esc(h.id) + '\',\'punten\',this.value)"></td>' +
+      '<td><input type="text" value="' + esc(u.opmerking || '') + '" placeholder="Basis oefeningen / opmerking..." style="min-width:170px;margin:0;min-height:34px" onchange="wijzigUitslag(\'' + esc(h.id) + '\',\'opmerking\',this.value)"></td>' +
+    '</tr>';
   }).join('');
 
-  var lijst = deelnemers
-    .filter(matchFilter)
-    .sort(function(a, b) { return (a.startnummer || 999999) - (b.startnummer || 999999); });
+  return '<div class="box">' +
+    '<div class="box-head"><div><h2>2. Basis oefeningen &amp; Tijden (' + esc(jaar) + ')</h2><div class="sub">Noteer tijden, punten en opmerkingen over de basisoefeningen</div></div></div>' +
+    zoekFilterBalk() +
+    '<div class="table-wrap"><table><thead><tr><th>Startnr</th><th>Hond</th><th>Tijd</th><th>Punten</th><th>Opmerking</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="5" class="sub" style="padding:14px">Geen deelnemers gevonden.</td></tr>') +
+    '</tbody></table></div></div>';
+}
 
+/* STAP 3: Brevetten */
+function renderStap3() {
+  var lijst = gesorteerdeLijst();
+  var rows = lijst.map(function(h) {
+    var u = uitslagen[h.id] || {};
+    return '<tr>' +
+      '<td><span class="chip">' + (h.startnummer != null ? ('#' + esc(h.startnummer)) : '—') + '</span></td>' +
+      '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.klasse) + ' · ' + esc(h.eigenaar) + '</div></td>' +
+      '<td>' + esc(h.huidigBrevet) + '</td>' +
+      '<td><b>' + esc(h.opvolgendBrevet) + '</b></td>' +
+      '<td><label style="display:inline-flex;align-items:center;gap:6px;margin:0;cursor:pointer"><input type="checkbox" ' + (u.geslaagd ? 'checked' : '') + ' style="width:auto;min-height:auto;margin:0" onchange="wijzigUitslag(\'' + esc(h.id) + '\',\'geslaagd\',this.checked)"> Geslaagd</label></td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="box">' +
+    '<div class="box-head"><div><h2>3. Brevetten (' + esc(jaar) + ')</h2><div class="sub">Overzicht opvolgende brevetten en geslaagde combinaties</div></div></div>' +
+    zoekFilterBalk() +
+    '<div class="table-wrap"><table><thead><tr><th>Startnr</th><th>Hond</th><th>Huidig</th><th>Opvolgend brevet</th><th>Resultaat</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="5" class="sub" style="padding:14px">Geen deelnemers gevonden.</td></tr>') +
+    '</tbody></table></div></div>';
+}
+
+/* STAP 4: Beste Reu & Beste Teef */
+function renderStap4() {
+  var lijst = gesorteerdeLijst();
   var rows = lijst.map(function(h) {
     return '<tr>' +
       '<td><span class="chip">' + (h.startnummer != null ? ('#' + esc(h.startnummer)) : '—') + '</span></td>' +
-      '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.klasse) + ' • ' + esc(h.opvolgendBrevet) + '</div></td>' +
-      '<td><select style="width:auto;margin:0;min-height:34px" onchange="wijzigBaan(\'' + esc(h.id) + '\',this.value)">' +
-        ['1','2','3','4','5'].map(function(b) { return '<option value="' + b + '" ' + (String(h.baan) === b ? 'selected' : '') + '>Baan ' + b + '</option>'; }).join('') +
-      '</select></td>' +
+      '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.eigenaar) + '</div></td>' +
+      '<td>' + esc(h.geslacht) + '</td>' +
+      '<td><span class="chip">' + esc(h.klasse) + '</span></td>' +
       '<td><select style="width:auto;margin:0;min-height:34px" onchange="wijzigKcm(\'' + esc(h.id) + '\',this.value)">' +
         KCM_OPTIES.map(function(k) { return '<option value="' + esc(k) + '" ' + (h.kcm === k ? 'selected' : '') + '>' + esc(k) + '</option>'; }).join('') +
       '</select></td>' +
@@ -579,37 +676,55 @@ function renderTab2() {
   }).join('');
 
   return '<div class="box">' +
-    '<div class="box-head"><div><h2>Banen &amp; KCM-kwalificaties (' + esc(jaar) + ')</h2><div class="sub">Overzicht per baan en KCM-toekenning</div></div></div>' +
-    '<div class="grid5" style="margin-bottom:14px">' + baanKaarten + '</div>' +
-    '<div class="table-wrap"><table><thead><tr>' +
-      '<th>Startnr</th><th>Hond</th><th>Baan</th><th>KCM</th>' +
-    '</tr></thead><tbody>' + (rows || '<tr><td colspan="4" class="sub" style="padding:14px">Geen deelnemers gevonden.</td></tr>') + '</tbody></table></div>' +
-  '</div>';
+    '<div class="box-head"><div><h2>4. Beste Reu &amp; Beste Teef (' + esc(jaar) + ')</h2><div class="sub">KCM-kwalificaties en kandidaten voor Beste Reu en Beste Teef</div></div></div>' +
+    zoekFilterBalk() +
+    '<div class="table-wrap"><table><thead><tr><th>Startnr</th><th>Hond</th><th>Geslacht</th><th>Klasse</th><th>KCM</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="5" class="sub" style="padding:14px">Geen deelnemers gevonden.</td></tr>') +
+    '</tbody></table></div></div>';
 }
 
-function renderTab3() {
-  var lijst = deelnemers
-    .filter(matchFilter)
-    .sort(function(a, b) { return (a.startnummer || 999999) - (b.startnummer || 999999); });
-
+/* STAP 5: Tijd/Punten & Export/Print */
+function renderStap5() {
+  var lijst = gesorteerdeLijst();
   var rows = lijst.map(function(h) {
-    var u = uitslagen[h.id] || { tijd: '', plaatsing: '', opmerking: '', geslaagd: false };
+    var u = uitslagen[h.id] || {};
     return '<tr>' +
-      '<td><span class="chip">' + (h.startnummer != null ? ('#' + esc(h.startnummer)) : '—') + '</span></td>' +
-      '<td><div class="hond-main">' + esc(h.roepnaam) + '</div><div class="hond-sub">' + esc(h.klasse) + ' • ' + esc(h.opvolgendBrevet) + '</div></td>' +
-      '<td><input type="text" value="' + esc(u.tijd || '') + '" placeholder="Bijv. 01:24.5" style="width:110px;margin:0;min-height:34px" onchange="wijzigUitslag(\'' + esc(h.id) + '\',\'tijd\',this.value)"></td>' +
-      '<td><input type="text" value="' + esc(u.plaatsing || '') + '" placeholder="1e / U / ..." style="width:90px;margin:0;min-height:34px" onchange="wijzigUitslag(\'' + esc(h.id) + '\',\'plaatsing\',this.value)"></td>' +
-      '<td><label style="display:inline-flex;align-items:center;gap:6px;margin:0;cursor:pointer"><input type="checkbox" ' + (u.geslaagd ? 'checked' : '') + ' style="width:auto;min-height:auto;margin:0" onchange="wijzigUitslag(\'' + esc(h.id) + '\',\'geslaagd\',this.checked)"> Geslaagd</label></td>' +
-      '<td><input type="text" value="' + esc(u.opmerking || '') + '" placeholder="Opmerking..." style="min-width:140px;margin:0;min-height:34px" onchange="wijzigUitslag(\'' + esc(h.id) + '\',\'opmerking\',this.value)"></td>' +
+      '<td>#' + esc(h.startnummer != null ? h.startnummer : '—') + '</td>' +
+      '<td><b>' + esc(h.roepnaam) + '</b> (' + esc(h.eigenaar) + ')</td>' +
+      '<td>' + esc(h.klasse) + '</td>' +
+      '<td>' + esc(h.opvolgendBrevet) + '</td>' +
+      '<td>' + esc(u.tijd || '—') + '</td>' +
+      '<td>' + esc(u.punten || '—') + '</td>' +
+      '<td>' + (u.geslaagd ? 'Geslaagd' : '—') + '</td>' +
     '</tr>';
   }).join('');
 
   return '<div class="box">' +
-    '<div class="box-head"><div><h2>Tijden &amp; Uitslagen (' + esc(jaar) + ')</h2><div class="sub">Noteer tijden, plaatsing, brevetresultaat en opmerkingen</div></div></div>' +
-    '<div class="table-wrap"><table><thead><tr>' +
-      '<th>Startnr</th><th>Hond</th><th>Tijd</th><th>Plaatsing</th><th>Brevet</th><th>Opmerking</th>' +
-    '</tr></thead><tbody>' + (rows || '<tr><td colspan="6" class="sub" style="padding:14px">Geen deelnemers gevonden.</td></tr>') + '</tbody></table></div>' +
-  '</div>';
+    '<div class="box-head">' +
+      '<div><h2>5. Tijd/Punten &amp; Export/Print (' + esc(jaar) + ')</h2><div class="sub">Overzicht gereed voor printen of delen</div></div>' +
+      '<button type="button" class="pri sm" onclick="window.print()">Print overzicht</button>' +
+    '</div>' +
+    '<div class="table-wrap"><table><thead><tr><th>Startnr</th><th>Hond &amp; Eigenaar</th><th>Klasse</th><th>Brevet</th><th>Tijd</th><th>Punten</th><th>Status</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="7" class="sub" style="padding:14px">Geen gegevens om af te drukken.</td></tr>') +
+    '</tbody></table></div></div>';
+}
+
+/* STAP 6: Bekers */
+function renderStap6() {
+  return '<div class="box">' +
+    '<div class="box-head"><div><h2>6. Bekers (' + esc(jaar) + ')</h2><div class="sub">Vastleggen van ereprijzen, Beste Reu, Beste Teef en wisselbekers</div></div></div>' +
+    '<div class="grid2">' +
+      '<div class="kaart">' +
+        '<label for="bekerReu">Beste Reu</label>' +
+        '<input id="bekerReu" type="text" value="' + esc(bekersData.besteReu || '') + '" placeholder="Bijv. #17 Bram – Jan de Vries" onchange="wijzigBeker(\'besteReu\',this.value)">' +
+        '<label for="bekerTeef">Beste Teef</label>' +
+        '<input id="bekerTeef" type="text" value="' + esc(bekersData.besteTeef || '') + '" placeholder="Bijv. #4 Luna – Sanne Bakker" onchange="wijzigBeker(\'besteTeef\',this.value)">' +
+      '</div>' +
+      '<div class="kaart">' +
+        '<label for="bekerWissel">Wisselbekers / Bijzondere trofeeën</label>' +
+        '<input id="bekerWissel" type="text" value="' + esc(bekersData.wisselbekers || '') + '" placeholder="Noteer wisselbekers en winnaars..." onchange="wijzigBeker(\'wisselbekers\',this.value)">' +
+      '</div>' +
+    '</div></div>';
 }
 
 function render() {
@@ -618,15 +733,17 @@ function render() {
     ? '<div class="warn-box"><b>Wedstrijdjaar ' + esc(jaar) + ' is afgesloten en vergrendeld (alleen-lezen).</b> Wijzigingen zijn geblokkeerd.</div>'
     : '';
   var bodyHtml = '';
-  if (actieveTab === 1) bodyHtml = renderTab1();
-  else if (actieveTab === 2) bodyHtml = renderTab2();
-  else bodyHtml = renderTab3();
+  if (actieveStap === 1) bodyHtml = renderStap1();
+  else if (actieveStap === 2) bodyHtml = renderStap2();
+  else if (actieveStap === 3) bodyHtml = renderStap3();
+  else if (actieveStap === 4) bodyHtml = renderStap4();
+  else if (actieveStap === 5) bodyHtml = renderStap5();
+  else if (actieveStap === 6) bodyHtml = renderStap6();
 
   document.getElementById('appContent').innerHTML = banner + bodyHtml;
 
   if (isVergrendeld()) {
-    var appEl = document.getElementById('appContent');
-    appEl.querySelectorAll('input,select,button').forEach(function(el) {
+    document.getElementById('appContent').querySelectorAll('input,select,button').forEach(function(el) {
       el.disabled = true;
     });
   }
