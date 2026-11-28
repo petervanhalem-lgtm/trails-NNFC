@@ -3,22 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Startscherm – NNFC</title>
+<title>NNFC Waterwerk – Startscherm</title>
 <style>
 :root{
   --bg:#EEF3F5;--sf:#FFFFFF;--sf2:#F7FAFC;--ink:#0E2A3A;--mut:#4D6573;--ac:#0B6E8F;--acink:#FFFFFF;
-  --ln:#C3D3DB;--soft:#DDE8ED;
+  --ok:#1F7A4D;--bad:#B3261E;--ln:#C3D3DB;--soft:#DDE8ED;--warn:#B45309;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#0C1A22;--sf:#14293A;--sf2:#102230;--ink:#E8F1F5;--mut:#9DB4C1;--ac:#4CC3E6;--acink:#06222E;
-    --ln:#2C4558;--soft:#1D3547;
+    --ok:#6FD6A0;--bad:#FF8A80;--ln:#2C4558;--soft:#1D3547;--warn:#FBBF6A;
   }
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:17px;line-height:1.35}
 .wrap{max-width:1380px;margin:0 auto;padding:14px 18px 60px}
 
+/* UNIFORME BOVENSTE BALK */
 .top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap;background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:12px 16px}
 .top-l{display:flex;align-items:center;gap:12px;min-width:240px;flex:1 1 320px}
 .top img{width:48px;height:48px;border-radius:50%;flex:none}
@@ -31,20 +32,53 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Con
 .top-r button:hover,.top-r .btn-link:hover{background:var(--sf2)}
 .top-r .btn-link.active{background:var(--soft);border-color:var(--ac);color:var(--ink)}
 .top-sep{width:10px;flex:none}
+
+button,.btn-link{font:inherit;color:inherit;border:1.5px solid var(--ln);background:var(--sf);border-radius:10px;min-height:40px;padding:6px 13px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .12s,border-color .12s}
+button:hover,.btn-link:hover{background:var(--sf2)}
+.pri{background:var(--ac)!important;border-color:var(--ac)!important;color:var(--acink)!important}
+.sm{min-height:36px;padding:4px 10px;font-size:15px}
+
+.box{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:14px}
+.box-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+h2{font-size:20px;margin:0;font-weight:700}
+h3{font-size:20px;margin:0;font-weight:700}
+.sub{color:var(--mut);font-size:14px}
+
+.jaar-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.jaar-pill{border:1.5px solid var(--ln);background:var(--sf2);color:var(--ink);border-radius:10px;min-height:38px;padding:4px 12px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.jaar-pill.actief{background:var(--ac);border-color:var(--ac);color:var(--acink)}
+.stip{color:var(--ok);font-size:16px;line-height:1}
+.jaar-pill.actief .stip{color:var(--acink)}
+.meta-lijn{font-size:14px;color:var(--mut);background:var(--sf2);border:1px solid var(--ln);border-radius:10px;padding:8px 12px}
+
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:960px){.grid3{grid-template-columns:1fr}}
+.kaart{background:var(--sf);border:2px solid var(--ln);border-radius:16px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.kaart-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.badge{background:var(--soft);color:var(--ink);border-radius:8px;padding:3px 9px;font-size:13px;font-weight:700;white-space:nowrap}
+.kaart p{margin:0 0 10px;color:var(--mut);font-size:15px}
+.kaart ul{margin:0 0 12px;padding-left:18px;color:var(--ink);font-size:15px}
+.kaart li{margin-bottom:4px}
+.klok-label{font-size:14px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.klok-rij{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.open-btn{width:100%;min-height:44px;font-size:16px;font-weight:700}
+
+.toast{position:fixed;bottom:18px;right:18px;background:var(--ok);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.22);z-index:99;display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <!-- UNIFORME BOVENSTE BALK -->
   <header class="top">
     <div class="top-l">
       <img src="nnfc-logo.png" alt="NNFC" onerror="this.style.display='none'">
       <div>
-        <h1>Startscherm (<span id="lblJaar">2027</span>)</h1>
-        <div class="sub">NNFC Trials</div>
+        <h1>NNFC Waterwerk – Startscherm (<span id="lblJaar">2027</span>)</h1>
+        <div class="sub">Kies een wedstrijdjaar met beschikbare data en open het gewenste onderdeel</div>
       </div>
     </div>
     <div class="top-r" role="navigation" aria-label="Hoofdnavigatie">
-      <select id="selJaar" onchange="wisselJaar()" aria-label="Selecteer wedstrijdjaar"></select>
+      <select id="selJaar" onchange="wisselJaar(this.value)" aria-label="Selecteer wedstrijdjaar"></select>
       <a href="beheer.html" class="btn-link">Beheer / Admin</a>
       <a href="index.html" class="btn-link active" aria-current="page">Startscherm</a>
       <a href="wedstrijdtafel.html" class="btn-link">Wedstrijdtafel</a>
@@ -53,9 +87,111 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow Semi Con
       <button type="button" id="btnVervers" onclick="verversNu()">Ververs</button>
     </div>
   </header>
+
+  <!-- BESCHIKBARE JAREN & DATASTATUS -->
+  <section class="box">
+    <div class="box-head">
+      <div>
+        <h2>Beschikbare jaren &amp; datastatus</h2>
+        <div class="sub">Groene stip = data aanwezig · Slot = heel jaar gefinaliseerd en vergrendeld</div>
+      </div>
+      <div class="jaar-pills" id="jaarPills"></div>
+    </div>
+    <div class="meta-lijn" id="statusRegel">Actief jaar: 2027</div>
+  </section>
+
+  <!-- DRIE HOOFDKAARTEN -->
+  <section class="grid3" aria-label="Onderdelen">
+    <article class="kaart">
+      <div>
+        <div class="kaart-top">
+          <h3>Banen / Klokkers</h3>
+          <span class="badge">Baan 1–5</span>
+        </div>
+        <p>Startvolgorde per baan, stopwatch, punten per oefening en de 3 bijlagen bij het waterwerkreglement.</p>
+        <ul>
+          <li>Live tijdregistratie en puntoptelling per oefening</li>
+          <li>Directe inzage in de 3 bijlagen langs de waterkant</li>
+        </ul>
+        <div class="klok-label">Klokkersscherm per baan (voor gekozen jaar):</div>
+        <div class="klok-rij">
+          <a id="linkKlok1" href="klokker.html?baan=1&jaar=2027" class="btn-link sm">Klokker B1</a>
+          <a id="linkKlok2" href="klokker.html?baan=2&jaar=2027" class="btn-link sm">Klokker B2</a>
+          <a id="linkKlok3" href="klokker.html?baan=3&jaar=2027" class="btn-link sm">Klokker B3</a>
+        </div>
+        <div class="klok-rij">
+          <a id="linkKlok4" href="klokker.html?baan=4&jaar=2027" class="btn-link sm">Klokker B4</a>
+          <a id="linkKlok5" href="klokker.html?baan=5&jaar=2027" class="btn-link sm">Klokker B5</a>
+        </div>
+      </div>
+      <a id="linkBanen" href="banen.html?jaar=2027" class="btn-link pri open-btn">Open Banen / Klokkers &rarr;</a>
+    </article>
+
+    <article class="kaart">
+      <div>
+        <div class="kaart-top">
+          <h3>Wedstrijdtafel</h3>
+          <span class="badge">Uitslagen</span>
+        </div>
+        <p>Aanwezigheid, oefenpunten, brevetuitslagen en bekers per klasse volgens het reglement.</p>
+        <ul>
+          <li>Overzicht van aanwezigheid en klasse-uitslagen</li>
+          <li>Brevetuitslagen en bekerverdeling per klasse</li>
+        </ul>
+      </div>
+      <a id="linkTafel" href="wedstrijdtafel.html?jaar=2027" class="btn-link pri open-btn">Open Wedstrijdtafel &rarr;</a>
+    </article>
+
+    <article class="kaart">
+      <div>
+        <div class="kaart-top">
+          <h3>Beheer / Admin</h3>
+          <span class="badge">Deelnemers &amp; Jaar</span>
+        </div>
+        <p>Deelnemerslijst (inclusief kennel- en stamboomnamen), baanindeling, bijlagen en jaarfinalisatie.</p>
+        <ul>
+          <li>Import, inschrijvingen en baanindeling per jaar</li>
+          <li>Volledig jaar afsluiten en vergrendelen na afloop</li>
+        </ul>
+      </div>
+      <a id="linkBeheer" href="beheer.html?jaar=2027" class="btn-link pri open-btn">Open Beheer / Admin &rarr;</a>
+    </article>
+  </section>
 </div>
 
+<div id="toast" class="toast">Ververst</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="config.js"></script>
 <script>
+var db = null;
+var toonAlleJaren = false;
+
+function esc(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toonToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg || 'Ververst';
+  el.style.display = 'block';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(function() { el.style.display = 'none'; }, 1600);
+}
+
+try {
+  if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  }
+} catch (e) {}
+
 function isGeldigJaar(y) {
   return /^20\d{2}$/.test(String(y == null ? '' : y).trim());
 }
@@ -104,28 +240,107 @@ for (var y = 2026; y <= 2040; y++) {
 var jaar = selJaarEl.value;
 bewaarActiefJaar(jaar, false);
 
-function zetJaarLabels(yStr) {
+function telDeelnemersVoorJaar(yStr) {
+  try {
+    var raw = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + yStr));
+    if (Array.isArray(raw)) return raw.length;
+    if (raw && typeof raw === 'object') return Object.keys(raw).length;
+  } catch (e) {}
+  return 0;
+}
+
+function isJaarVergrendeld(yStr) {
+  try {
+    var s = JSON.parse(localStorage.getItem('nnfc_slot_' + yStr));
+    if (s && typeof s.vergrendeld === 'boolean') return !!s.vergrendeld;
+  } catch (e) {}
+  return String(yStr) === '2026';
+}
+
+function updateLinks(yStr) {
   document.getElementById('lblJaar').textContent = yStr;
   document.querySelectorAll('a.btn-link').forEach(function(a) {
     var href = a.getAttribute('href') || '';
     if (href.indexOf('index.html') !== -1) return;
     var basis = href.split('?')[0];
-    a.setAttribute('href', basis + '?jaar=' + encodeURIComponent(yStr));
+    if (href.indexOf('baan=') !== -1) {
+      var match = href.match(/baan=(\d+)/);
+      var baanNr = match ? match[1] : '1';
+      a.setAttribute('href', basis + '?baan=' + baanNr + '&jaar=' + encodeURIComponent(yStr));
+    } else {
+      a.setAttribute('href', basis + '?jaar=' + encodeURIComponent(yStr));
+    }
   });
 }
-zetJaarLabels(jaar);
 
-function wisselJaar() {
-  jaar = selJaarEl.value;
+function renderStartscherm() {
+  selJaarEl.value = jaar;
+  updateLinks(jaar);
+
+  var zichtbaar = toonAlleJaren
+    ? Array.from({ length: 15 }, function(_, idx) { return String(2026 + idx); })
+    : ['2026', '2027', '2028'];
+
+  var pillsHtml = zichtbaar.map(function(yStr) {
+    var aantal = telDeelnemersVoorJaar(yStr);
+    var slot = isJaarVergrendeld(yStr);
+    var actief = (yStr === jaar);
+    var stip = aantal > 0 ? '<span class="stip">&bull;</span>' : '';
+    var lockIcoon = slot ? '&#128274;' : '';
+    var teller = aantal > 0 ? ' (' + aantal + ')' : '';
+    return '<button type="button" class="jaar-pill ' + (actief ? 'actief' : '') + '" onclick="wisselJaar(\'' + yStr + '\')">' +
+      stip + yStr + lockIcoon + teller +
+    '</button>';
+  }).join('');
+
+  pillsHtml += '<button type="button" class="jaar-pill" onclick="toonAlleJaren=!toonAlleJaren;renderStartscherm()">' +
+    (toonAlleJaren ? 'Toon minder jaren' : 'Toon meer jaren') +
+  '</button>';
+
+  document.getElementById('jaarPills').innerHTML = pillsHtml;
+
+  var gekozenAantal = telDeelnemersVoorJaar(jaar);
+  var gekozenStatus = isJaarVergrendeld(jaar) ? 'Vergrendeld' : 'Open';
+  document.getElementById('statusRegel').innerHTML =
+    'Actief jaar: <b>' + esc(jaar) + '</b> &middot; Geselecteerd <b>' + esc(jaar) + '</b>: ' +
+    gekozenAantal + ' deelnemers &middot; <b>' + esc(gekozenStatus) + '</b>';
+}
+
+function wisselJaar(nieuwJaar) {
+  var yStr = String(nieuwJaar || selJaarEl.value);
+  if (!isGeldigJaar(yStr)) return;
+  jaar = yStr;
   bewaarActiefJaar(jaar, true);
-  zetJaarLabels(jaar);
+  renderStartscherm();
 }
 
 function verversNu() {
   jaar = selJaarEl.value;
   bewaarActiefJaar(jaar, true);
-  zetJaarLabels(jaar);
+  if (db) {
+    try {
+      db.ref('wedstrijd/beheer_deelnemers_' + jaar).once('value', function(snap) {
+        var val = snap.val();
+        if (val) {
+          var lijst = Array.isArray(val) ? val : Object.keys(val).map(function(k) { return val[k]; });
+          localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(lijst));
+        }
+        renderStartscherm();
+      });
+      db.ref('wedstrijd/slot_' + jaar).once('value', function(snap) {
+        var s = snap.val();
+        if (s && typeof s.vergrendeld === 'boolean') {
+          localStorage.setItem('nnfc_slot_' + jaar, JSON.stringify(s));
+        }
+        renderStartscherm();
+      });
+    } catch (e) {}
+  }
+  renderStartscherm();
+  toonToast('Jaar ' + jaar + ' ververst');
 }
+
+renderStartscherm();
 </script>
 </body>
 </html>
