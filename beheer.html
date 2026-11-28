@@ -104,6 +104,7 @@ tbody tr:hover{background:var(--soft)}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="selJaar" onchange="wisselJaar()" style="width:auto;margin:0;font-weight:700" aria-label="Selecteer wedstrijdjaar"></select>
+      <span id="fbStatusBadge"></span>
       <span id="slotStatusBadge"></span>
       <a href="wedstrijdtafel.html" class="btn-link pri">Wedstrijdtafel →</a>
       <a href="banen.html" class="btn-link">Banen / Klokkers →</a>
@@ -150,6 +151,8 @@ tbody tr:hover{background:var(--soft)}
 <div id="toast" class="toast">Opgeslagen</div>
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="config.js"></script>
 <script>
 var db = null;
@@ -179,13 +182,24 @@ function controleerWachtwoordIndienActief() {
   return true;
 }
 
+function updateFbBadge(verbonden) {
+  var el = document.getElementById('fbStatusBadge');
+  if (!el) return;
+  el.innerHTML = verbonden
+    ? '<span class="chip-ok">🟢 Live Firebase</span>'
+    : '<span class="chip-warn">🔴 Geen Firebase</span>';
+}
+
 function initFirebase() {
   try {
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "JOUW_API_KEY") {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.database();
+      updateFbBadge(true);
+      return;
     }
   } catch (e) {}
+  updateFbBadge(false);
 }
 initFirebase();
 
@@ -282,8 +296,9 @@ function volgendeBrevetNa(huidigBrevet) {
   return BREVET_OPTIES[idx + 1];
 }
 
-function normaliseerDeelnemerRecord(h) {
+function normaliseerDeelnemerRecord(h, sleutelId) {
   if (!h || typeof h !== 'object') return h;
+  if (!h.id && sleutelId) h.id = String(sleutelId);
   var hb = normaliseerBrevet(h.huidigBrevet);
   var ob = h.opvolgendBrevet ? normaliseerBrevet(h.opvolgendBrevet) : volgendeBrevetNa(hb);
   if (hb !== 'Geen' && ob === hb) ob = volgendeBrevetNa(hb);
@@ -336,7 +351,7 @@ function normaliseerBaanIndelingObject(b) {
 function laadData() {
   try {
     var ruw = JSON.parse(localStorage.getItem('nnfc_deelnemers_' + jaar)) || [];
-    deelnemers = ruw.map(normaliseerDeelnemerRecord);
+    deelnemers = ruw.map(function(item, idx) { return normaliseerDeelnemerRecord(item, 'loc_' + idx); });
   } catch (e) { deelnemers = []; }
   baanIndeling = maakStandaardBaanIndeling();
   try {
@@ -404,6 +419,7 @@ function luisterFirebaseJaar() {
   try {
     _firebaseSlotRef = db.ref('wedstrijd/slot_' + jaar);
     _firebaseSlotRef.on('value', function(snap) {
+      updateFbBadge(true);
       var remote = snap.val();
       if (remote && typeof remote === 'object' && typeof remote.vergrendeld === 'boolean') {
         var nieuwSlot = {
@@ -422,10 +438,13 @@ function luisterFirebaseJaar() {
 
     _firebaseDeelnemersRef = db.ref('wedstrijd/beheer_deelnemers_' + jaar);
     _firebaseDeelnemersRef.on('value', function(snap) {
+      updateFbBadge(true);
       var val = snap.val();
       if (!val) return;
-      var lijst = Array.isArray(val) ? val : Object.keys(val).map(function(k) { return val[k]; });
-      var genormaliseerd = lijst.filter(Boolean).map(normaliseerDeelnemerRecord);
+      var lijst = Array.isArray(val)
+        ? val.map(function(item, i) { return normaliseerDeelnemerRecord(item, 'arr_' + i); })
+        : Object.keys(val).map(function(k) { return normaliseerDeelnemerRecord(val[k], k); });
+      var genormaliseerd = lijst.filter(Boolean);
       if (JSON.stringify(genormaliseerd) !== JSON.stringify(deelnemers)) {
         deelnemers = genormaliseerd;
         localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
@@ -435,6 +454,7 @@ function luisterFirebaseJaar() {
 
     _firebaseBaanIndelingRef = db.ref('wedstrijd/baanindeling_' + jaar);
     _firebaseBaanIndelingRef.on('value', function(snap) {
+      updateFbBadge(true);
       var b = snap.val();
       if (!b || !b.banen) return;
       var genormaliseerdBaan = normaliseerBaanIndelingObject(b);
@@ -444,7 +464,9 @@ function luisterFirebaseJaar() {
         render();
       }
     });
-  } catch (e) {}
+  } catch (e) {
+    updateFbBadge(false);
+  }
 }
 
 laadSlot();
@@ -486,7 +508,7 @@ function syncFirebase() {
 }
 
 function bewaarDeelnemers(toastTekst) {
-  deelnemers = deelnemers.map(normaliseerDeelnemerRecord);
+  deelnemers = deelnemers.map(function(h, idx) { return normaliseerDeelnemerRecord(h, 'h_' + idx); });
   localStorage.setItem('nnfc_deelnemers_' + jaar, JSON.stringify(deelnemers));
   syncFirebase();
   render();
@@ -1052,7 +1074,7 @@ function renderSectie1() {
 }
 
 function renderSectie2() {
-  var volgendNr = volgendeStartnummer();
+  var volgendNr = volgendeStartnummer('Jeugd');
   return '<div class="box">' +
     '<div class="box-head">' +
       '<div><h2>2. Nieuwe inschrijving toevoegen (' + esc(jaar) + ')</h2><div class="sub">Voeg een hond en geleider toe voor de waterwerkdag</div></div>' +
@@ -1319,7 +1341,7 @@ function importJSON(inputEl) {
         alert('Ongeldig JSON-back-upbestand: deelnemerslijst ontbreekt.');
         return;
       }
-      deelnemers = data.deelnemers.map(normaliseerDeelnemerRecord);
+      deelnemers = data.deelnemers.map(function(h, idx) { return normaliseerDeelnemerRecord(h, 'json_' + idx); });
       if (data.baanIndeling && data.baanIndeling.banen) {
         baanIndeling = normaliseerBaanIndelingObject(data.baanIndeling);
         localStorage.setItem('nnfc_baanindeling_' + jaar, JSON.stringify(baanIndeling));
